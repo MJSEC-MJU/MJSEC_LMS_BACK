@@ -8,4 +8,6 @@ import org.springframework.stereotype.Repository;
 public interface PendingUserRepository extends JpaRepository<PendingUser, Long> {
 
     boolean existsByStudentNumber(Long studentNumber);
+
+    boolean existsByEmail(String email);
 }

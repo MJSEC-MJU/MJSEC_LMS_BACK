@@ -28,13 +28,32 @@ public class AuthService {
     public Boolean checkStudentNumber(Long studentNumber){
 
         // 학번이 8자리 숫자인지 체크
-        if(!String.valueOf(studentNumber).matches("^\\d{8}$")){
+        if(studentNumber == null || !String.valueOf(studentNumber).matches("^\\d{8}$")){
             throw new RestApiException(ErrorCode.INVALID_STUDENT_NUMBER);
         }
 
         // 학번이 회원가입 승인 대기 중인 테이블 & 유저 테이블에 등록되어 있는지 확인
         if(pendingUserRepository.existsByStudentNumber(studentNumber)) return false;
         if(userRepository.existsByStudentNumber(studentNumber)) return false;
+
+        return true;
+    }
+
+    /**
+     * 사용 중인 이메일인지 체크하는 메소드 (회원가입 승인 대기 중인 테이블까지 확인)
+     * @param email 이메일
+     * @return true / false
+     */
+    public Boolean checkEmail(String email){
+
+        // 이메일 형식에 맞는지 체크
+        if(email == null || !email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")){
+            throw new RestApiException(ErrorCode.INVALID_EMAIL_FORMAT);
+        }
+
+        // 이메일이 회원가입 승인 대기 중인 테이블 & 유저 테이블에 등록되어 있는지 확인
+        if(pendingUserRepository.existsByEmail(email)) return false;
+        if(userRepository.existsByEmail(email)) return false;
 
         return true;
     }

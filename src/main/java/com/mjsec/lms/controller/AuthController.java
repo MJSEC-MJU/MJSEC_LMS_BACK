@@ -40,4 +40,25 @@ public class AuthController {
             );
         }
     }
+
+    @GetMapping("/check-email")
+    public ResponseEntity<SuccessResponse<Boolean>> checkEmail(@RequestParam String email){
+
+        if(authService.checkEmail(email)) {
+            return ResponseEntity.status(HttpStatus.OK).body(
+                    SuccessResponse.of(
+                            ResponseMessage.EMAIL_CHECL_SUCCESS,
+                            true
+                    )
+            );
+        }
+        else {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    SuccessResponse.of(
+                            ResponseMessage.DUPLICATE_EMAIL,
+                            false
+                    )
+            );
+        }
+    }
 }
