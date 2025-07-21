@@ -23,6 +23,9 @@ public class PendingUser {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long pendingUserId;
 
+    @Column(nullable = false, unique = true)
+    private Long studentNumber;
+
     @Column(nullable = false)
     private String password;
 
@@ -31,9 +34,6 @@ public class PendingUser {
 
     @Column(nullable = false, unique = true)
     private String email;
-
-    @Column(nullable = false, unique = true)
-    private Long studentNumber;
 
     @Column(nullable = false)
     private String phoneNumber;

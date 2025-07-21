@@ -14,6 +14,7 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "내부 서버 오류가 발생했습니다."),
 
     // 학번 관련 에러
+    DUPLICATE_STUDENT_NUMBER(HttpStatus.CONFLICT, "사용할 수 없는 학번 입니다."),
     INVALID_STUDENT_NUMBER(HttpStatus.BAD_REQUEST, "학번은 8자리 숫자 입니다."),
 
     // 이메일 관련 에러

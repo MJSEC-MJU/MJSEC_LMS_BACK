@@ -2,7 +2,10 @@ package com.mjsec.lms.dto;
 
 import com.mjsec.lms.domain.User;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,8 +20,10 @@ import lombok.Setter;
 @AllArgsConstructor
 public class UserDto {
 
-    @NotBlank
-    private String loginId;
+    @NotNull(message = "학번은 필수입니다.")
+    @Min(value = 10000000, message = "학번은 8자리여야 합니다.")
+    @Max(value = 99999999, message = "학번은 8자리여야 합니다.")
+    private Long studentNumber;
 
     @Pattern(
             regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d{5,})(?=.*[\\W_]{2,}).*$",
@@ -35,19 +40,7 @@ public class UserDto {
     @NotBlank
     private String email;
 
-    @Pattern(regexp = "^\\d{8}$", message = "학번은 8자리 숫자여야 합니다.")
-    @NotBlank
-    private String studentId;
-
     @Pattern(regexp = "^010-\\d{4}-\\d{4}$", message = "전화번호는 010-xxxx-xxxx 형식이어야 합니다.")
     @NotBlank
-    private String phone;
-
-    public static UserDto from(User user) {
-
-        return UserDto.builder()
-                .name(user.getName())
-                .email(user.getEmail())
-                .build();
-    }
+    private String phoneNumber;
 }

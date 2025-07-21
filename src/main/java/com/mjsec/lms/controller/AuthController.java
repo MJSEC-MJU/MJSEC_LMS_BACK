@@ -1,12 +1,16 @@
 package com.mjsec.lms.controller;
 
+import com.mjsec.lms.dto.AuthDto;
 import com.mjsec.lms.dto.SuccessResponse;
 import com.mjsec.lms.service.AuthService;
 import com.mjsec.lms.type.ResponseMessage;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -60,5 +64,19 @@ public class AuthController {
                     )
             );
         }
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<SuccessResponse<Void>> register(
+            @RequestBody @Valid AuthDto.Register registerRequest
+    ){
+
+        authService.register(registerRequest);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                SuccessResponse.of(
+                        ResponseMessage.REGISTER_SUCCESS
+                )
+        );
     }
 }

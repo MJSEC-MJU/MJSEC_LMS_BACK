@@ -1,10 +1,14 @@
 package com.mjsec.lms.service;
 
+import com.mjsec.lms.domain.PendingUser;
+import com.mjsec.lms.dto.AuthDto;
+import com.mjsec.lms.dto.UserDto;
 import com.mjsec.lms.exception.RestApiException;
 import com.mjsec.lms.repository.PendingUserRepository;
 import com.mjsec.lms.repository.UserRepository;
 import com.mjsec.lms.type.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -13,11 +17,14 @@ public class AuthService {
 
     private final PendingUserRepository pendingUserRepository;
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthService(PendingUserRepository pendingUserRepository, UserRepository userRepository) {
+    public AuthService(PendingUserRepository pendingUserRepository, UserRepository userRepository,
+                       PasswordEncoder passwordEncoder) {
 
         this.pendingUserRepository = pendingUserRepository;
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -56,5 +63,41 @@ public class AuthService {
         if(userRepository.existsByEmail(email)) return false;
 
         return true;
+    }
+
+
+    /**
+     * 회원가입 승인 요청을 처리하는 메소드
+     * @param registerRequest 유저의 개인 정보를 담은 Dto
+     */
+    public void register(AuthDto.Register registerRequest){
+
+        UserDto userDto = registerRequest.getUserDto();
+
+        // 학번 중복 체크
+        if(pendingUserRepository.existsByStudentNumber(userDto.getStudentNumber())){
+            throw new RestApiException(ErrorCode.DUPLICATE_STUDENT_NUMBER);
+        }
+        if(userRepository.existsByStudentNumber(userDto.getStudentNumber())){
+            throw new RestApiException(ErrorCode.DUPLICATE_STUDENT_NUMBER);
+        }
+
+        // 이메일 중복 체크
+        if(pendingUserRepository.existsByEmail(userDto.getEmail())){
+            throw new RestApiException(ErrorCode.DUPLICATE_EMAIL);
+        }
+        if(userRepository.existsByEmail(userDto.getEmail())){
+            throw new RestApiException(ErrorCode.DUPLICATE_EMAIL);
+        }
+
+        PendingUser pendingUser = PendingUser.builder()
+                .studentNumber(userDto.getStudentNumber())
+                .password(passwordEncoder.encode(userDto.getPassword()))
+                .name(userDto.getName())
+                .email(userDto.getEmail())
+                .phoneNumber(userDto.getPhoneNumber())
+                .build();
+
+        pendingUserRepository.save(pendingUser);
     }
 }
