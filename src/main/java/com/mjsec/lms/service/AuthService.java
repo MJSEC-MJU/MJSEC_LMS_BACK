@@ -90,6 +90,7 @@ public class AuthService {
             throw new RestApiException(ErrorCode.DUPLICATE_EMAIL);
         }
 
+        // 회원의 정보를 User 테이블이 아닌 승인 요청을 저장하는 PendingUser 테이블에 (임시) 저장
         PendingUser pendingUser = PendingUser.builder()
                 .studentNumber(userDto.getStudentNumber())
                 .password(passwordEncoder.encode(userDto.getPassword()))
