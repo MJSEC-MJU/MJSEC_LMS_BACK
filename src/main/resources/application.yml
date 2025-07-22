@@ -49,3 +49,7 @@ springdoc:
   default-produces-media-type: application/json
   paths-to-match:
     - /**
+
+admin:
+  number: ${ADMIN_NUMBER}
+  password: ${ADMIN_USER_PASSWORD}
