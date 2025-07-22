@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-// Admin 계정 생성을 위한 Configuration Class
+// Admin 계정 생성을 위한 Configuration Class (테스트 단계에서만 사용)
 @Configuration
 public class AdminUserInitializer {
 
