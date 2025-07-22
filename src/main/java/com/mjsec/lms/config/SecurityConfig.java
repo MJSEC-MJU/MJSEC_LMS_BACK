@@ -1,6 +1,9 @@
 package com.mjsec.lms.config;
 
 import com.mjsec.lms.repository.UserRepository;
+import com.mjsec.lms.security.CustomLoginFilter;
+import com.mjsec.lms.security.CustomLogoutFilter;
+import com.mjsec.lms.security.JwtFilter;
 import com.mjsec.lms.service.JwtService;
 import com.mjsec.lms.type.UserRole;
 import jakarta.servlet.http.HttpServletRequest;
@@ -64,7 +67,7 @@ public class SecurityConfig {
         http
                 .addFilterBefore(new CustomLoginFilter(userRepository, jwtService, passwordEncoder), UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(new JwtFilter(jwtService), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(new CustomLogoutFilter(jwtService), LogoutFilter.class);
+                .addFilterBefore(new CustomLogoutFilter(), LogoutFilter.class);
 
         // 경로별 인가 작업
         http
