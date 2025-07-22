@@ -26,13 +26,13 @@ public class UserDto {
     private Long studentNumber;
 
     @Pattern(
-            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d{5,})(?=.*[\\W_]{2,}).*$",
-            message = "비밀번호는 대소문자, 숫자 5개 이상, 특수문자 2개 이상을 포함해야 합니다."
+            regexp = "^(?=(?:.*[a-z]))(?=(?:.*[A-Z]))(?=(?:.*\\\\d){5,})(?=(?:.*[\\\\W_]){2,}).{8,}$\n",
+            message = "비밀번호는 총 8자 이상이며 대소문자, 숫자 5개 이상, 특수문자 2개 이상을 포함해야 합니다."
     )
     @NotBlank
     private String password;
 
-    @Pattern(regexp = "^[ㄱ-ㅎ|가-힣]*$", message = "사용자 이름은 한글로만 이루어져야 합니다.")
+    @Pattern(regexp = "^[가-힣]+$", message = "사용자 이름은 한글로만 이루어져야 합니다.")
     @NotBlank
     private String name;
 

@@ -2,6 +2,7 @@ package com.mjsec.lms.controller;
 
 import com.mjsec.lms.dto.PendingUserDto;
 import com.mjsec.lms.dto.SuccessResponse;
+import com.mjsec.lms.service.AdminService;
 import com.mjsec.lms.type.ResponseMessage;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
