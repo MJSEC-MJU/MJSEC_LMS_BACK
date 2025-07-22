@@ -27,9 +27,10 @@ public class AdminUserInitializer {
                 User admin = User.builder()
                         .studentNumber(adminNumber)
                         .password(passwordEncoder.encode(adminPassword))
+                        .name("관리자")
                         .email("admin@example.com")
-                        .role(UserRole.ROLE_ADMIN)
                         .phoneNumber("010-3727-3727")
+                        .role(UserRole.ROLE_ADMIN)
                         .build();
                 userRepository.save(admin);
 
