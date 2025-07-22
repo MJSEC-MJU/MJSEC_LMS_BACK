@@ -2,6 +2,7 @@ package com.mjsec.lms.config;
 
 import com.mjsec.lms.repository.UserRepository;
 import com.mjsec.lms.service.JwtService;
+import com.mjsec.lms.type.UserRole;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import org.springframework.context.annotation.Bean;
@@ -70,6 +71,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests((auth) -> auth
                         .requestMatchers("/swagger-ui/*", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/users/**").permitAll() // 임시로 허용
                 );
 
