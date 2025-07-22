@@ -68,7 +68,7 @@ public class AuthService {
 
     /**
      * 회원가입 승인 요청을 처리하는 메소드
-     * @param registerRequest 유저의 개인 정보를 담은 Dto
+     * @param registerRequest 유저의 개인 정보를 담은 Dto (학번, 이름, 비밀번호, 이메일, 전화번호)
      */
     public void register(AuthDto.Register registerRequest){
 
