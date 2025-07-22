@@ -15,7 +15,11 @@ public enum ResponseMessage {
     STUDENT_NUMBER_CHECK_SUCCESS("사용 가능한 학번"),
     DUPLICATE_STUDENT_NUMBER("사용 중인 학번"),
     EMAIL_CHECL_SUCCESS("사용 가능한 이메일"),
-    DUPLICATE_EMAIL("사용 중인 이메일")
+    DUPLICATE_EMAIL("사용 중인 이메일"),
+
+    // Admin 관련
+    GET_ALL_PENDING_USER_SUCCESS("회원가입 승인 대기자 목록 반환 성공"),
+    APPROVE_REGISTER_SUCCESS("회원가입 승인 완료")
     ;
 
     private final String message;
