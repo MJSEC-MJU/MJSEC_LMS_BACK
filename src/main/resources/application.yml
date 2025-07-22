@@ -52,4 +52,4 @@ springdoc:
 
 admin:
   number: ${ADMIN_NUMBER}
-  password: ${ADMIN_USER_PASSWORD}
+  password: ${ADMIN_PASSWORD}
