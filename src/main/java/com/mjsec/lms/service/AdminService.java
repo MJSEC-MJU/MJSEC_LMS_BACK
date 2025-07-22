@@ -10,7 +10,6 @@ import com.mjsec.lms.type.ErrorCode;
 import com.mjsec.lms.type.UserRole;
 import jakarta.transaction.Transactional;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
