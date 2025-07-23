@@ -34,7 +34,7 @@ public class AdminController {
         );
     }
 
-    @PostMapping("/member-approval")
+    @PostMapping("/member-approval/{studentNumber}")
     public ResponseEntity<SuccessResponse<Void>> approveRegister(@PathVariable Long studentNumber) {
 
         adminService.approveRegister(studentNumber);

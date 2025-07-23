@@ -26,8 +26,8 @@ public class UserDto {
     private Long studentNumber;
 
     @Pattern(
-            regexp = "^(?=(?:.*[a-z]))(?=(?:.*[A-Z]))(?=(?:.*\\\\d){5,})(?=(?:.*[\\\\W_]){2,}).{8,}$\n",
-            message = "비밀번호는 총 8자 이상이며 대소문자, 숫자 5개 이상, 특수문자 2개 이상을 포함해야 합니다."
+            regexp = "^(?=.*[A-Z])(?=.*[0-9])(?=.*[a-z])(?=.*[!@#$%^&*()-+=]).{8,}$",
+            message = "비밀번호는 대소문자, 숫자, 특수문자를 포함해야 합니다."
     )
     @NotBlank
     private String password;
