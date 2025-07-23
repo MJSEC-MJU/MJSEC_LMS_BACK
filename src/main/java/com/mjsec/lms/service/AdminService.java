@@ -33,6 +33,8 @@ public class AdminService {
      */
     public List<PendingUserDto> getAllPendingUser() {
 
+        log.info("Getting all pending users");
+
         List<PendingUser> allPendingUsers = pendingUserRepository.findAll();
 
         return allPendingUsers.stream()
@@ -52,11 +54,14 @@ public class AdminService {
     @Transactional
     public void approveRegister(Long studentNumber){
 
+        log.info("Approve registration for {}", studentNumber);
+
         PendingUser pendingUser = pendingUserRepository.findByStudentNumber(studentNumber)
                 .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
 
         if (userRepository.existsByStudentNumber(pendingUser.getStudentNumber()) ||
                 userRepository.existsByEmail(pendingUser.getEmail())) {
+            log.warn("Already existing user: {}", studentNumber);
             throw new RestApiException(ErrorCode.ALREADY_REGISTERED_USER);
         }
 
@@ -71,5 +76,6 @@ public class AdminService {
 
         userRepository.save(user);
         pendingUserRepository.delete(pendingUser);
+        log.info("Moved pending user to approved user: {}", user.getStudentNumber());
     }
 }

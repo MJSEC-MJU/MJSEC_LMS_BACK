@@ -36,13 +36,21 @@ public class AuthService {
 
         // 학번이 8자리 숫자인지 체크
         if(studentNumber == null || !String.valueOf(studentNumber).matches("^\\d{8}$")){
+            log.warn("Invalid student number format: {}", studentNumber);
             throw new RestApiException(ErrorCode.INVALID_STUDENT_NUMBER);
         }
 
         // 학번이 회원가입 승인 대기 중인 테이블 & 유저 테이블에 등록되어 있는지 확인
-        if(pendingUserRepository.existsByStudentNumber(studentNumber)) return false;
-        if(userRepository.existsByStudentNumber(studentNumber)) return false;
+        if(pendingUserRepository.existsByStudentNumber(studentNumber)) {
+            log.info("Student number {} already exists in PendingUser", studentNumber);
+            return false;
+        }
+        if(userRepository.existsByStudentNumber(studentNumber)) {
+            log.info("Student number {} already exists in User", studentNumber);
+            return false;
+        }
 
+        log.info("Student number {} is available", studentNumber);
         return true;
     }
 
@@ -53,15 +61,25 @@ public class AuthService {
      */
     public Boolean checkEmail(String email){
 
+        log.info("checkEmail called with email: {}", email);
+
         // 이메일 형식에 맞는지 체크
         if(email == null || !email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")){
+            log.warn("Invalid email format: {}", email);
             throw new RestApiException(ErrorCode.INVALID_EMAIL_FORMAT);
         }
 
         // 이메일이 회원가입 승인 대기 중인 테이블 & 유저 테이블에 등록되어 있는지 확인
-        if(pendingUserRepository.existsByEmail(email)) return false;
-        if(userRepository.existsByEmail(email)) return false;
+        if(pendingUserRepository.existsByEmail(email)) {
+            log.info("Email {} already exists in PendingUser", email);
+            return false;
+        }
+        if(userRepository.existsByEmail(email)) {
+            log.info("Email {} already exists in User", email);
+            return false;
+        }
 
+        log.info("Email {} is available", email);
         return true;
     }
 
@@ -72,21 +90,27 @@ public class AuthService {
      */
     public void register(AuthDto.Register registerRequest){
 
+        log.info("register called with studentNumber: {}", registerRequest.getUserDto().getStudentNumber());
+
         UserDto userDto = registerRequest.getUserDto();
 
         // 학번 중복 체크
         if(pendingUserRepository.existsByStudentNumber(userDto.getStudentNumber())){
+            log.warn("Duplicate student number in PendingUser: {}", userDto.getStudentNumber());
             throw new RestApiException(ErrorCode.DUPLICATE_STUDENT_NUMBER);
         }
         if(userRepository.existsByStudentNumber(userDto.getStudentNumber())){
+            log.warn("Duplicate student number in User: {}", userDto.getStudentNumber());
             throw new RestApiException(ErrorCode.DUPLICATE_STUDENT_NUMBER);
         }
 
         // 이메일 중복 체크
         if(pendingUserRepository.existsByEmail(userDto.getEmail())){
+            log.warn("Duplicate email in PendingUser: {}", userDto.getEmail());
             throw new RestApiException(ErrorCode.DUPLICATE_EMAIL);
         }
         if(userRepository.existsByEmail(userDto.getEmail())){
+            log.warn("Duplicate email in User: {}", userDto.getEmail());
             throw new RestApiException(ErrorCode.DUPLICATE_EMAIL);
         }
 
@@ -100,5 +124,7 @@ public class AuthService {
                 .build();
 
         pendingUserRepository.save(pendingUser);
+
+        log.info("Pending user saved successfully: studentNumber = {}", pendingUser.getStudentNumber());
     }
 }

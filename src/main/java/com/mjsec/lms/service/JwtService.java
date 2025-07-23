@@ -63,11 +63,11 @@ public class JwtService {
     /**
      * JWT 생성
      *
-     * @param tokenType : 토큰 타입(ACCESS 토큰 / REFRESH 토큰)
+     * @param tokenType : 토큰 타입(ACCESS 토큰 / REFRESH 토큰) -> 현재는 ACCESS 토큰만 사용
      * @param studentNumber : 유저의 학번
      * @param role : 유저의 권한
      * @param expiredMs : 만료 시점
-     * @return JWT
+     * @return JWT (String)
      */
     public String createJwt(String tokenType, Long studentNumber, String role, Long expiredMs) {
 
