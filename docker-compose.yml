@@ -1,0 +1,74 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: mjsec-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE:      ${MYSQL_DATABASE}
+      MYSQL_USER:          ${MYSQL_USER}
+      MYSQL_PASSWORD:      ${MYSQL_PASSWORD}
+      
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - mjsec-network
+
+  redis:
+    image: redis:6-alpine
+    container_name: mjsec-redis
+    environment:
+      # 만약 Redis AUTH를 쓰면
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mjsec-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mjsec-app
+    ports:
+      - "8080:8080"
+    environment:
+      # Spring Datasource
+      SPRING_DATASOURCE_URL:          ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME:     ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD:     ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_JPA_DATABASE_PLATFORM:   ${SPRING_JPA_DATABASE_PLATFORM}
+      SPRING_JPA_HIBERNATE_DDL_AUTO:  ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+
+      # Redis
+      SPRING_REDIS_HOST:  ${SPRING_REDIS_HOST}
+      SPRING_REDIS_PORT:  ${SPRING_REDIS_PORT}
+
+      # Mail
+      SPRING_MAIL_HOST:     ${SPRING_MAIL_HOST}
+      SPRING_MAIL_PORT:     ${SPRING_MAIL_PORT}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD}
+
+      # JWT, Admin
+      JWT_SECRET:      ${JWT_SECRET}
+      ADMIN_NUMBER:    ${ADMIN_NUMBER}
+      ADMIN_NAME:      ${ADMIN_NAME}
+      ADMIN_EMAIL:     ${ADMIN_EMAIL}
+      ADMIN_PASSWORD:  ${ADMIN_PASSWORD}
+    depends_on:
+      - db
+      - redis
+    networks:
+      - mjsec-network
+
+volumes:
+  db_data:
+  redis_data:
+
+networks:
+  mjsec-network:
+    driver: bridge
