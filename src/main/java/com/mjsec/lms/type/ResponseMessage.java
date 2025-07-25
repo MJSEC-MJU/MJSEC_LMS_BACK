@@ -19,7 +19,10 @@ public enum ResponseMessage {
 
     // Admin 관련
     GET_ALL_PENDING_USER_SUCCESS("회원가입 승인 대기자 목록 반환 성공"),
-    APPROVE_REGISTER_SUCCESS("회원가입 승인 완료")
+    APPROVE_REGISTER_SUCCESS("회원가입 승인 완료"),
+
+    // Assignment 관련
+    ASSIGNMENT_SUCCESS("과제 등록 성공")
     ;
 
     private final String message;
