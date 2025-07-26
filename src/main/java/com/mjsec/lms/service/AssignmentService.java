@@ -6,6 +6,7 @@ import com.mjsec.lms.domain.StudyGroup;
 import com.mjsec.lms.domain.User;
 import com.mjsec.lms.dto.AssignmentDTO;
 import com.mjsec.lms.dto.AssignmentResponse;
+import com.mjsec.lms.dto.DetailAssignmentResponse;
 import com.mjsec.lms.exception.RestApiException;
 import com.mjsec.lms.repository.AssignmentRepository;
 import com.mjsec.lms.repository.GroupMemberRepository;
@@ -77,11 +78,14 @@ public class AssignmentService {
 
         log.info("Assignment created successfully: {}", assignment);
 
+        //레포지토리에 저장
         assignmentRepository.save(assignment);
 
+        //Response DTO로 만들어서 반환하기
         return createResponse(assignment);
     }
 
+    //전체 과제 조회하기
     public List<AssignmentResponse> getAssignment(Long groupId, Long currentUserStudentNumber) {
 
         log.info("getAssignment called");
@@ -110,6 +114,38 @@ public class AssignmentService {
         log.info("get Assignment Successfully!");
 
         return assignmentResponses;
+    }
+
+    //과제 상세 조회하기
+    public DetailAssignmentResponse getDetailAssignment(Long groupId, Long assignmentId, Long currentUserStudentNumber) {
+        log.info("getDetailAssignment called");
+
+        //과제를 상세히 조회하려는 유저 확인하기
+        User user = userRepository.findByStudentNumber(currentUserStudentNumber).orElseThrow(()-> new RestApiException(ErrorCode.USER_NOT_FOUND));
+
+        //스터디가 존재하는 지 확인하기
+        StudyGroup studyGroup = studyGroupRepository.findById(groupId)
+                .orElseThrow(() -> new RestApiException(ErrorCode.STUDY_NOT_FOUND));
+
+        //스터디 그룹에 속하는 유저인지 확인하기
+        GroupMember groupMember = groupMemberRepository.findByUserAndStudyGroup(user,studyGroup).orElseThrow(()-> new RestApiException(ErrorCode.STUDY_USER_NOT_FOUND));
+
+        Assignment assignment = assignmentRepository.findById(assignmentId).orElseThrow(()-> new RestApiException(ErrorCode.ASSIGNMENT_NOT_FOUND));
+
+        log.info("Found assignment: {}", assignment);
+
+        //DetailAssignmentResponse DTO 로 변환해서 반환
+        DetailAssignmentResponse detailAssignmentResponse = DetailAssignmentResponse.builder()
+                .assignmentId(assignment.getAssignId())
+                .title(assignment.getTitle())
+                .content(assignment.getContent())
+                .startDate(assignment.getStartDate())
+                .endDate(assignment.getEndDate())
+                .creatorName(user.getName())
+                .createdAt(assignment.getCreatedAt())
+                .build();
+
+        return detailAssignmentResponse;
     }
 
     //과제 Response로 변환하기

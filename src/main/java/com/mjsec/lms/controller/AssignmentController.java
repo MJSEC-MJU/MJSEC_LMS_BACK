@@ -3,6 +3,7 @@ package com.mjsec.lms.controller;
 
 import com.mjsec.lms.dto.AssignmentDTO;
 import com.mjsec.lms.dto.AssignmentResponse;
+import com.mjsec.lms.dto.DetailAssignmentResponse;
 import com.mjsec.lms.dto.SuccessResponse;
 import com.mjsec.lms.service.AssignmentService;
 import com.mjsec.lms.type.ResponseMessage;
@@ -41,6 +42,7 @@ public class AssignmentController {
         );
     }
 
+    //전체 과제 조회하기
     @GetMapping("/{groupId}/assignments")
     public ResponseEntity<SuccessResponse<List<AssignmentResponse>>> getAssignments(
             @PathVariable Long groupId,
@@ -55,6 +57,26 @@ public class AssignmentController {
                 SuccessResponse.of(
                         ResponseMessage.ASSIGNMENT_SUCCESS,
                         assignmentResponseList
+                )
+        );
+    }
+
+    //과제 상세 조회하기
+    @GetMapping("/{groupId}/assignments/{assignId}")
+    public ResponseEntity<SuccessResponse<DetailAssignmentResponse>> getDetailedAssignment(
+            @PathVariable Long groupId,
+            @PathVariable Long assignId,
+            Authentication authentication){
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        DetailAssignmentResponse detailAssignmentResponse = assignmentService.getDetailAssignment(groupId,assignId,currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.ASSIGNMENT_SUCCESS,
+                        detailAssignmentResponse
                 )
         );
     }
