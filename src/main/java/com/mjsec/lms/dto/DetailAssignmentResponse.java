@@ -22,4 +22,6 @@ public class DetailAssignmentResponse {
     private String creatorName;
 
     private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
 }

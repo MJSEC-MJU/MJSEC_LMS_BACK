@@ -24,7 +24,7 @@ public class AssignmentController {
     }
 
     @PostMapping("/{groupId}/create-assignment")
-    public ResponseEntity<SuccessResponse<AssignmentResponse>> createAssignment(
+    public ResponseEntity<SuccessResponse<DetailAssignmentResponse>> createAssignment(
             @PathVariable Long groupId,
             @RequestBody AssignmentDTO dto,
             Authentication authentication) {  // Spring Security가 자동 주입
@@ -32,11 +32,11 @@ public class AssignmentController {
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
-        AssignmentResponse response = assignmentService.createAssignment(groupId, dto, currentUserStudentNumber);
+        DetailAssignmentResponse response = assignmentService.createAssignment(groupId, dto, currentUserStudentNumber);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
-                        ResponseMessage.ASSIGNMENT_SUCCESS,
+                        ResponseMessage.ASSIGNMENT_CREATE_SUCCESS,
                         response
                 )
         );
@@ -77,6 +77,44 @@ public class AssignmentController {
                 SuccessResponse.of(
                         ResponseMessage.ASSIGNMENT_SUCCESS,
                         detailAssignmentResponse
+                )
+        );
+    }
+
+    @PutMapping("/{groupId}/assignments/{assignId}")
+    public ResponseEntity<SuccessResponse<DetailAssignmentResponse>> updateAssignment(
+            @PathVariable Long groupId,
+            @PathVariable Long assignId,
+            @RequestBody AssignmentDTO dto,
+            Authentication authentication){
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        DetailAssignmentResponse detailAssignmentResponse = assignmentService.updateAssignment(groupId, assignId, dto, currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.ASSIGNMENT_UPDATE_SUCCESS,
+                        detailAssignmentResponse
+                )
+        );
+    }
+
+    @DeleteMapping("/{groupId}/assignments/{assignId}")
+    public ResponseEntity<SuccessResponse<Void>> deleteAssignment(
+            @PathVariable Long groupId,
+            @PathVariable Long assignId,
+            Authentication authentication){
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        assignmentService.deleteAssignment(groupId,assignId,currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.ASSIGNMENT_DELETE_SUCCESS
                 )
         );
     }
