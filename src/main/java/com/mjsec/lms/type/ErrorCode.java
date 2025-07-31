@@ -39,13 +39,18 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "유저를 찾을 수 없습니다."),
     ALREADY_REGISTERED_USER(HttpStatus.BAD_REQUEST, "이미 회원가입이 완료된 유저입니다."),
 
-
     //스터디
     STUDY_NOT_FOUND(HttpStatus.NOT_FOUND, "스터디를 찾을 수 없습니다."),
-    UNAUTHORIZED_ROLE(HttpStatus.UNAUTHORIZED, "멘토만 과제를 등록할 수 있습니다."),
-    STUDY_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 스터디 멤버를 찾을 수 없습니다.")
-    ;
+    STUDY_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "스터디에 해당 사용자가 없습니다."),
+    UNAUTHORIZED_ROLE(HttpStatus.FORBIDDEN, "해당 작업을 수행할 권한이 없습니다.");
 
-    private final HttpStatus httpStatus;
-    private final String description;
+
+    private final HttpStatus status;
+    private final String message;
+    public HttpStatus getHttpStatus() {
+        return status;
+    }
+    public String getDescription() {
+        return message;
+    }
 }
