@@ -2,11 +2,14 @@ package com.mjsec.lms.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
-import com.mjsec.lms.type.AnnouncementType;
+import com.mjsec.lms.type.AnnouncementRole;
 import lombok.experimental.SuperBuilder;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
-
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
 @Entity
 @Getter
 @Setter
@@ -19,8 +22,6 @@ public class Announcement extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long announcementId;
 
-    private Long userId;
-
     @Column(nullable = false, length= 200)
     private String title;
 
@@ -29,14 +30,17 @@ public class Announcement extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 50)
-    private AnnouncementType type;
+    private AnnouncementRole type;
 
     private LocalDateTime startDate;
     private LocalDateTime endDate;
 
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
-
-
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User creator;
 
 
 }

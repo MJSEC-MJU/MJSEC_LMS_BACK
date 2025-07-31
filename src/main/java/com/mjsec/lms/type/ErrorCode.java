@@ -42,7 +42,12 @@ public enum ErrorCode {
     //스터디
     STUDY_NOT_FOUND(HttpStatus.NOT_FOUND, "스터디를 찾을 수 없습니다."),
     STUDY_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "스터디에 해당 사용자가 없습니다."),
-    UNAUTHORIZED_ROLE(HttpStatus.FORBIDDEN, "해당 작업을 수행할 권한이 없습니다.");
+    UNAUTHORIZED_ROLE(HttpStatus.FORBIDDEN, "해당 작업을 수행할 권한이 없습니다."),
+
+    //공지사항
+    ANNOUNCEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "공지사항을 찾을 수 없습니다."),
+    ANNOUNCEMENT_FORBIDDEN(HttpStatus.FORBIDDEN, "공지사항에 접근할 권한이 없습니다."),
+    ANNOUNCEMENT_TYPE_REQUIRED(HttpStatus.BAD_REQUEST, "공지 타입은 필수입니다.");
 
 
     private final HttpStatus status;

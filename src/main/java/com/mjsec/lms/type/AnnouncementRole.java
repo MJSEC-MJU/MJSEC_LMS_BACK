@@ -1,6 +1,6 @@
 package com.mjsec.lms.type;
 
-public enum AnnouncementType {
+public enum AnnouncementRole {
     NOTICE,
     COMPETITION,
     EVENT,

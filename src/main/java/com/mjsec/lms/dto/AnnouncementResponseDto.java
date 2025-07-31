@@ -1,6 +1,6 @@
 package com.mjsec.lms.dto;
 
-import com.mjsec.lms.type.AnnouncementType;
+import com.mjsec.lms.type.AnnouncementRole;
 import lombok.*;
 import java.time.LocalDateTime;
 
@@ -10,12 +10,14 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class AnnouncementResponseDto {
-    private Long id;
+    private Long announcementId;
     private Long userId;
     private String title;
     private String content;
-    private AnnouncementType type;
+    private AnnouncementRole type;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private LocalDateTime createdAt;
+
+
 }
