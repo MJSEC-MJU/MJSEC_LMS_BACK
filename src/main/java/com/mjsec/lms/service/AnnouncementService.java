@@ -31,6 +31,9 @@ public class AnnouncementService {
         if (user.getRole() != UserRole.ROLE_ADMIN) {
             throw new RestApiException(ErrorCode.UNAUTHORIZED_ROLE);
         }
+        if (dto.getType() == null) {
+            throw new RestApiException(ErrorCode.ANNOUNCEMENT_TYPE_REQUIRED);
+        }
 
         Announcement announcement= Announcement.builder()
                 .title(dto.getTitle())
