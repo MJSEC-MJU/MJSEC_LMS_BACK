@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/users/")
 public class AnnouncementController {
@@ -24,6 +26,7 @@ public class AnnouncementController {
 
     @PostMapping("/announcement")
     public ResponseEntity<SuccessResponse<AnnouncementResponseDto>> createAnnouncement(
+
             @RequestBody AnnouncementRequestDto dto,
             Authentication authentication) {  // Spring Security가 자동 주입
 
@@ -36,12 +39,23 @@ public class AnnouncementController {
                 SuccessResponse.of(
                         ResponseMessage.ANNOUNCEMENT_SUCCESS,
                         responseDto
-                ));
+                )
+        );
+    }
+    @GetMapping("/announcements")
+    public ResponseEntity<SuccessResponse<List<AnnouncementResponseDto>>> getAnnouncements(Authentication authentication) {
 
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+        List<AnnouncementResponseDto> announcements = announcementService.getAnnouncements(currentUserStudentNumber);
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.GET_ANNOUNCEMENT_SUCCESS,
+                        announcements
+                ));
     }
 
 
 
-
 }
+
 

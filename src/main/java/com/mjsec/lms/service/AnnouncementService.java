@@ -9,23 +9,26 @@ import com.mjsec.lms.mapper.AnnouncementMapper;
 import com.mjsec.lms.repository.*;
 import com.mjsec.lms.type.ErrorCode;
 import com.mjsec.lms.type.UserRole;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AnnouncementService {
+
     private final AnnouncementRepository announcementRepository;
     private final UserRepository userRepository;
 
     AnnouncementService(AnnouncementRepository announcementRepository, UserRepository userRepository) {
+
         this.announcementRepository = announcementRepository;
         this.userRepository = userRepository;
     }
 
-
     public Announcement  createAnnouncement(AnnouncementRequestDto dto, Long currentUserStudentNumber) {
+
         //유저가 맞는지 확인 + 관리자인지 확인
         User user = validateUser(currentUserStudentNumber);
         if (user.getRole() != UserRole.ROLE_ADMIN) {
@@ -45,6 +48,24 @@ public class AnnouncementService {
                 .creator(user)
                 .build();
                 return announcementRepository.save(announcement);
+    }
+    public List<AnnouncementResponseDto> getAnnouncements( Long currentUserStudentNumber) {
+
+        //전체 과제를 조회하려는 유저 확인하기
+        /*
+        User user = userRepository.findByStudentNumber(currentUserStudentNumber)
+                .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
+        */
+       //공지사항이 존재하는지 확인하기
+        List<Announcement> announcements = announcementRepository.findAll();
+        if(announcements.isEmpty()) {
+            throw new RestApiException(ErrorCode.ANNOUNCEMENT_NOT_FOUND);
+        }
+
+        return announcements.stream()
+                .map((AnnouncementMapper::toDto))
+                .collect(Collectors.toList());
+
     }
 
     private User validateUser(Long studentNumber) {

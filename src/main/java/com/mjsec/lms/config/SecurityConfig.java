@@ -19,6 +19,9 @@ import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import static io.lettuce.core.AclCategory.ADMIN;
+import static org.hibernate.cfg.JdbcSettings.USER;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -76,7 +79,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/groups/**").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/users/announcements/**").hasRole("USER")
+                        .requestMatchers("/api/v1/users/announcements/**").hasAnyRole("ADMIN", "USER")
                         .requestMatchers("/api/v1/users/**").permitAll() // 임시로 허용
 
                 );

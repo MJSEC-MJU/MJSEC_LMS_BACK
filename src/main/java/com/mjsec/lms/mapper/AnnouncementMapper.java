@@ -19,7 +19,7 @@ public class AnnouncementMapper {
     public static AnnouncementResponseDto toDto(Announcement entity) {
         return AnnouncementResponseDto.builder()
                 .announcementId(entity.getAnnouncementId())
-                .userId(entity.getCreator() != null ? entity.getCreator().getUserId() : null) // User 객체에서 userId 추출
+                .userId(entity.getCreator() != null ? entity.getCreator().getUserId() : null) // User 객체에서 userId 추출ﬁ
                 .title(entity.getTitle())
                 .content(entity.getContent())
                 .type(entity.getType())
