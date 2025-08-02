@@ -53,7 +53,21 @@ public class AnnouncementController {
                         announcements
                 ));
     }
+    @GetMapping("/announcement/{announcementId}")
+    public ResponseEntity<SuccessResponse<AnnouncementResponseDto>> getAnnouncementDetails(
+            @PathVariable Long announcementId, Authentication authentication){
 
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        AnnouncementResponseDto  dto = announcementService.getAnnouncementDetail(announcementId, currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.DETAIL_ANNOUNCEMENT_SUCCESS,
+                        dto
+                )
+        );
+    }
 
 
 }

@@ -49,13 +49,12 @@ public class AnnouncementService {
                 .build();
                 return announcementRepository.save(announcement);
     }
-    public List<AnnouncementResponseDto> getAnnouncements( Long currentUserStudentNumber) {
+    public List<AnnouncementResponseDto> getAnnouncements(Long currentUserStudentNumber ) {
 
         //전체 과제를 조회하려는 유저 확인하기
-        /*
         User user = userRepository.findByStudentNumber(currentUserStudentNumber)
-                .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
-        */
+                .orElseThrow(() -> new RestApiException(ErrorCode.ANNOUNCEMENT_NOT_FOUND));
+
        //공지사항이 존재하는지 확인하기
         List<Announcement> announcements = announcementRepository.findAll();
         if(announcements.isEmpty()) {
@@ -66,6 +65,18 @@ public class AnnouncementService {
                 .map((AnnouncementMapper::toDto))
                 .collect(Collectors.toList());
 
+    }
+
+    public AnnouncementResponseDto  getAnnouncementDetail(Long announcementId,Long currentUserStudentNumber){
+
+        //유저 존재 확인
+        User user = userRepository.findByStudentNumber(currentUserStudentNumber)
+                .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
+
+        //공지사항 존재 확인
+        Announcement announcement = announcementRepository.findById(announcementId)
+                .orElseThrow(() -> new RestApiException(ErrorCode.ANNOUNCEMENT_NOT_FOUND));
+        return AnnouncementMapper.toDto(announcement);
     }
 
     private User validateUser(Long studentNumber) {

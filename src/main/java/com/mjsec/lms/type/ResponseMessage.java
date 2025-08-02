@@ -26,7 +26,7 @@ public enum ResponseMessage {
 
     // Announcement관련
     ANNOUNCEMENT_SUCCESS("공지사항 등록 성공"),
-    GET_ANNOUNCEMENT_SUCCESS("전체 공지사항 목록 반환 성공");
-
+    GET_ANNOUNCEMENT_SUCCESS("전체 공지사항 목록 반환 성공"),
+    DETAIL_ANNOUNCEMENT_SUCCESS("공지사항 상제 조회 성공");
     private final String message;
 }
