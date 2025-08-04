@@ -22,7 +22,10 @@ public enum ResponseMessage {
     APPROVE_REGISTER_SUCCESS("회원가입 승인 완료"),
 
     // Assignment 관련
-    ASSIGNMENT_SUCCESS("과제 등록 성공")
+    ASSIGNMENT_CREATE_SUCCESS("과제 등록 성공"),
+    ASSIGNMENT_DELETE_SUCCESS("과제 삭제 성공"),
+    ASSIGNMENT_UPDATE_SUCCESS("과제 수정 성공"),
+    ASSIGNMENT_SUCCESS("과제 조회 성공")
     ;
 
     private final String message;
