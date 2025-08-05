@@ -1,12 +1,10 @@
 package com.mjsec.lms.controller;
 
 
-import com.mjsec.lms.dto.AssignmentDTO;
-import com.mjsec.lms.dto.AssignmentResponse;
-import com.mjsec.lms.dto.DetailAssignmentResponse;
-import com.mjsec.lms.dto.SuccessResponse;
+import com.mjsec.lms.dto.*;
 import com.mjsec.lms.service.AssignmentService;
 import com.mjsec.lms.type.ResponseMessage;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -23,10 +21,11 @@ public class AssignmentController {
         this.assignmentService = assignmentService;
     }
 
+    //과제 등록하기
     @PostMapping("/{groupId}/create-assignment")
     public ResponseEntity<SuccessResponse<DetailAssignmentResponse>> createAssignment(
             @PathVariable Long groupId,
-            @RequestBody AssignmentDTO dto,
+            @Valid @RequestBody AssignmentDto dto,
             Authentication authentication) {  // Spring Security가 자동 주입
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
@@ -81,11 +80,12 @@ public class AssignmentController {
         );
     }
 
+    //등록한 과제 수정하기
     @PutMapping("/{groupId}/assignments/{assignId}")
     public ResponseEntity<SuccessResponse<DetailAssignmentResponse>> updateAssignment(
             @PathVariable Long groupId,
             @PathVariable Long assignId,
-            @RequestBody AssignmentDTO dto,
+            @RequestBody AssignmentDto dto,
             Authentication authentication){
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
@@ -101,6 +101,7 @@ public class AssignmentController {
         );
     }
 
+    //등록한 과제 삭제하기
     @DeleteMapping("/{groupId}/assignments/{assignId}")
     public ResponseEntity<SuccessResponse<Void>> deleteAssignment(
             @PathVariable Long groupId,
@@ -115,6 +116,27 @@ public class AssignmentController {
         return ResponseEntity.ok(
                 SuccessResponse.of(
                         ResponseMessage.ASSIGNMENT_DELETE_SUCCESS
+                )
+        );
+    }
+
+    //과제 제출하기 (멘티가)
+    @PostMapping("/{groupId}/assign-submit/{assignId}")
+    public ResponseEntity<SuccessResponse<SubmissionResponse>> submitAssignment(
+            @Valid @RequestBody SubmissionDto dto,
+            @PathVariable Long groupId,
+            @PathVariable Long assignId,
+            Authentication authentication){
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        SubmissionResponse submissionResponse = assignmentService.submitAssignment(groupId,assignId,currentUserStudentNumber,dto);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.ASSIGNMENT_SUBMIT_SUCCESS,
+                        submissionResponse
                 )
         );
     }

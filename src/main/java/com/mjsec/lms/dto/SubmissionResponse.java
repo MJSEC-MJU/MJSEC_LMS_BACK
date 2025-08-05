@@ -7,14 +7,12 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-public class AssignmentDTO {
-
-    private String title;
+public class SubmissionResponse {
+    private Long submissionId;
 
     private String content;
 
-    private LocalDateTime startDate;
+    private String creatorName;
 
-    private LocalDateTime endDate;
-
+    private LocalDateTime createdAt;
 }

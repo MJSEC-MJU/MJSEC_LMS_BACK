@@ -13,21 +13,23 @@ import org.hibernate.annotations.SQLRestriction;
 @AllArgsConstructor
 @Table(name = "assignment_submission")
 @SuperBuilder
-@SQLDelete(sql = "UPDATE assignment_submission SET deleted_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE assignment_submission SET deleted_at = NOW() WHERE submission_id = ?")
 @SQLRestriction("deleted_at is null")
 public class AssignmentSubmission extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long id;
+    @Column(name = "submission_id")
+    private Long submissionId;
 
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
+    /* 파일 올리기 X - 일단 지움
     @Column(name = "file_url", columnDefinition = "TEXT")
     private String fileUrl;
-
+     */
+    
     @Column(name = "feedback", columnDefinition = "TEXT")
     private String feedback;
 
