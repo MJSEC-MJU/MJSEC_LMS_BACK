@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface SubmissionRepository extends JpaRepository<AssignmentSubmission, Long> {
 
+    boolean existsBySubmitterUserIdAndAssignmentAssignId(Long submitterUserId, Long assignmentAssignId);
 }

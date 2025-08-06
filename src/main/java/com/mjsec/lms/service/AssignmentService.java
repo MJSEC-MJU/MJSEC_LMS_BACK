@@ -13,9 +13,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -25,6 +29,11 @@ public class AssignmentService {
     private final StudyGroupRepository studyGroupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final SubmissionRepository submissionRepository;
+
+    private static final String[] ALLOWED_DOMAINS =
+            {"velog.io", "tistory.com", "blog.naver.com"};
+
+    private static final Pattern URL_PATTERN = Pattern.compile("^https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$");
 
     public AssignmentService(AssignmentRepository assignmentRepository,
                              UserRepository userRepository,
@@ -140,7 +149,7 @@ public class AssignmentService {
 
     //과제 제출하기
     @Transactional
-    public SubmissionResponse submitAssignment(Long groupId, Long assignmentId, Long currentUserStudentNumber, SubmissionDto dto) {
+    public SubmissionResponse submitAssignment(Long groupId, Long assignmentId, Long currentUserStudentNumber, SubmissionDto dto, String ipAddress) {
 
         log.info("submitAssignment called");
 
@@ -150,11 +159,19 @@ public class AssignmentService {
         validateMenteeRole(user.getUserId(), groupId);
         Assignment assignment = validateAssignment(assignmentId);
 
+        //과제 내용 확인하기
+        validateSubmissionContent(dto.getContent());
+
+        //과제 제출 중복 여부 체크
+        validateDuplicateSubmission(user.getUserId(), assignmentId);
+
         AssignmentSubmission assignmentSubmission = AssignmentSubmission.builder()
                 .content(dto.getContent())
                 .createdAt(LocalDateTime.now())
+                .password(dto.getPassword())
                 .submitter(user)
                 .assignment(assignment)
+                .submitterIp(ipAddress)
                 .build();
 
         submissionRepository.save(assignmentSubmission);
@@ -166,6 +183,104 @@ public class AssignmentService {
     /**
      * === 검증 메서드들 ===
      */
+
+    private void validateSubmissionContent(String content) {
+
+        if(content == null || content.trim().isEmpty()) {
+            throw new RestApiException(ErrorCode.SUBMISSION_CONTENT_REQUIRED);
+        }
+
+        List<String> urls = extractUrls(content);
+        for(String url : urls) {
+            validateUrlSecurity(url);
+        }
+
+        validateMaliciousContent(content);
+    }
+
+    //허용된 도메인인지 확인하기
+    private void validateUrlSecurity(String urlString){
+
+        try{
+            URL url = new URL(urlString);
+            String urlHost = url.getHost().toLowerCase();
+
+            boolean isAllowed = Arrays.stream(ALLOWED_DOMAINS)
+                    .anyMatch(domain -> urlHost.endsWith("."+domain) || urlHost.equals(domain));
+
+            if(!isAllowed){
+                log.warn("URL {} is not allowed. Allowed domains: {}", urlString, Arrays.toString(ALLOWED_DOMAINS));
+                throw new RestApiException(ErrorCode.UNAUTHORIZED_DOMAIN);
+            }
+        } catch(MalformedURLException e){
+            log.warn("URL {} is invalid", urlString);
+            throw new RestApiException(ErrorCode.INVALID_URL_FORMAT);
+        }
+    }
+
+    //XSS, SQL INJECTION 검사
+    private void validateMaliciousContent(String content) {
+
+        String lowerContent = content.toLowerCase();
+
+        // 기본적인 XSS 패턴 검증
+        String[] maliciousPatterns = {
+                "<script", "javascript:", "onload=", "onerror=", "onclick=",
+                "onmouseover=", "eval(", "alert(", "document.cookie"
+        };
+
+        for (String pattern : maliciousPatterns) {
+            if (lowerContent.contains(pattern)) {
+                log.warn("Malicious content pattern detected: {}", pattern);
+                throw new RestApiException(ErrorCode.WARNING_CONTENT);
+            }
+        }
+
+        // SQL Injection 기본 패턴 검증
+        String[] sqlPatterns = {
+                "union select", "drop table", "delete from", "insert into",
+                "update set", "' or '1'='1", "-- ", "/*"
+        };
+
+        for (String pattern : sqlPatterns) {
+            if (lowerContent.contains(pattern)) {
+                log.warn("SQL injection pattern detected: {}", pattern);
+                throw new RestApiException(ErrorCode.WARNING_CONTENT);
+            }
+        }
+    }
+
+    //URL 뽑아내기
+    private List<String> extractUrls(String content) {
+
+        List<String> urls = new ArrayList<>();
+        String[] splittedContent = content.split("\\s+");
+
+        for(String word : splittedContent) {
+            if(isValidUrl(word)){
+                urls.add(word);
+            }
+        }
+
+        return urls;
+    }
+
+    //유효한 URL인지 확인
+    private boolean isValidUrl(String urlString) {
+
+        //URL 패턴에 맞는지 먼저 검사하기
+        if(!URL_PATTERN.matcher(urlString).matches()) {
+            return false;
+        }
+
+        //실제로 있는 URL인지 검사하기
+        try{
+            new URL(urlString);
+            return true;
+        } catch (MalformedURLException e){
+            return false;
+        }
+    }
 
     //사용자 존재 여부를 확인하고 User 객체를 반환
     private User validateUser(Long studentNumber) {
@@ -216,6 +331,18 @@ public class AssignmentService {
 
         return assignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.ASSIGNMENT_NOT_FOUND));
+    }
+
+    //과제 제출 중복 여부 확인하기
+    private void validateDuplicateSubmission(Long userId, Long assignmentId) {
+        
+        boolean alreadySubmitted = submissionRepository
+                .existsBySubmitterUserIdAndAssignmentAssignId(userId, assignmentId);
+
+        if (alreadySubmitted) {
+            log.warn("User {} attempted duplicate submission for assignment {}", userId, assignmentId);
+            throw new RestApiException(ErrorCode.DUPLICATE_SUBMISSION);
+        }
     }
 
     /**
@@ -283,6 +410,7 @@ public class AssignmentService {
                 .build();
     }
 
+    //과제 제출 반환용 Dto로 변환하기
     private SubmissionResponse createSubmissionResponse(AssignmentSubmission assignmentSubmission) {
 
         return SubmissionResponse.builder()

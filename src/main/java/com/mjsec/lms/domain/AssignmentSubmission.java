@@ -29,6 +29,14 @@ public class AssignmentSubmission extends BaseEntity {
     @Column(name = "file_url", columnDefinition = "TEXT")
     private String fileUrl;
      */
+
+    //혹시 모를 IPv6를 위한 45자 설정
+    @Column(name = "submitter_ip", length = 45)
+    private String submitterIp;
+
+    //블로그 비밀번호 (Tistory)
+    @Column(name="password", columnDefinition = "TEXT")
+    private String password;
     
     @Column(name = "feedback", columnDefinition = "TEXT")
     private String feedback;
