@@ -15,7 +15,5 @@ public class AnnouncementRequestDto {
     @NotNull(message = "type은 필수입니다.")
     private AnnouncementRole type;
 
-    private LocalDateTime startDate;
 
-    private LocalDateTime endDate;
 }

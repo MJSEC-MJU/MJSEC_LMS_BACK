@@ -12,8 +12,6 @@ public class AnnouncementMapper {
                 .title(dto.getTitle())
                 .content(dto.getContent())
                 .type(dto.getType())
-                .startDate(dto.getStartDate())
-                .endDate(dto.getEndDate())
                 .build();
     }
     public static AnnouncementResponseDto toDto(Announcement entity) {
@@ -23,8 +21,6 @@ public class AnnouncementMapper {
                 .title(entity.getTitle())
                 .content(entity.getContent())
                 .type(entity.getType())
-                .startDate(entity.getStartDate())
-                .endDate(entity.getEndDate())
                 .createdAt(entity.getCreatedAt())
                 .build();
     }

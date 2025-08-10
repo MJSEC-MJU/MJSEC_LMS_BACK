@@ -21,10 +21,6 @@ public class AnnouncementResponseDto {
 
     private AnnouncementRole type;
 
-    private LocalDateTime startDate;
-
-    private LocalDateTime endDate;
-
     private LocalDateTime createdAt;
 
 

@@ -32,9 +32,6 @@ public class Announcement extends BaseEntity {
     @Column(length = 50)
     private AnnouncementRole type;
 
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
-
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
