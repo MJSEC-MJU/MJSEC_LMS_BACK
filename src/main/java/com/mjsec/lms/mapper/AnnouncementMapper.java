@@ -22,7 +22,7 @@ public class AnnouncementMapper {
                 .content(entity.getContent())
                 .type(entity.getType())
                 .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
                 .build();
     }
-
 }

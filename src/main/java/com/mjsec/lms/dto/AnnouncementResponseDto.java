@@ -23,5 +23,5 @@ public class AnnouncementResponseDto {
 
     private LocalDateTime createdAt;
 
-
+    private LocalDateTime updatedAt;
 }

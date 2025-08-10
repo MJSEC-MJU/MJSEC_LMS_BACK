@@ -37,11 +37,12 @@ public class AnnouncementController {
         AnnouncementResponseDto responseDto = AnnouncementMapper.toDto(saved);
         return ResponseEntity.ok(
                 SuccessResponse.of(
-                        ResponseMessage.ANNOUNCEMENT_SUCCESS,
+                        ResponseMessage.POST_ANNOUNCEMENT_SUCCESS,
                         responseDto
                 )
         );
     }
+
     @GetMapping("/announcements")
     public ResponseEntity<SuccessResponse<List<AnnouncementResponseDto>>> getAnnouncements(Authentication authentication) {
 
@@ -53,13 +54,14 @@ public class AnnouncementController {
                         announcements
                 ));
     }
+
     @GetMapping("/announcement/{announcementId}")
     public ResponseEntity<SuccessResponse<AnnouncementResponseDto>> getAnnouncementDetails(
-            @PathVariable Long announcementId, Authentication authentication){
+            @PathVariable Long announcementId, Authentication authentication) {
 
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
-        AnnouncementResponseDto  dto = announcementService.getAnnouncementDetail(announcementId, currentUserStudentNumber);
+        AnnouncementResponseDto dto = announcementService.getAnnouncementDetail(announcementId, currentUserStudentNumber);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
@@ -68,6 +70,22 @@ public class AnnouncementController {
                 )
         );
     }
+
+    @PutMapping("/announcements/{announcementId}")
+    public ResponseEntity<SuccessResponse<AnnouncementResponseDto>> updateAnnouncement(
+            @PathVariable Long announcementId,
+            @RequestBody AnnouncementRequestDto requestDto,
+            Authentication authentication
+    ){
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+        AnnouncementResponseDto updated = announcementService.updateAnnouncement(announcementId,  requestDto,currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(ResponseMessage.UPDATE_ANNOUNCEMENT_SUCCESS,updated)
+        );
+    }
+
+
 
 
 }

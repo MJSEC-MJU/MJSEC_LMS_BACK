@@ -41,8 +41,11 @@ public enum ErrorCode {
 
     //스터디
     STUDY_NOT_FOUND(HttpStatus.NOT_FOUND, "스터디를 찾을 수 없습니다."),
-    STUDY_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "스터디에 해당 사용자가 없습니다."),
-    UNAUTHORIZED_ROLE(HttpStatus.FORBIDDEN, "해당 작업을 수행할 권한이 없습니다."),
+    UNAUTHORIZED_ROLE(HttpStatus.UNAUTHORIZED, "멘토만 과제를 관리할 수 있습니다."),
+    STUDY_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 스터디 멤버를 찾을 수 없습니다."),
+
+    //과제
+    ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "과제를 찾을 수 없습니다."),
 
     //공지사항
     ANNOUNCEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "공지사항을 찾을 수 없습니다."),

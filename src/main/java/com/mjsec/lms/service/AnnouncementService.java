@@ -35,6 +35,8 @@ public class AnnouncementService {
         if (user.getRole() != UserRole.ROLE_ADMIN) {
             throw new RestApiException(ErrorCode.UNAUTHORIZED_ROLE);
         }
+
+        //공지사항 타입이 비어있는지 확인
         if (dto.getType() == null) {
             throw new RestApiException(ErrorCode.ANNOUNCEMENT_TYPE_REQUIRED);
         }
@@ -65,7 +67,6 @@ public class AnnouncementService {
         return announcements.stream()
                 .map((AnnouncementMapper::toDto))
                 .collect(Collectors.toList());
-
     }
 
     //세부 공지사항 내용을 반환하기
@@ -81,9 +82,34 @@ public class AnnouncementService {
         return AnnouncementMapper.toDto(announcement);
     }
 
+    //공지사항 수정하기
+    public AnnouncementResponseDto updateAnnouncement(Long announcementId, AnnouncementRequestDto dto,Long currentUserStudentNumber) {
+
+        // 유저 확인 + 관리자 권한 확인
+        User user = validateUser(currentUserStudentNumber);
+        if (user.getRole() != UserRole.ROLE_ADMIN) {
+            throw new RestApiException(ErrorCode.UNAUTHORIZED_ROLE);
+        }
+
+        // 공지사항 확인
+        Announcement announcement = announcementRepository.findById(announcementId)
+                .orElseThrow(() -> new RestApiException(ErrorCode.ANNOUNCEMENT_NOT_FOUND));
+
+        //작성자 확인(공지사항 작성자 id와 수정하려는 유저 id를 비교)
+        if(!announcement.getCreator().getUserId().equals(user.getUserId())) {
+            throw new RestApiException(ErrorCode.UNAUTHORIZED_ROLE);
+        }
+
+        announcement.setTitle(dto.getTitle());
+        announcement.setContent(dto.getContent());
+        announcement.setType(dto.getType());
+        announcement.setUpdatedAt(LocalDateTime.now());
+        Announcement saved = announcementRepository.save(announcement);
+        return AnnouncementMapper.toDto(saved);
+    }
+
     private User validateUser(Long studentNumber) {
         return userRepository.findByStudentNumber(studentNumber)
                 .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
     }
-
 }
