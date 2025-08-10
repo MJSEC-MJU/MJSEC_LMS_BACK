@@ -52,7 +52,6 @@ public enum ErrorCode {
     ANNOUNCEMENT_UNAUTHORIZED_ROLE(HttpStatus.FORBIDDEN, "공지사항에 접근할 권한이 없습니다."),
     ANNOUNCEMENT_TYPE_REQUIRED(HttpStatus.BAD_REQUEST, "공지 타입은 필수입니다.");
 
-
     private final HttpStatus status;
     private final String message;
     public HttpStatus getHttpStatus() {
