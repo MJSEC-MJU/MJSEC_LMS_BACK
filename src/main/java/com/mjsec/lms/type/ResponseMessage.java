@@ -25,6 +25,7 @@ public enum ResponseMessage {
     ASSIGNMENT_DELETE_SUCCESS("과제 삭제 성공"),
     ASSIGNMENT_UPDATE_SUCCESS("과제 수정 성공"),
     ASSIGNMENT_SUCCESS("과제 조회 성공"),
+    ASSIGNMENT_SUBMIT_SUCCESS("과제 제출 성공"),
 
     // Announcement관련
     POST_ANNOUNCEMENT_SUCCESS("공지사항 등록 성공"),

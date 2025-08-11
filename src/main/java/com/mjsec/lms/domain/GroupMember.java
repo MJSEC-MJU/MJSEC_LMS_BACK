@@ -14,14 +14,14 @@ import org.hibernate.annotations.SQLRestriction;
 @AllArgsConstructor
 @Table(name = "group_member")
 @SuperBuilder
-@SQLDelete(sql = "UPDATE group_member SET deleted_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE group_member SET deleted_at = NOW() WHERE member_id = ?")
 @SQLRestriction("deleted_at is null")
 public class GroupMember extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long id;
+    @Column(name = "member_id")
+    private Long memberId;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
