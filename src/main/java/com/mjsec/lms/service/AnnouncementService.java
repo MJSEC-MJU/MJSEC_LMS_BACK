@@ -57,8 +57,7 @@ public class AnnouncementService {
     public List<AnnouncementResponseDto> getAnnouncements(Long currentUserStudentNumber ) {
 
         //전체 공지사항을  조회하려는 유저 확인하기
-        User user = userRepository.findByStudentNumber(currentUserStudentNumber)
-                .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
+       User user = validateUser(currentUserStudentNumber);
 
        //공지사항이 존재하는지 확인하기
         List<Announcement> announcements = announcementRepository.findAll();
@@ -103,11 +102,11 @@ public class AnnouncementService {
         }
 
         //데이터가 null이 아닌 경우에만 업데이트
-        if (dto.getTitle() != null) {
+        if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty()) {
             announcement.setTitle(dto.getTitle());
         }
 
-        if (dto.getContent() != null) {
+        if (dto.getContent() != null&& !dto.getContent().trim().isEmpty()) {
             announcement.setContent(dto.getContent());
         }
 
