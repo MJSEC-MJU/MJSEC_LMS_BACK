@@ -31,6 +31,8 @@ public enum ResponseMessage {
     POST_ANNOUNCEMENT_SUCCESS("공지사항 등록 성공"),
     GET_ANNOUNCEMENT_SUCCESS("전체 공지사항 목록 반환 성공"),
     DETAIL_ANNOUNCEMENT_SUCCESS("공지사항 상제 조회 성공"),
-    UPDATE_ANNOUNCEMENT_SUCCESS("공지사항 수정 성공");
+    UPDATE_ANNOUNCEMENT_SUCCESS("공지사항 수정 성공"),
+    DELETE_ANNOUNCEMENT_SUCCESS("공지사항 삭제 성공");
+
     private final String message;
 }

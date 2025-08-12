@@ -9,7 +9,9 @@ import com.mjsec.lms.mapper.AnnouncementMapper;
 import com.mjsec.lms.repository.*;
 import com.mjsec.lms.type.ErrorCode;
 import com.mjsec.lms.type.UserRole;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -100,12 +102,46 @@ public class AnnouncementService {
             throw new RestApiException(ErrorCode.UNAUTHORIZED_ROLE);
         }
 
-        announcement.setTitle(dto.getTitle());
-        announcement.setContent(dto.getContent());
-        announcement.setType(dto.getType());
+        //데이터가 null이 아닌 경우에만 업데이트
+        if (dto.getTitle() != null) {
+            announcement.setTitle(dto.getTitle());
+        }
+
+        if (dto.getContent() != null) {
+            announcement.setContent(dto.getContent());
+        }
+
+        if (dto.getType() != null) {
+            announcement.setType(dto.getType());
+        }
+
         announcement.setUpdatedAt(LocalDateTime.now());
+
         Announcement saved = announcementRepository.save(announcement);
         return AnnouncementMapper.toDto(saved);
+    }
+
+    //공지사항 삭제하기
+    @Transactional
+    public void  deleteAnnouncement(Long announcementId, Long currentUserStudentNumber) {
+
+        //유저 권한 + 관리자 권한 확인
+        User user = validateUser(currentUserStudentNumber);
+        if (user.getRole() != UserRole.ROLE_ADMIN) {
+            throw new RestApiException(ErrorCode.UNAUTHORIZED_ROLE);
+        }
+
+        // 조회할 수 있는 공지사항인지 확인
+        Announcement announcement = announcementRepository.findById(announcementId)
+                .orElseThrow(() -> new RestApiException(ErrorCode.ANNOUNCEMENT_NOT_FOUND)
+                );
+
+        //작성자 본인이 맞는지 확인
+        if (!announcement.getCreator().getUserId().equals(user.getUserId())) {
+            throw new RestApiException(ErrorCode.UNAUTHORIZED_ROLE);
+        }
+
+        announcementRepository.delete(announcement);
     }
 
     private User validateUser(Long studentNumber) {

@@ -7,7 +7,6 @@ import com.mjsec.lms.dto.SuccessResponse;
 import com.mjsec.lms.mapper.AnnouncementMapper;
 import com.mjsec.lms.service.AnnouncementService;
 import com.mjsec.lms.type.ResponseMessage;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -82,6 +81,19 @@ public class AnnouncementController {
 
         return ResponseEntity.ok(
                 SuccessResponse.of(ResponseMessage.UPDATE_ANNOUNCEMENT_SUCCESS,updated)
+        );
+    }
+
+    @DeleteMapping("/announcements/{announcementId}")
+    public ResponseEntity<SuccessResponse> deleteAnnouncement(
+            @PathVariable Long announcementId,
+            Authentication authentication){
+
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+        announcementService.deleteAnnouncement(announcementId, currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(ResponseMessage.DELETE_ANNOUNCEMENT_SUCCESS)
         );
     }
 
