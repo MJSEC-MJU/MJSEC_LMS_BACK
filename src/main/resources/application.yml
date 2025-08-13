@@ -40,3 +40,7 @@ springdoc:
 admin:
   number: ${ADMIN_NUMBER}
   password: ${ADMIN_PASSWORD}
+
+server:
+  error:
+    include-stacktrace: never
