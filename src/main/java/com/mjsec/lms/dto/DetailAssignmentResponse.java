@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -20,6 +21,10 @@ public class DetailAssignmentResponse {
     private LocalDateTime endDate;
 
     private String creatorName;
+
+    private int commentCount;
+
+    private List<AssignmentCommentResponse> commentList;
 
     private LocalDateTime createdAt;
 
