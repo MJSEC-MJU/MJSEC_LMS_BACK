@@ -7,7 +7,6 @@ services:
       MYSQL_DATABASE:      ${MYSQL_DATABASE}
       MYSQL_USER:          ${MYSQL_USER}
       MYSQL_PASSWORD:      ${MYSQL_PASSWORD}
-      
     ports:
       - "3306:3306"
     volumes:
@@ -19,14 +18,15 @@ services:
     image: redis:6-alpine
     container_name: mjsec-redis
     environment:
-      # 만약 Redis AUTH를 쓰면
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      # REDIS_PASSWORD: ${REDIS_PASSWORD}
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
       - mjsec-network
+    # requirepass를 쓰려면 이렇게:
+    # command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
 
   app:
     build:
@@ -47,11 +47,8 @@ services:
       SPRING_REDIS_HOST:  ${SPRING_REDIS_HOST}
       SPRING_REDIS_PORT:  ${SPRING_REDIS_PORT}
 
-      # Mail
-      SPRING_MAIL_HOST:     ${SPRING_MAIL_HOST}
-      SPRING_MAIL_PORT:     ${SPRING_MAIL_PORT}
-      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME}
-      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD}
+      # 메일 자동 설정 완전 비활성화 — 메일 안 쓸 때 안전장치
+      # SPRING_AUTOCONFIGURE_EXCLUDE: "org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration,org.springframework.boot.autoconfigure.mail.MailSenderValidatorAutoConfiguration"
 
       # JWT, Admin
       JWT_SECRET:      ${JWT_SECRET}
