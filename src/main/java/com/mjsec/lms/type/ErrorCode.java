@@ -37,9 +37,33 @@ public enum ErrorCode {
 
     //유저
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "유저를 찾을 수 없습니다."),
-    ALREADY_REGISTERED_USER(HttpStatus.BAD_REQUEST, "이미 회원가입이 완료된 유저입니다.")
-    ;
+    ALREADY_REGISTERED_USER(HttpStatus.BAD_REQUEST, "이미 회원가입이 완료된 유저입니다."),
 
-    private final HttpStatus httpStatus;
-    private final String description;
+    //스터디
+    STUDY_NOT_FOUND(HttpStatus.NOT_FOUND, "스터디를 찾을 수 없습니다."),
+    UNAUTHORIZED_MENTO_ROLE(HttpStatus.UNAUTHORIZED, "멘토만 과제를 관리할 수 있습니다."),
+    UNAUTHORIZED_MENTEE_ROLE(HttpStatus.UNAUTHORIZED, "멘티만 과제를 제출할 수 있습니다."),
+    STUDY_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 스터디 멤버를 찾을 수 없습니다."),
+
+    //과제
+    ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "과제를 찾을 수 없습니다."),
+    SUBMISSION_CONTENT_REQUIRED(HttpStatus.NOT_FOUND, "제출 내용을 찾을 수 없습니다."),
+    UNAUTHORIZED_DOMAIN(HttpStatus.UNAUTHORIZED, "허용되지 않은 도메인입니다."),
+    INVALID_URL_FORMAT(HttpStatus.BAD_REQUEST, "유효하지 않은 URL입니다."),
+    WARNING_CONTENT(HttpStatus.BAD_REQUEST, "허용되지 않은 내용입니다."),
+    DUPLICATE_SUBMISSION(HttpStatus.BAD_REQUEST, "중복된 과제 제출입니다."),
+
+    //공지사항
+    ANNOUNCEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "공지사항을 찾을 수 없습니다."),
+    ANNOUNCEMENT_UNAUTHORIZED_ROLE(HttpStatus.FORBIDDEN, "공지사항에 접근할 권한이 없습니다."),
+    ANNOUNCEMENT_TYPE_REQUIRED(HttpStatus.BAD_REQUEST, "공지 타입은 필수입니다.");
+
+    private final HttpStatus status;
+    private final String message;
+    public HttpStatus getHttpStatus() {
+        return status;
+    }
+    public String getDescription() {
+        return message;
+    }
 }

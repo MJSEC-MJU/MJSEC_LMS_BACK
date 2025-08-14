@@ -36,7 +36,6 @@ out/
 ### VS Code ###
 .vscode/
 
-
 .DS_Store
 Thumbs.db
 
@@ -56,3 +55,4 @@ docker-compose.override.yml
 # 빌드 아티팩트
 *.jar
 *.war
+
