@@ -26,13 +26,17 @@ public enum ResponseMessage {
     ASSIGNMENT_UPDATE_SUCCESS("과제 수정 성공"),
     ASSIGNMENT_SUCCESS("과제 조회 성공"),
     ASSIGNMENT_SUBMIT_SUCCESS("과제 제출 성공"),
-
+    ASSIGNMENT_SUBMIT_CHECK_SUCCESS("과제 제출 확인 성공"),
+    ASSIGNMENT_SUBMIT_UPDATE_SUCCESS("과제 제출 내용 수정 성공"),
+    ASSIGNMENT_SUBMIT_DELETE_SUCCESS("제출한 과제 삭제 성공"),
+    LEAVE_FEEDBACK_SUCCESS("과제 피드백 남기기 성공"),
+    COMMENT_CREATE_SUCCESS("댓글 생성 성공"),
     // Announcement관련
     POST_ANNOUNCEMENT_SUCCESS("공지사항 등록 성공"),
     GET_ANNOUNCEMENT_SUCCESS("전체 공지사항 목록 반환 성공"),
     DETAIL_ANNOUNCEMENT_SUCCESS("공지사항 상제 조회 성공"),
     UPDATE_ANNOUNCEMENT_SUCCESS("공지사항 수정 성공"),
-    DELETE_ANNOUNCEMENT_SUCCESS("공지사항 삭제 성공");
-
+    DELETE_ANNOUNCEMENT_SUCCESS("공지사항 삭제 성공")
+    ;
     private final String message;
 }

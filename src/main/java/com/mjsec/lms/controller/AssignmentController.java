@@ -4,11 +4,11 @@ package com.mjsec.lms.controller;
 import com.mjsec.lms.dto.*;
 import com.mjsec.lms.service.AssignmentService;
 import com.mjsec.lms.type.ResponseMessage;
+import com.mjsec.lms.util.IpUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -47,12 +47,12 @@ public class AssignmentController {
     @GetMapping("/{groupId}/assignments")
     public ResponseEntity<SuccessResponse<List<AssignmentResponse>>> getAssignments(
             @PathVariable Long groupId,
-            Authentication authentication){
+            Authentication authentication) {
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
-        List<AssignmentResponse> assignmentResponseList = assignmentService.getAssignment(groupId,currentUserStudentNumber);
+        List<AssignmentResponse> assignmentResponseList = assignmentService.getAssignment(groupId, currentUserStudentNumber);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
@@ -67,12 +67,12 @@ public class AssignmentController {
     public ResponseEntity<SuccessResponse<DetailAssignmentResponse>> getDetailedAssignment(
             @PathVariable Long groupId,
             @PathVariable Long assignId,
-            Authentication authentication){
+            Authentication authentication) {
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
-        DetailAssignmentResponse detailAssignmentResponse = assignmentService.getDetailAssignment(groupId,assignId,currentUserStudentNumber);
+        DetailAssignmentResponse detailAssignmentResponse = assignmentService.getDetailAssignment(groupId, assignId, currentUserStudentNumber);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
@@ -88,7 +88,7 @@ public class AssignmentController {
             @PathVariable Long groupId,
             @PathVariable Long assignId,
             @RequestBody AssignmentDto dto,
-            Authentication authentication){
+            Authentication authentication) {
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
@@ -108,12 +108,12 @@ public class AssignmentController {
     public ResponseEntity<SuccessResponse<Void>> deleteAssignment(
             @PathVariable Long groupId,
             @PathVariable Long assignId,
-            Authentication authentication){
+            Authentication authentication) {
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
-        assignmentService.deleteAssignment(groupId,assignId,currentUserStudentNumber);
+        assignmentService.deleteAssignment(groupId, assignId, currentUserStudentNumber);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
@@ -129,15 +129,15 @@ public class AssignmentController {
             @PathVariable Long groupId,
             @PathVariable Long assignId,
             Authentication authentication,
-            HttpServletRequest request){
+            HttpServletRequest request) {
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
         //클라이언트 IP 뽑아내기
-        String clientIpAddr = extractClientIp(request);
+        String clientIpAddr = IpUtil.getClientIp(request);
 
-        SubmissionResponse submissionResponse = assignmentService.submitAssignment(groupId,assignId,currentUserStudentNumber,dto,clientIpAddr);
+        SubmissionResponse submissionResponse = assignmentService.submitAssignment(groupId, assignId, currentUserStudentNumber, dto, clientIpAddr);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
@@ -147,51 +147,136 @@ public class AssignmentController {
         );
     }
 
-    //클라이언트 IP 뽑아내기
-    private String extractClientIp(HttpServletRequest request) {
+    /**
+     * 전체 과제 제출 리스트 확인 가능
+     */
+    @GetMapping("/{groupId}/assign-submit/{assignId}/submissions")
+    public ResponseEntity<SuccessResponse<List<SubmissionResponse>>> getSubmissionList(
+            @PathVariable Long groupId,
+            @PathVariable Long assignId,
+            Authentication authentication
+    ) {
 
-        String clientIp = null;
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
-        // X-Forwarded-For 헤더 확인
-        clientIp = request.getHeader("X-Forwarded-For");
-        if (StringUtils.hasText(clientIp) && !isUnknownIp(clientIp)) {
-            return clientIp.split(",")[0].trim();
-        }
+        List<SubmissionResponse> submissionResponseList = assignmentService.getSubmissionList(groupId, assignId, currentUserStudentNumber);
 
-        // Proxy-Client-IP 헤더 확인
-        clientIp = request.getHeader("Proxy-Client-IP");
-        if (StringUtils.hasText(clientIp) && !isUnknownIp(clientIp)) {
-            return clientIp;
-        }
-
-        // WL-Proxy-Client-IP 헤더 확인
-        clientIp = request.getHeader("WL-Proxy-Client-IP");
-        if (StringUtils.hasText(clientIp) && !isUnknownIp(clientIp)) {
-            return clientIp;
-        }
-
-        // HTTP_CLIENT_IP 헤더 확인
-        clientIp = request.getHeader("HTTP_CLIENT_IP");
-        if (StringUtils.hasText(clientIp) && !isUnknownIp(clientIp)) {
-            return clientIp;
-        }
-
-        // HTTP_X_FORWARDED_FOR 헤더 확인
-        clientIp = request.getHeader("HTTP_X_FORWARDED_FOR");
-        if (StringUtils.hasText(clientIp) && !isUnknownIp(clientIp)) {
-            return clientIp;
-        }
-
-        // 기본적으로 getRemoteAddr() 사용
-        return request.getRemoteAddr();
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.ASSIGNMENT_SUBMIT_CHECK_SUCCESS,
+                        submissionResponseList
+                )
+        );
     }
 
-    //알 수 없는 IP인지 확인하기
-    private boolean isUnknownIp(String ip) {
+    /**
+    * 유저별 과제 제출 확인하기 (멘토/멘티 둘 다 가능)
+     * 멘티 (자기 자신 과제만 조회 가능)
+     * 멘토 (나머지도 다 가능)
+     */
+    @GetMapping("/{groupId}/assign-submit/{assignId}/submissions/{submitId}")
+    public ResponseEntity<SuccessResponse<DetailSubmissionResponse>> getUserDetailedSubmission(
+            @PathVariable Long groupId,
+            @PathVariable Long assignId,
+            @PathVariable Long submitId,
+            Authentication authentication) {
 
-        return "unknown".equalsIgnoreCase(ip) ||
-                "0:0:0:0:0:0:0:1".equals(ip) ||
-                "127.0.0.1".equals(ip);
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        DetailSubmissionResponse detailSubmissionResponse = assignmentService.getDetailedSubmission(groupId, assignId, submitId, currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.ASSIGNMENT_SUBMIT_CHECK_SUCCESS,
+                        detailSubmissionResponse
+                )
+        );
+    }
+
+    //과제 제출 수정하기
+    @PutMapping("/{groupId}/assign-submit/{assignId}/submissions/{submitId}")
+    public ResponseEntity<SuccessResponse<DetailSubmissionResponse>> updateSubmission(
+            @PathVariable Long groupId,
+            @PathVariable Long assignId,
+            @PathVariable Long submitId,
+            @RequestBody SubmissionDto dto,
+            Authentication authentication){
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        DetailSubmissionResponse detailSubmissionResponse = assignmentService.updateAssignmentSubmission(groupId, assignId, submitId, currentUserStudentNumber, dto);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.ASSIGNMENT_SUBMIT_UPDATE_SUCCESS,
+                        detailSubmissionResponse
+                )
+        );
+    }
+
+    //과제 제출 삭제하기
+    @DeleteMapping("/{groupId}/assign-submit/{assignId}/submissions/{submitId}")
+    public ResponseEntity<SuccessResponse<Void>> deleteSubmission(
+            @PathVariable Long groupId,
+            @PathVariable Long assignId,
+            @PathVariable Long submitId,
+            Authentication authentication){
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        assignmentService.deleteAssignmentSubmission(groupId, assignId, submitId, currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.ASSIGNMENT_SUBMIT_DELETE_SUCCESS
+                )
+        );
+    }
+
+    //과제 제출 피드백 남기기
+    @PostMapping("/{groupId}/assign-submit/{assignId}/submissions/{submitId}/feedback")
+    public ResponseEntity<SuccessResponse<Void>> leaveFeedback(
+            @PathVariable Long groupId,
+            @PathVariable Long assignId,
+            @PathVariable Long submitId,
+            @RequestBody SubmissionFeedbackDto dto,
+            Authentication authentication){
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        assignmentService.leaveFeedback(groupId, assignId, submitId, currentUserStudentNumber, dto);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.LEAVE_FEEDBACK_SUCCESS
+                )
+        );
+    }
+
+    //댓글 생성하기
+    @PostMapping("/{groupId}/assignments/{assignId}/create-comment")
+    public ResponseEntity<SuccessResponse<AssignmentCommentResponse>> createAssignmentComment(
+            @PathVariable Long groupId,
+            @PathVariable Long assignId,
+            @RequestBody AssignmentCommentDto dto,
+            Authentication authentication){
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        AssignmentCommentResponse assignmentComment = assignmentService.createAssignmentComment(groupId, assignId, currentUserStudentNumber, dto);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.COMMENT_CREATE_SUCCESS,
+                        assignmentComment
+                )
+        );
     }
 
 }
