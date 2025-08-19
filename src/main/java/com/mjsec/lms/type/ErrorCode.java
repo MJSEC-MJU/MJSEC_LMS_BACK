@@ -47,15 +47,22 @@ public enum ErrorCode {
 
     //과제
     ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "과제를 찾을 수 없습니다."),
-    SUBMISSION_CONTENT_REQUIRED(HttpStatus.NOT_FOUND, "과제 링크를 찾을 수 없습니다."),
     UNAUTHORIZED_DOMAIN(HttpStatus.UNAUTHORIZED, "허용되지 않은 도메인입니다."),
     INVALID_URL_FORMAT(HttpStatus.BAD_REQUEST, "유효하지 않은 URL입니다."),
     WARNING_CONTENT(HttpStatus.BAD_REQUEST, "허용되지 않은 내용입니다."),
     DUPLICATE_SUBMISSION(HttpStatus.BAD_REQUEST, "중복된 과제 제출입니다."),
+    ASSIGNMENT_COMMENT_REQUIRED(HttpStatus.BAD_REQUEST, "과제 댓글 내용이 없습니다"),
 
+    //과제 피드백
+    FEEDBACK_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 피드백을 남겼습니다."),
+    FEEDBACK_NOT_FOUND(HttpStatus.NOT_FOUND,"피드백이 존재하지 않습니다."),
+    FEEDBACK_CONTENT_REQUIRED(HttpStatus.NOT_FOUND, "과제 피드백 내용이 없습니다."),
+
+    //과제 제출
     SUBMISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "과제 제출 내역을 찾을 수 없습니다."),
     UNAUTHORIZED_ACCESS_SUBMISSION(HttpStatus.UNAUTHORIZED, "과제 제출 조회 권한이 없습니다."),
     SUBMISSION_ASSIGNMENT_MISMATCH(HttpStatus.NOT_FOUND, "제출물이 해당 과제에 속하지 않습니다."),
+    SUBMISSION_CONTENT_REQUIRED(HttpStatus.BAD_REQUEST, "과제 제출 내용(링크, 비밀번호)이 없습니다."),
 
     //공지사항
     ANNOUNCEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "공지사항을 찾을 수 없습니다."),

@@ -237,27 +237,6 @@ public class AssignmentController {
         );
     }
 
-    //과제 제출 피드백 남기기
-    @PostMapping("/{groupId}/assign-submit/{assignId}/submissions/{submitId}/feedback")
-    public ResponseEntity<SuccessResponse<Void>> leaveFeedback(
-            @PathVariable Long groupId,
-            @PathVariable Long assignId,
-            @PathVariable Long submitId,
-            @RequestBody SubmissionFeedbackDto dto,
-            Authentication authentication){
-
-        // JwtFilter에서 설정한 studentNumber를 가져옴
-        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
-
-        assignmentService.leaveFeedback(groupId, assignId, submitId, currentUserStudentNumber, dto);
-
-        return ResponseEntity.ok(
-                SuccessResponse.of(
-                        ResponseMessage.LEAVE_FEEDBACK_SUCCESS
-                )
-        );
-    }
-
     //댓글 생성하기
     @PostMapping("/{groupId}/assignments/{assignId}/create-comment")
     public ResponseEntity<SuccessResponse<AssignmentCommentResponse>> createAssignmentComment(
@@ -279,4 +258,66 @@ public class AssignmentController {
         );
     }
 
+    //과제 제출 피드백 남기기
+    @PostMapping("/{groupId}/assign-submit/{assignId}/submissions/{submitId}/feedback")
+    public ResponseEntity<SuccessResponse<Void>> leaveFeedback(
+            @PathVariable Long groupId,
+            @PathVariable Long assignId,
+            @PathVariable Long submitId,
+            @RequestBody SubmissionFeedbackDto dto,
+            Authentication authentication){
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        assignmentService.leaveFeedback(groupId, assignId, submitId, currentUserStudentNumber, dto);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.FEEDBACK_LEAVE_SUCCESS
+                )
+        );
+    }
+
+
+    //과제 피드백 수정하기
+    @PutMapping("/{groupId}/assign-submit/{assignId}/submissions/{submitId}/feedback")
+    public ResponseEntity<SuccessResponse<SubmissionFeedbackDto>> updateFeedback(
+            @PathVariable Long groupId,
+            @PathVariable Long assignId,
+            @PathVariable Long submitId,
+            @RequestBody SubmissionFeedbackDto dto,
+            Authentication authentication){
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        SubmissionFeedbackDto submissionFeedbackDto = assignmentService.updateFeedback(groupId, assignId, submitId, currentUserStudentNumber, dto);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.FEEDBACK_UPDATE_SUCCESS
+                )
+        );
+    }
+
+    //과제 피드백 삭제하기
+    @DeleteMapping("/{groupId}/assign-submit/{assignId}/submissions/{submitId}/feedback")
+    public ResponseEntity<SuccessResponse<Void>> deleteFeedback(
+            @PathVariable Long groupId,
+            @PathVariable Long assignId,
+            @PathVariable Long submitId,
+            Authentication authentication) {
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        assignmentService.deleteFeedback(groupId, assignId, submitId, currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.FEEDBACK_DELETE_SUCCESS
+                )
+        );
+    }
 }

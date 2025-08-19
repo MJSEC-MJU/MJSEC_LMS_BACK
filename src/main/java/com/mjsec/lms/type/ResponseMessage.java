@@ -2,7 +2,6 @@ package com.mjsec.lms.type;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
@@ -29,8 +28,11 @@ public enum ResponseMessage {
     ASSIGNMENT_SUBMIT_CHECK_SUCCESS("과제 제출 확인 성공"),
     ASSIGNMENT_SUBMIT_UPDATE_SUCCESS("과제 제출 내용 수정 성공"),
     ASSIGNMENT_SUBMIT_DELETE_SUCCESS("제출한 과제 삭제 성공"),
-    LEAVE_FEEDBACK_SUCCESS("과제 피드백 남기기 성공"),
+    FEEDBACK_LEAVE_SUCCESS("과제 피드백 남기기 성공"),
     COMMENT_CREATE_SUCCESS("댓글 생성 성공"),
+    FEEDBACK_UPDATE_SUCCESS("과제 피드백 수정 성공"),
+    FEEDBACK_DELETE_SUCCESS("과제 피드백 삭제 성공"),
+
     // Announcement관련
     POST_ANNOUNCEMENT_SUCCESS("공지사항 등록 성공"),
     GET_ANNOUNCEMENT_SUCCESS("전체 공지사항 목록 반환 성공"),

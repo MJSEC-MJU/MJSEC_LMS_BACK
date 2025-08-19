@@ -17,10 +17,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class AssignmentService {
+
     private final AssignmentRepository assignmentRepository;
     private final UserRepository userRepository;
     private final StudyGroupRepository studyGroupRepository;
@@ -30,6 +32,16 @@ public class AssignmentService {
 
     private static final String[] ALLOWED_DOMAINS =
             {"velog.io", "tistory.com", "blog.naver.com"};
+
+    private static final String[] XSS_PATTERNS = {
+            "<script", "javascript:", "onload=", "onerror=", "onclick=",
+            "onmouseover=", "eval(", "alert(", "document.cookie"
+    };
+
+    private static final String[] SQL_INJECTION_PATTERNS = {
+            "union select", "drop table", "delete from", "insert into",
+            "update set", "' or '1'='1", "-- ", "/*"
+    };
 
     private static final Pattern URL_PATTERN = Pattern.compile("^https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$");
 
@@ -54,9 +66,8 @@ public class AssignmentService {
 
         log.info("createAssignment called with groupId: {}, dto: {}, currentUserStudentNumber: {}", groupId, dto, currentUserStudentNumber);
 
-        User user = validateUser(currentUserStudentNumber);
+        User user = validateMentoAccess(groupId, currentUserStudentNumber);
         StudyGroup studyGroup = validateStudyGroup(groupId);
-        validateMentoRole(user.getUserId(), groupId);
 
         log.info("User {} is confirmed as MENTO of StudyGroup: {}", user.getUserId(), studyGroup.getName());
 
@@ -70,8 +81,8 @@ public class AssignmentService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        log.info("Assignment created successfully: {}", assignment);
         assignmentRepository.save(assignment);
+        log.info("Assignment created successfully: {}", assignment);
 
         return createDetailAssignmentResponse(assignment);
     }
@@ -82,17 +93,14 @@ public class AssignmentService {
 
         log.info("getAssignment called");
 
-        User user = validateUser(currentUserStudentNumber);
-        StudyGroup studyGroup = validateStudyGroup(groupId);
-        validateGroupMembership(user, studyGroup);
+        validateBasicAccess(groupId, currentUserStudentNumber);
 
         List<Assignment> assignmentList = assignmentRepository.findAllByStudyGroup_StudyId(groupId);
-        log.info("Found {} assignments in StudyGroup: {}", assignmentList.size(), studyGroup.getName());
+        log.info("Found {} assignments in StudyGroup", assignmentList.size());
 
-        List<AssignmentResponse> assignmentResponses = new ArrayList<>();
-        for (Assignment assignment : assignmentList) {
-            assignmentResponses.add(createResponse(assignment));
-        }
+        List<AssignmentResponse> assignmentResponses = assignmentList.stream()
+                .map(this::createResponse)
+                .collect(Collectors.toList());
 
         log.info("get Assignment Successfully!");
         return assignmentResponses;
@@ -104,9 +112,7 @@ public class AssignmentService {
 
         log.info("getDetailAssignment called");
 
-        User user = validateUser(currentUserStudentNumber);
-        StudyGroup studyGroup = validateStudyGroup(groupId);
-        validateGroupMembership(user, studyGroup);
+        validateBasicAccess(groupId, currentUserStudentNumber);
         Assignment assignment = validateAssignment(assignmentId);
 
         log.info("Found assignment: {}", assignment);
@@ -119,9 +125,7 @@ public class AssignmentService {
 
         log.info("updateAssignment called");
 
-        User user = validateUser(currentUserStudentNumber);
-        validateStudyGroup(groupId);
-        validateMentoRole(user.getUserId(), groupId);
+        validateMentoAccess(groupId, currentUserStudentNumber);
         Assignment assignment = validateAssignment(assignmentId);
 
         log.info("Found assignment: {}", assignment);
@@ -136,9 +140,7 @@ public class AssignmentService {
 
         log.info("deleteAssignment called");
 
-        User user = validateUser(currentUserStudentNumber);
-        validateStudyGroup(groupId);
-        validateMentoRole(user.getUserId(), groupId);
+        validateMentoAccess(groupId, currentUserStudentNumber);
         Assignment assignment = validateAssignment(assignmentId);
 
         log.info("Found assignment: {}", assignment);
@@ -153,10 +155,7 @@ public class AssignmentService {
 
         log.info("submitAssignment called");
 
-        User user = validateUser(currentUserStudentNumber);
-        StudyGroup studyGroup = validateStudyGroup(groupId);
-        validateGroupMembership(user, studyGroup);
-        validateMenteeRole(user.getUserId(), groupId);
+        User user = validateMenteeAccess(groupId, currentUserStudentNumber);
         Assignment assignment = validateAssignment(assignmentId);
 
         //과제 내용 확인하기
@@ -186,18 +185,13 @@ public class AssignmentService {
 
         log.info("getSubmissionList called");
 
-        User user = validateUser(currentUserStudentNumber);
-        StudyGroup studyGroup = validateStudyGroup(groupId);
-        validateGroupMembership(user, studyGroup);
+        validateBasicAccess(groupId, currentUserStudentNumber);
         Assignment assignment = validateAssignment(assignmentId);
 
-        List<SubmissionResponse> submissionResponses = new ArrayList<>();
-        List<AssignmentSubmission> assignmentSubmissionList = submissionRepository.findAssignmentSubmissionsByAssignmentAssignId(assignment.getAssignId());
-        for (AssignmentSubmission assignmentSubmission : assignmentSubmissionList) {
-            submissionResponses.add(createSubmissionResponse(assignmentSubmission));
-        }
-
-        return submissionResponses;
+        return submissionRepository.findAssignmentSubmissionsByAssignmentAssignId(assignment.getAssignId())
+                .stream()
+                .map(this::createSubmissionResponse)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -206,19 +200,15 @@ public class AssignmentService {
      * 멘토 (나머지도 다 가능)
      */
     @Transactional(readOnly = true)
-    public DetailSubmissionResponse getDetailedSubmission(Long groupId, Long assignmentId,Long submitId, Long currentUserStudentNumber) {
-        
-        log.info("getUserDetailedSubmission called");
+    public DetailSubmissionResponse getDetailedSubmission(Long groupId, Long assignmentId, Long submitId, Long currentUserStudentNumber) {
+
+        log.info("getDetailedSubmission called");
 
         User user = validateUser(currentUserStudentNumber);
         validateStudyGroup(groupId);
         validateAssignment(assignmentId);
-        AssignmentSubmission assignmentSubmission = validateSubmission(submitId);
+        AssignmentSubmission assignmentSubmission = validateSubmissionAccess(assignmentId, submitId);
         GroupMemberRole role = validateUserRole(user.getUserId(), groupId);
-
-        if (!assignmentSubmission.getAssignment().getAssignId().equals(assignmentId)) {
-            throw new RestApiException(ErrorCode.SUBMISSION_ASSIGNMENT_MISMATCH);
-        }
 
         if(role == GroupMemberRole.MENTEE) {
             if (!assignmentSubmission.getSubmitter().getUserId().equals(user.getUserId())) {
@@ -228,71 +218,48 @@ public class AssignmentService {
             }
         }
         else if(role == GroupMemberRole.MENTO) {
-            log.info("Mentor {} accessing submission {}", user.getUserId(), submitId);
+            log.info("Mento {} accessing submission {}", user.getUserId(), submitId);
         }
 
         return createDetailSubmissionResponse(assignmentSubmission);
     }
 
+    //과제 제출 수정하기
     @Transactional
-    public DetailSubmissionResponse updateAssignmentSubmission(Long groupId, Long assignmentId, Long submitId, Long currentUserStudentNumber,SubmissionDto dto) {
+    public DetailSubmissionResponse updateAssignmentSubmission(Long groupId, Long assignmentId, Long submitId, Long currentUserStudentNumber, SubmissionDto dto) {
 
         log.info("updateAssignmentSubmission called");
 
-        User user = validateUser(currentUserStudentNumber);
-        validateStudyGroup(groupId);
-        validateAssignment(assignmentId);
-        validateMenteeRole(user.getUserId(), groupId);
-        AssignmentSubmission assignmentSubmission = validateSubmission(submitId);
-        validateAssignmentIdInAssignmentSubmission(assignmentId, assignmentSubmission);
+        User user = validateMenteeAccess(groupId, currentUserStudentNumber);
+        AssignmentSubmission assignmentSubmission = validateSubmissionAccess(assignmentId, submitId);
         validateSubmissionOwnership(assignmentSubmission, user.getUserId());
 
         return updateSubmitData(assignmentSubmission, dto);
     }
 
+    //과제 제출 삭제하기
     @Transactional
     public void deleteAssignmentSubmission(Long groupId, Long assignmentId, Long submitId, Long currentUserStudentNumber) {
 
         log.info("deleteAssignmentSubmission called");
 
-        User user = validateUser(currentUserStudentNumber);
-        validateStudyGroup(groupId);
-        validateAssignment(assignmentId);
-        validateMenteeRole(user.getUserId(), groupId);
-        AssignmentSubmission assignmentSubmission = validateSubmission(submitId);
-        validateAssignmentIdInAssignmentSubmission(assignmentId, assignmentSubmission);
+        User user = validateMenteeAccess(groupId, currentUserStudentNumber);
+        AssignmentSubmission assignmentSubmission = validateSubmissionAccess(assignmentId, submitId);
         validateSubmissionOwnership(assignmentSubmission, user.getUserId());
 
         submissionRepository.delete(assignmentSubmission);
-
         log.info("Assignment submission deleted successfully: {}", assignmentSubmission);
-    }
-
-    //멘토가 과제 피드백 남기기
-    @Transactional
-    public void leaveFeedback(Long groupId, Long assignmentId, Long submitId, Long currentUserStudentNumber, SubmissionFeedbackDto dto) {
-
-        log.info("leaveFeedback called");
-
-        User user = validateUser(currentUserStudentNumber);
-        validateStudyGroup(groupId);
-        validateAssignment(assignmentId);
-        validateMentoRole(user.getUserId(), groupId);
-        AssignmentSubmission assignmentSubmission = validateSubmission(submitId);
-
-        leaveFeedbackData(assignmentSubmission, dto);
     }
 
     //과제 댓글 생성
     @Transactional
     public AssignmentCommentResponse createAssignmentComment(Long groupId, Long assignmentId, Long currentUserStudentNumber, AssignmentCommentDto dto) {
 
-        log.info("createAssignmentComment call");
+        log.info("createAssignmentComment called");
 
-        User user = validateUser(currentUserStudentNumber);
-        StudyGroup studyGroup = validateStudyGroup(groupId);
+        User user = validateBasicAccess(groupId, currentUserStudentNumber);
         Assignment assignment = validateAssignment(assignmentId);
-        validateGroupMembership(user,studyGroup);
+        validateComment(dto.getContent());
 
         AssignmentComment assignmentComment = AssignmentComment.builder()
                 .assignment(assignment)
@@ -306,9 +273,94 @@ public class AssignmentService {
         return createAssignmentCommentResponse(assignmentComment);
     }
 
+    //멘토가 과제 피드백 남기기
+    @Transactional
+    public void leaveFeedback(Long groupId, Long assignmentId, Long submitId, Long currentUserStudentNumber, SubmissionFeedbackDto dto) {
+
+        log.info("leaveFeedback called");
+
+        validateMentoAccess(groupId, currentUserStudentNumber);
+        AssignmentSubmission assignmentSubmission = validateSubmissionAccess(assignmentId, submitId);
+        validateFeedbackNotExists(assignmentSubmission);
+
+        leaveFeedbackData(assignmentSubmission, dto);
+    }
+
+    @Transactional
+    public SubmissionFeedbackDto updateFeedback(Long groupId, Long assignmentId, Long submitId, Long currentUserStudentNumber, SubmissionFeedbackDto dto) {
+
+        log.info("updateFeedback called");
+
+        validateMentoAccess(groupId, currentUserStudentNumber);
+        AssignmentSubmission assignmentSubmission = validateSubmissionAccess(assignmentId, submitId);
+        validateFeedbackExists(assignmentSubmission);
+
+        return updateFeedbackData(assignmentSubmission, dto);
+    }
+
+    @Transactional
+    public void deleteFeedback(Long groupId, Long assignmentId, Long submitId, Long currentUserStudentNumber) {
+
+        log.info("deleteFeedback called");
+
+        validateMentoAccess(groupId, currentUserStudentNumber);
+        AssignmentSubmission assignmentSubmission = validateSubmissionAccess(assignmentId, submitId);
+        validateFeedbackExists(assignmentSubmission);
+
+        assignmentSubmission.setFeedback(null);
+        assignmentSubmission.setUpdatedAt(LocalDateTime.now());
+        submissionRepository.save(assignmentSubmission);
+
+        log.info("Feedback deleted successfully for submission: {}", assignmentSubmission.getSubmissionId());
+    }
+
     /**
-     * === 검증 메서드들 ===
+     * === 공통 검증 메서드들 ===
      */
+
+    // 기본 접근 검증 (사용자, 스터디 그룹 존재, 멤버십)
+    private User validateBasicAccess(Long groupId, Long currentUserStudentNumber) {
+
+        User user = validateUser(currentUserStudentNumber);
+        StudyGroup studyGroup = validateStudyGroup(groupId);
+        validateGroupMembership(user, studyGroup);
+        return user;
+    }
+
+    // 멘토 접근 검증
+    private User validateMentoAccess(Long groupId, Long currentUserStudentNumber) {
+
+        User user = validateUser(currentUserStudentNumber);
+        validateStudyGroup(groupId);
+        validateMentoRole(user.getUserId(), groupId);
+        return user;
+    }
+
+    // 멘티 접근 검증
+    private User validateMenteeAccess(Long groupId, Long currentUserStudentNumber) {
+
+        User user = validateUser(currentUserStudentNumber);
+        StudyGroup studyGroup = validateStudyGroup(groupId);
+        validateGroupMembership(user, studyGroup);
+        validateMenteeRole(user.getUserId(), groupId);
+        return user;
+    }
+
+    // 제출물 접근 검증 (과제와 제출물 존재, 관계 검증)
+    private AssignmentSubmission validateSubmissionAccess(Long assignmentId, Long submitId) {
+
+        validateAssignment(assignmentId);
+        AssignmentSubmission submission = validateSubmission(submitId);
+        validateAssignmentIdInAssignmentSubmission(assignmentId, submission);
+        return submission;
+    }
+
+    private void validateComment(String content) {
+
+        if(content == null || content.trim().isEmpty()){
+            throw new RestApiException(ErrorCode.ASSIGNMENT_COMMENT_REQUIRED);
+        }
+    }
 
     // 제출물이 해당 과제에 속하는지 검증
     private void validateAssignmentIdInAssignmentSubmission(Long assignmentId, AssignmentSubmission assignmentSubmission) {
@@ -349,10 +401,18 @@ public class AssignmentService {
 
         try{
             URL url = new URL(urlString);
-            String urlHost = url.getHost().toLowerCase();
+            String urlHost = url.getHost();
+
+            if (urlHost == null) {
+                throw new RestApiException(ErrorCode.INVALID_URL_FORMAT);
+            }
+
+            urlHost = urlHost.toLowerCase();
+
+            String finalUrlHost = urlHost;
 
             boolean isAllowed = Arrays.stream(ALLOWED_DOMAINS)
-                    .anyMatch(domain -> urlHost.endsWith("."+domain) || urlHost.equals(domain));
+                    .anyMatch(domain -> finalUrlHost.endsWith("."+domain) || finalUrlHost.equals(domain));
 
             if(!isAllowed){
                 log.warn("URL {} is not allowed. Allowed domains: {}", urlString, Arrays.toString(ALLOWED_DOMAINS));
@@ -369,26 +429,16 @@ public class AssignmentService {
 
         String lowerContent = content.toLowerCase();
 
-        // 기본적인 XSS 패턴 검증
-        String[] maliciousPatterns = {
-                "<script", "javascript:", "onload=", "onerror=", "onclick=",
-                "onmouseover=", "eval(", "alert(", "document.cookie"
-        };
-
-        for (String pattern : maliciousPatterns) {
+        // XSS 패턴 검증
+        for (String pattern : XSS_PATTERNS) {
             if (lowerContent.contains(pattern)) {
-                log.warn("Malicious content pattern detected: {}", pattern);
+                log.warn("Malicious XSS pattern detected: {}", pattern);
                 throw new RestApiException(ErrorCode.WARNING_CONTENT);
             }
         }
 
-        // SQL Injection 기본 패턴 검증
-        String[] sqlPatterns = {
-                "union select", "drop table", "delete from", "insert into",
-                "update set", "' or '1'='1", "-- ", "/*"
-        };
-
-        for (String pattern : sqlPatterns) {
+        // SQL Injection 패턴 검증
+        for (String pattern : SQL_INJECTION_PATTERNS) {
             if (lowerContent.contains(pattern)) {
                 log.warn("SQL injection pattern detected: {}", pattern);
                 throw new RestApiException(ErrorCode.WARNING_CONTENT);
@@ -407,7 +457,6 @@ public class AssignmentService {
                 urls.add(word);
             }
         }
-
         return urls;
     }
 
@@ -489,7 +538,7 @@ public class AssignmentService {
 
     //과제 제출 중복 여부 확인하기
     private void validateDuplicateSubmission(Long userId, Long assignmentId) {
-        
+
         boolean alreadySubmitted = submissionRepository
                 .existsBySubmitterUserIdAndAssignmentAssignId(userId, assignmentId);
 
@@ -506,6 +555,23 @@ public class AssignmentService {
                 .orElseThrow(() -> new RestApiException(ErrorCode.SUBMISSION_NOT_FOUND));
     }
 
+    //과제 피드백이 이미 존재하는지 검증
+    private void validateFeedbackNotExists(AssignmentSubmission submission) {
+
+        if (submission.getFeedback() != null && !submission.getFeedback().trim().isEmpty()) {
+            log.warn("Feedback already exists for submission {}", submission.getSubmissionId());
+            throw new RestApiException(ErrorCode.FEEDBACK_ALREADY_EXISTS);
+        }
+    }
+
+    private void validateFeedbackExists(AssignmentSubmission submission) {
+
+        if (submission.getFeedback() == null || submission.getFeedback().trim().isEmpty()) {
+            log.warn("No feedback exists for submission {}", submission.getSubmissionId());
+            throw new RestApiException(ErrorCode.FEEDBACK_NOT_FOUND);
+        }
+    }
+
     /**
      * === 데이터 처리 메서드들 ===
      */
@@ -513,11 +579,6 @@ public class AssignmentService {
     //Assignment 데이터를 업데이트
     private void updateAssignmentData(Assignment assignment, AssignmentDto dto) {
 
-        /*
-        null이 아닌 경우만 update 하도록 변경.
-        title과 content는 빈 문자열인지 아닌지까지 검사하기
-         */
-        
         if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty()) {
             assignment.setTitle(dto.getTitle());
         }
@@ -539,8 +600,14 @@ public class AssignmentService {
         log.info("Assignment updated successfully: {}", assignment);
     }
 
-    //제출한 과제 내용을 업데이트
+    //제출한 과제 내용을 수정
     private DetailSubmissionResponse updateSubmitData(AssignmentSubmission assignmentSubmission, SubmissionDto dto) {
+
+        // 수정할 데이터가 없으면 예외
+        if((dto.getContent() == null || dto.getContent().trim().isEmpty()) &&
+                (dto.getPassword() == null || dto.getPassword().trim().isEmpty())) {
+            throw new RestApiException(ErrorCode.SUBMISSION_CONTENT_REQUIRED);
+        }
 
         if(dto.getContent() != null && !dto.getContent().trim().isEmpty()){
             validateSubmissionContent(dto.getContent());
@@ -554,6 +621,8 @@ public class AssignmentService {
         assignmentSubmission.setUpdatedAt(LocalDateTime.now());
         submissionRepository.save(assignmentSubmission);
 
+        log.info("Assignment submission updated successfully: {}", assignmentSubmission.getSubmissionId());
+
         return createDetailSubmissionResponse(assignmentSubmission);
     }
 
@@ -563,12 +632,11 @@ public class AssignmentService {
 
     //Assignment를 DetailAssignmentResponse로 변환
     private DetailAssignmentResponse createDetailAssignmentResponse(Assignment assignment) {
-        List<AssignmentComment> assignmentCommentList = assignmentCommentRepository.findAllByAssignmentAssignId(assignment.getAssignId());
-        List<AssignmentCommentResponse> commentList = new ArrayList<>();
 
-        for(AssignmentComment comment : assignmentCommentList) {
-            commentList.add(createAssignmentCommentResponse(comment));
-        }
+        List<AssignmentComment> assignmentCommentList = assignmentCommentRepository.findAllByAssignmentAssignId(assignment.getAssignId());
+        List<AssignmentCommentResponse> commentList = assignmentCommentList.stream()
+                .map(this::createAssignmentCommentResponse)
+                .collect(Collectors.toList());
 
         return DetailAssignmentResponse.builder()
                 .assignmentId(assignment.getAssignId())
@@ -622,20 +690,23 @@ public class AssignmentService {
                 .build();
     }
 
+    //과제 피드백 남기기
     private void leaveFeedbackData(AssignmentSubmission submission, SubmissionFeedbackDto dto) {
 
         if(dto.getFeedback() != null && !dto.getFeedback().trim().isEmpty()){
             submission.setFeedback(dto.getFeedback());
         }
         else{
-            submission.setFeedback(null);
+            throw new RestApiException(ErrorCode.FEEDBACK_CONTENT_REQUIRED);
         }
 
         submission.setUpdatedAt(LocalDateTime.now());
-
         submissionRepository.save(submission);
+
+        log.info("Feedback saved successfully for submission: {}", submission.getSubmissionId());
     }
 
+    //과제 댓글 Response 생성해서 반환하기
     private AssignmentCommentResponse createAssignmentCommentResponse(AssignmentComment assignmentComment) {
 
         return AssignmentCommentResponse.builder()
@@ -644,6 +715,26 @@ public class AssignmentService {
                 .assignmentId(assignmentComment.getAssignment().getAssignId())
                 .creatorName(assignmentComment.getAuthor().getName())
                 .createdAt(assignmentComment.getCreatedAt())
+                .build();
+    }
+
+    //과제 피드백 수정해서 dto 반환하기
+    private SubmissionFeedbackDto updateFeedbackData(AssignmentSubmission submission, SubmissionFeedbackDto dto) {
+
+        if(dto.getFeedback() != null && !dto.getFeedback().trim().isEmpty()){
+            submission.setFeedback(dto.getFeedback());
+            submission.setUpdatedAt(LocalDateTime.now());
+        }
+        else {
+            throw new RestApiException(ErrorCode.FEEDBACK_CONTENT_REQUIRED);
+        }
+
+        submissionRepository.save(submission);
+
+        log.info("Feedback updated successfully for submission: {}", submission.getSubmissionId());
+
+        return SubmissionFeedbackDto.builder()
+                .feedback(submission.getFeedback())
                 .build();
     }
 }

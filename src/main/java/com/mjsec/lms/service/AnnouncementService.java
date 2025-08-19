@@ -35,7 +35,7 @@ public class AnnouncementService {
         //유저가 맞는지 확인 + 관리자인지 확인
         User user = validateUser(currentUserStudentNumber);
         if (user.getRole() != UserRole.ROLE_ADMIN) {
-            throw new RestApiException(ErrorCode.UNAUTHORIZED_ROLE);
+            throw new RestApiException(ErrorCode.ANNOUNCEMENT_UNAUTHORIZED_ROLE);
         }
 
         //공지사항 타입이 비어있는지 확인
@@ -89,7 +89,7 @@ public class AnnouncementService {
         // 유저 확인 + 관리자 권한 확인
         User user = validateUser(currentUserStudentNumber);
         if (user.getRole() != UserRole.ROLE_ADMIN) {
-            throw new RestApiException(ErrorCode.UNAUTHORIZED_ROLE);
+            throw new RestApiException(ErrorCode.ANNOUNCEMENT_UNAUTHORIZED_ROLE);
         }
 
         // 공지사항 확인
@@ -98,7 +98,7 @@ public class AnnouncementService {
 
         //작성자 확인(공지사항 작성자 id와 수정하려는 유저 id를 비교)
         if(!announcement.getCreator().getUserId().equals(user.getUserId())) {
-            throw new RestApiException(ErrorCode.UNAUTHORIZED_ROLE);
+            throw new RestApiException(ErrorCode.ANNOUNCEMENT_UNAUTHORIZED_ROLE);
         }
 
         //데이터가 null이 아닌 경우에만 업데이트
@@ -127,7 +127,7 @@ public class AnnouncementService {
         //유저 권한 + 관리자 권한 확인
         User user = validateUser(currentUserStudentNumber);
         if (user.getRole() != UserRole.ROLE_ADMIN) {
-            throw new RestApiException(ErrorCode.UNAUTHORIZED_ROLE);
+            throw new RestApiException(ErrorCode.ANNOUNCEMENT_UNAUTHORIZED_ROLE);
         }
 
         // 조회할 수 있는 공지사항인지 확인
@@ -137,7 +137,7 @@ public class AnnouncementService {
 
         //작성자 본인이 맞는지 확인
         if (!announcement.getCreator().getUserId().equals(user.getUserId())) {
-            throw new RestApiException(ErrorCode.UNAUTHORIZED_ROLE);
+            throw new RestApiException(ErrorCode.ANNOUNCEMENT_UNAUTHORIZED_ROLE);
         }
 
         announcementRepository.delete(announcement);
