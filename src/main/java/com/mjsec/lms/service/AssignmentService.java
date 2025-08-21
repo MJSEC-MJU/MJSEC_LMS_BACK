@@ -87,8 +87,7 @@ public class AssignmentService {
         return createDetailAssignmentResponse(assignment);
     }
 
-    // 전체 과제 조회하기
-    @Transactional(readOnly = true)
+    // 전체 과제 조회하기 - @Transactional 제거 (단순 조회)
     public List<AssignmentResponse> getAssignment(Long groupId, Long currentUserStudentNumber) {
 
         log.info("getAssignment called");
@@ -106,8 +105,7 @@ public class AssignmentService {
         return assignmentResponses;
     }
 
-    // 과제 상세 조회하기
-    @Transactional(readOnly = true)
+    // 과제 상세 조회하기 - @Transactional 제거 (단순 조회)
     public DetailAssignmentResponse getDetailAssignment(Long groupId, Long assignmentId, Long currentUserStudentNumber) {
 
         log.info("getDetailAssignment called");
@@ -179,8 +177,7 @@ public class AssignmentService {
         return createSubmissionResponse(assignmentSubmission);
     }
 
-    //과제 제출 리스트 확인하기 (멘토/멘티)
-    @Transactional(readOnly = true)
+    //과제 제출 리스트 확인하기 (멘토/멘티) - @Transactional 제거 (단순 조회)
     public List<SubmissionResponse> getSubmissionList(Long groupId, Long assignmentId, Long currentUserStudentNumber) {
 
         log.info("getSubmissionList called");
@@ -199,7 +196,6 @@ public class AssignmentService {
      * 멘티 (자기 자신 과제만 조회 가능)
      * 멘토 (나머지도 다 가능)
      */
-    @Transactional(readOnly = true)
     public DetailSubmissionResponse getDetailedSubmission(Long groupId, Long assignmentId, Long submitId, Long currentUserStudentNumber) {
 
         log.info("getDetailedSubmission called");
