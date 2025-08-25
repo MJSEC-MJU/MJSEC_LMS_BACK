@@ -7,7 +7,8 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-public class AssignmentDTO {
+public class AssignmentResponse {
+    private Long assignmentId;
 
     private String title;
 
@@ -17,4 +18,5 @@ public class AssignmentDTO {
 
     private LocalDateTime endDate;
 
+    private LocalDateTime createdAt;
 }

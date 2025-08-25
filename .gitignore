@@ -37,6 +37,22 @@ out/
 .vscode/
 
 .DS_Store
-._.DS_Store
-**/.DS_Store
-**/._.DS_Store
+Thumbs.db
+
+# 로그 및 임시 파일
+logs/
+*.log
+tmp/
+*.tmp
+
+# 환경변수 파일
+.env
+.env.*
+
+# Docker Compose 오버라이드
+docker-compose.override.yml
+
+# 빌드 아티팩트
+*.jar
+*.war
+

@@ -41,11 +41,28 @@ public enum ErrorCode {
 
     //스터디
     STUDY_NOT_FOUND(HttpStatus.NOT_FOUND, "스터디를 찾을 수 없습니다."),
-    UNAUTHORIZED_ROLE(HttpStatus.UNAUTHORIZED, "멘토만 과제를 관리할 수 있습니다."),
+    UNAUTHORIZED_MENTO_ROLE(HttpStatus.UNAUTHORIZED, "멘토만 과제를 관리할 수 있습니다."),
+    UNAUTHORIZED_MENTEE_ROLE(HttpStatus.UNAUTHORIZED, "멘티만 과제를 제출할 수 있습니다."),
     STUDY_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 스터디 멤버를 찾을 수 없습니다."),
 
     //과제
     ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "과제를 찾을 수 없습니다."),
+    UNAUTHORIZED_DOMAIN(HttpStatus.UNAUTHORIZED, "허용되지 않은 도메인입니다."),
+    INVALID_URL_FORMAT(HttpStatus.BAD_REQUEST, "유효하지 않은 URL입니다."),
+    WARNING_CONTENT(HttpStatus.BAD_REQUEST, "허용되지 않은 내용입니다."),
+    DUPLICATE_SUBMISSION(HttpStatus.BAD_REQUEST, "중복된 과제 제출입니다."),
+    ASSIGNMENT_COMMENT_REQUIRED(HttpStatus.BAD_REQUEST, "과제 댓글 내용이 없습니다"),
+
+    //과제 피드백
+    FEEDBACK_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 피드백을 남겼습니다."),
+    FEEDBACK_NOT_FOUND(HttpStatus.NOT_FOUND,"피드백이 존재하지 않습니다."),
+    FEEDBACK_CONTENT_REQUIRED(HttpStatus.NOT_FOUND, "과제 피드백 내용이 없습니다."),
+
+    //과제 제출
+    SUBMISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "과제 제출 내역을 찾을 수 없습니다."),
+    UNAUTHORIZED_ACCESS_SUBMISSION(HttpStatus.UNAUTHORIZED, "과제 제출 조회 권한이 없습니다."),
+    SUBMISSION_ASSIGNMENT_MISMATCH(HttpStatus.NOT_FOUND, "제출물이 해당 과제에 속하지 않습니다."),
+    SUBMISSION_CONTENT_REQUIRED(HttpStatus.BAD_REQUEST, "과제 제출 내용(링크, 비밀번호)이 없습니다."),
 
     //공지사항
     ANNOUNCEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "공지사항을 찾을 수 없습니다."),
@@ -54,7 +71,7 @@ public enum ErrorCode {
     ANNOUNCEMENT_TITLE_REQUIRED(HttpStatus.BAD_REQUEST, "공지사항 제목은 필수입니다."),
     ANNOUNCEMENT_CONTENT_REQUIRED(HttpStatus.BAD_REQUEST, "공지사항 내용은 필수입니다."),
     ANNOUNCEMENT_FORBIDDEN(HttpStatus. FORBIDDEN,"본인이 작성한 공지사항만 수정/삭제할 수 있습니다. ");
-
+  
     private final HttpStatus status;
     private final String message;
     public HttpStatus getHttpStatus() {

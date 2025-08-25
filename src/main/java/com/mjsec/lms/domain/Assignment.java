@@ -49,4 +49,8 @@ public class Assignment extends BaseEntity {
     @Builder.Default
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<AssignmentSubmission> submissions = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<AssignmentComment> comments = new ArrayList<>();
 }

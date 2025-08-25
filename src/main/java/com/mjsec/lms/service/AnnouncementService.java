@@ -112,7 +112,6 @@ public class AnnouncementService {
         //작성자 본인 확인
         if(!announcement.getCreator().getUserId().equals(user.getUserId())) {
             throw new RestApiException(ErrorCode.ANNOUNCEMENT_FORBIDDEN);
-        }
 
         //데이터가 null이 아닌 경우에만 업데이트
         if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty()) {
