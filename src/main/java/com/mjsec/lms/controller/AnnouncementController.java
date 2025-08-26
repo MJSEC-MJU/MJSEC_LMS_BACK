@@ -23,7 +23,7 @@ public class AnnouncementController {
         this.announcementService = announcementService;
     }
 
-    @PostMapping("/announcement")
+    @PostMapping("/create-announcement")
     public ResponseEntity<SuccessResponse<AnnouncementResponseDto>> createAnnouncement(
             @RequestBody AnnouncementRequestDto dto,
             Authentication authentication) {  // Spring Security가 자동 주입
