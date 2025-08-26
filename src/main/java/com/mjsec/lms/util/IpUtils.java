@@ -1,10 +1,12 @@
 package com.mjsec.lms.util;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 //IP 주소 추출을 위한 유틸리티 클래스
-public class IpUtil {
+public class IpUtils {
 
     private static final String[] IP_HEADERS = {
             "X-Forwarded-For",
@@ -69,7 +71,7 @@ public class IpUtil {
     }
 
     // 유틸리티 클래스이므로 인스턴스화 방지
-    private IpUtil() {
+    private IpUtils() {
         throw new IllegalStateException("Utility class");
     }
 }
