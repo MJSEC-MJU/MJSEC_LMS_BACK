@@ -104,14 +104,14 @@ public class ValidationUtils {
     }
 
     // 사용자가 해당 스터디 그룹의 멘토인지 확인
-    public void validateMentoRole(Long userId, Long groupId) {
+    public void validateMentorRole(Long userId, Long groupId) {
 
         GroupMemberRole userRole = groupMemberRepository.findRoleByUserIdAndStudyId(userId, groupId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.STUDY_USER_NOT_FOUND));
 
-        if (userRole != GroupMemberRole.MENTO) {
-            log.warn("User {} does not have MENTO role in StudyGroup {}. Current role: {}", userId, groupId, userRole);
-            throw new RestApiException(ErrorCode.UNAUTHORIZED_MENTO_ROLE);
+        if (userRole != GroupMemberRole.MENTOR) {
+            log.warn("User {} does not have MENTOR role in StudyGroup {}. Current role: {}", userId, groupId, userRole);
+            throw new RestApiException(ErrorCode.UNAUTHORIZED_MENTOR_ROLE);
         }
     }
 
@@ -146,11 +146,11 @@ public class ValidationUtils {
     }
 
     // 멘토 접근 검증 (사용자 존재, 스터디 그룹 존재, 멘토 권한)
-    public User validateMentoAccess(Long groupId, Long currentUserStudentNumber) {
+    public User validateMentorAccess(Long groupId, Long currentUserStudentNumber) {
 
         User user = validateUser(currentUserStudentNumber);
         validateStudyGroup(groupId);
-        validateMentoRole(user.getUserId(), groupId);
+        validateMentorRole(user.getUserId(), groupId);
         return user;
     }
 

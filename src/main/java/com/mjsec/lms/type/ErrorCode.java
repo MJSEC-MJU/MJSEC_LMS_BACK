@@ -41,7 +41,7 @@ public enum ErrorCode {
 
     //스터디
     STUDY_NOT_FOUND(HttpStatus.NOT_FOUND, "스터디를 찾을 수 없습니다."),
-    UNAUTHORIZED_MENTO_ROLE(HttpStatus.UNAUTHORIZED, "멘토 권한인 유저만 가능합니다."),
+    UNAUTHORIZED_MENTOR_ROLE(HttpStatus.UNAUTHORIZED, "멘토 권한인 유저만 가능합니다."),
     UNAUTHORIZED_MENTEE_ROLE(HttpStatus.UNAUTHORIZED, "멘티 권한인 유저만 가능합니다."),
     STUDY_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 스터디 멤버를 찾을 수 없습니다."),
 

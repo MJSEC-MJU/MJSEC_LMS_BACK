@@ -34,7 +34,7 @@ public class AttendanceService {
         log.info("createAttendance called");
 
         // 출석체크 처리하려는 사람이 멘토인지 확인
-        validationUtils.validateMentoAccess(groupId, currentUserStudentNumber);
+        validationUtils.validateMentorAccess(groupId, currentUserStudentNumber);
         StudyGroup studyGroup = validationUtils.validateStudyGroup(groupId);
 
         // 출석체크 처리되는 사람이 스터디 그룹에 속하는지 확인

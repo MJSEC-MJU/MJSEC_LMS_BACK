@@ -41,10 +41,10 @@ public class AssignmentService {
 
         log.info("createAssignment called with groupId: {}, dto: {}, currentUserStudentNumber: {}", groupId, dto, currentUserStudentNumber);
 
-        User user = validationUtils.validateMentoAccess(groupId, currentUserStudentNumber);
+        User user = validationUtils.validateMentorAccess(groupId, currentUserStudentNumber);
         StudyGroup studyGroup = validationUtils.validateStudyGroup(groupId);
 
-        log.info("User {} is confirmed as MENTO of StudyGroup: {}", user.getUserId(), studyGroup.getName());
+        log.info("User {} is confirmed as MENTOR of StudyGroup: {}", user.getUserId(), studyGroup.getName());
 
         Assignment assignment = Assignment.builder()
                 .title(dto.getTitle())
@@ -98,7 +98,7 @@ public class AssignmentService {
 
         log.info("updateAssignment called");
 
-        validationUtils.validateMentoAccess(groupId, currentUserStudentNumber);
+        validationUtils.validateMentorAccess(groupId, currentUserStudentNumber);
         Assignment assignment = validationUtils.validateAssignment(assignmentId);
 
         log.info("Found assignment: {}", assignment);
@@ -113,7 +113,7 @@ public class AssignmentService {
 
         log.info("deleteAssignment called");
 
-        validationUtils.validateMentoAccess(groupId, currentUserStudentNumber);
+        validationUtils.validateMentorAccess(groupId, currentUserStudentNumber);
         Assignment assignment = validationUtils.validateAssignment(assignmentId);
 
         log.info("Found assignment: {}", assignment);
@@ -188,8 +188,8 @@ public class AssignmentService {
                 throw new RestApiException(ErrorCode.UNAUTHORIZED_ACCESS_SUBMISSION);
             }
         }
-        else if(role == GroupMemberRole.MENTO) {
-            log.info("Mento {} accessing submission {}", user.getUserId(), submitId);
+        else if(role == GroupMemberRole.MENTOR) {
+            log.info("Mentor {} accessing submission {}", user.getUserId(), submitId);
         }
 
         return createDetailSubmissionResponse(assignmentSubmission);
@@ -250,7 +250,7 @@ public class AssignmentService {
 
         log.info("leaveFeedback called");
 
-        validationUtils.validateMentoAccess(groupId, currentUserStudentNumber);
+        validationUtils.validateMentorAccess(groupId, currentUserStudentNumber);
         AssignmentSubmission assignmentSubmission = validationUtils.validateSubmissionAccess(assignmentId, submitId);
         validationUtils.validateFeedbackNotExists(assignmentSubmission);
 
@@ -262,7 +262,7 @@ public class AssignmentService {
 
         log.info("updateFeedback called");
 
-        validationUtils.validateMentoAccess(groupId, currentUserStudentNumber);
+        validationUtils.validateMentorAccess(groupId, currentUserStudentNumber);
         AssignmentSubmission assignmentSubmission = validationUtils.validateSubmissionAccess(assignmentId, submitId);
         validationUtils.validateFeedbackExists(assignmentSubmission);
 
@@ -274,7 +274,7 @@ public class AssignmentService {
 
         log.info("deleteFeedback called");
 
-        validationUtils.validateMentoAccess(groupId, currentUserStudentNumber);
+        validationUtils.validateMentorAccess(groupId, currentUserStudentNumber);
         AssignmentSubmission assignmentSubmission = validationUtils.validateSubmissionAccess(assignmentId, submitId);
         validationUtils.validateFeedbackExists(assignmentSubmission);
 
