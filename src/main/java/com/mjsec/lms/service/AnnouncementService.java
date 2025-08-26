@@ -41,12 +41,12 @@ public class AnnouncementService {
         }
 
         //제목이 비어있는지 확인
-        if(dto.getTitle() == null){
+        if(dto.getTitle() == null || dto.getTitle().trim().isEmpty()) {
             throw new RestApiException(ErrorCode.ANNOUNCEMENT_TITLE_REQUIRED);
         }
 
         //내용이 비어있는지 확인
-        if(dto.getContent() == null){
+        if(dto.getContent() == null || dto.getContent().trim().isEmpty()) {
             throw new RestApiException(ErrorCode.ANNOUNCEMENT_CONTENT_REQUIRED);
         }
 
