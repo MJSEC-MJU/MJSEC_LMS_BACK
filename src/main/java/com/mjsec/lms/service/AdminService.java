@@ -94,6 +94,10 @@ public class AdminService {
         User mentor = userRepository.findByStudentNumber(requestDto.getMentorStudentNumber())
                 .orElseThrow(() -> new RestApiException(ErrorCode.INVALID_MENTOR_STUDENT_NUMBER));
 
+        if(studyGroupRepository.existsByName(requestDto.getName())){
+            throw new RestApiException(ErrorCode.STUDY_GROUP_ALREADY_EXIST);
+        }
+
         StudyGroup studyGroup = StudyGroup.builder()
                 .name(requestDto.getName())
                 .category(requestDto.getCategory().name())

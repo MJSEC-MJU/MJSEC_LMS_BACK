@@ -45,6 +45,7 @@ public enum ErrorCode {
     UNAUTHORIZED_MENTO_ROLE(HttpStatus.UNAUTHORIZED, "멘토만 과제를 관리할 수 있습니다."),
     UNAUTHORIZED_MENTEE_ROLE(HttpStatus.UNAUTHORIZED, "멘티만 과제를 제출할 수 있습니다."),
     STUDY_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 스터디 멤버를 찾을 수 없습니다."),
+    STUDY_GROUP_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "이미 존재하는 스터디 그룹 입니다."),
 
     //과제
     ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "과제를 찾을 수 없습니다."),

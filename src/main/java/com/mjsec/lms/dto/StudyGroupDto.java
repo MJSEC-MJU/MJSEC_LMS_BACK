@@ -1,9 +1,10 @@
 package com.mjsec.lms.dto;
 
 import com.mjsec.lms.type.Category;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,8 +29,9 @@ public class StudyGroupDto {
         @NotNull(message = "스터디 타입은 필수 입력값 입니다.")
         private Category category;
 
-        @NotBlank(message = "멘토 학번은 필수 입력값 입니다.")
-        @Pattern(regexp = "^[0-9]{8}$", message = "멘토 학번은 8자리 숫자여야 합니다.")
+        @NotNull(message = "멘토 학번은 필수 입력값 입니다.")
+        @Min(value = 10000000, message = "멘토 학번은 8자리 숫자여야 합니다.")
+        @Max(value = 99999999, message = "멘토 학번은 8자리 숫자여야 합니다.")
         private Long mentorStudentNumber;
     }
 
