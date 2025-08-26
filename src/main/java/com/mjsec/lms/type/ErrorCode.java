@@ -38,6 +38,7 @@ public enum ErrorCode {
     //유저
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "유저를 찾을 수 없습니다."),
     ALREADY_REGISTERED_USER(HttpStatus.BAD_REQUEST, "이미 회원가입이 완료된 유저입니다."),
+    INVALID_MENTOR_STUDENT_NUMBER(HttpStatus.NOT_FOUND, "존재하지 않는 멘토 학번 입니다."),
 
     //스터디
     STUDY_NOT_FOUND(HttpStatus.NOT_FOUND, "스터디를 찾을 수 없습니다."),
