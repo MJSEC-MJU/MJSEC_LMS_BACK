@@ -38,12 +38,14 @@ public enum ErrorCode {
     //유저
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "유저를 찾을 수 없습니다."),
     ALREADY_REGISTERED_USER(HttpStatus.BAD_REQUEST, "이미 회원가입이 완료된 유저입니다."),
+    INVALID_MENTOR_STUDENT_NUMBER(HttpStatus.NOT_FOUND, "존재하지 않는 멘토 학번 입니다."),
 
     //스터디
     STUDY_NOT_FOUND(HttpStatus.NOT_FOUND, "스터디를 찾을 수 없습니다."),
     UNAUTHORIZED_MENTO_ROLE(HttpStatus.UNAUTHORIZED, "멘토만 과제를 관리할 수 있습니다."),
     UNAUTHORIZED_MENTEE_ROLE(HttpStatus.UNAUTHORIZED, "멘티만 과제를 제출할 수 있습니다."),
     STUDY_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 스터디 멤버를 찾을 수 없습니다."),
+    STUDY_GROUP_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "이미 존재하는 스터디 그룹 입니다."),
 
     //과제
     ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "과제를 찾을 수 없습니다."),
