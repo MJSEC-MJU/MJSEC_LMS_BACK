@@ -42,8 +42,8 @@ public enum ErrorCode {
 
     //스터디
     STUDY_NOT_FOUND(HttpStatus.NOT_FOUND, "스터디를 찾을 수 없습니다."),
-    UNAUTHORIZED_MENTO_ROLE(HttpStatus.UNAUTHORIZED, "멘토만 과제를 관리할 수 있습니다."),
-    UNAUTHORIZED_MENTEE_ROLE(HttpStatus.UNAUTHORIZED, "멘티만 과제를 제출할 수 있습니다."),
+    UNAUTHORIZED_MENTOR_ROLE(HttpStatus.UNAUTHORIZED, "멘토 권한인 유저만 가능합니다."),
+    UNAUTHORIZED_MENTEE_ROLE(HttpStatus.UNAUTHORIZED, "멘티 권한인 유저만 가능합니다."),
     STUDY_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 스터디 멤버를 찾을 수 없습니다."),
     STUDY_GROUP_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "이미 존재하는 스터디 그룹 입니다."),
 
@@ -66,6 +66,9 @@ public enum ErrorCode {
     SUBMISSION_ASSIGNMENT_MISMATCH(HttpStatus.NOT_FOUND, "제출물이 해당 과제에 속하지 않습니다."),
     SUBMISSION_CONTENT_REQUIRED(HttpStatus.BAD_REQUEST, "과제 제출 내용(링크, 비밀번호)이 없습니다."),
 
+    //출석 체크
+    DUPLICATE_ATTENDANCE_CHECK(HttpStatus.BAD_REQUEST, "중복된 출석체크입니다."),
+    INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, "끝일자가 시작일자보다 빠릅니다."),
     //공지사항
     ANNOUNCEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "공지사항을 찾을 수 없습니다."),
     ANNOUNCEMENT_UNAUTHORIZED_ROLE(HttpStatus.FORBIDDEN, "관리자만 관리할 수 있습니다.."),

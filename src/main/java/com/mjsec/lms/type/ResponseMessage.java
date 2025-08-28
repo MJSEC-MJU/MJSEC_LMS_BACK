@@ -21,6 +21,9 @@ public enum ResponseMessage {
     APPROVE_REGISTER_SUCCESS("회원가입 승인 완료"),
     CREATE_GROUP_SUCCESS("스터디 그룹 생성 성공"),
 
+    //User 관련
+    USER_GET_PAGE_SUCCESS("유저 페이지 조회 성공"),
+
     // Assignment 관련
     ASSIGNMENT_CREATE_SUCCESS("과제 등록 성공"),
     ASSIGNMENT_DELETE_SUCCESS("과제 삭제 성공"),
@@ -34,6 +37,10 @@ public enum ResponseMessage {
     COMMENT_CREATE_SUCCESS("댓글 생성 성공"),
     FEEDBACK_UPDATE_SUCCESS("과제 피드백 수정 성공"),
     FEEDBACK_DELETE_SUCCESS("과제 피드백 삭제 성공"),
+
+    //출석체크
+    ATTENDANCE_GET_SUCCESS("출석체크 조회 성공"),
+    ATTENDANCE_CREATE_SUCCESS("출석체크 성공"),
 
     // Announcement관련
     POST_ANNOUNCEMENT_SUCCESS("공지사항 등록 성공"),
