@@ -3,6 +3,7 @@ package com.mjsec.lms.controller;
 import com.mjsec.lms.dto.SuccessResponse;
 import com.mjsec.lms.dto.UserResponse;
 import com.mjsec.lms.service.UserService;
+import com.mjsec.lms.type.ResponseMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -27,5 +28,12 @@ public class UserController {
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
         UserResponse userResponse = userService.getUserPage(currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.USER_GET_PAGE_SUCCESS,
+                        userResponse
+                )
+        );
     }
 }

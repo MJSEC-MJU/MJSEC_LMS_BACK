@@ -19,6 +19,9 @@ public enum ResponseMessage {
     GET_ALL_PENDING_USER_SUCCESS("회원가입 승인 대기자 목록 반환 성공"),
     APPROVE_REGISTER_SUCCESS("회원가입 승인 완료"),
 
+    //User 관련
+    USER_GET_PAGE_SUCCESS("유저 페이지 조회 성공"),
+
     // Assignment 관련
     ASSIGNMENT_CREATE_SUCCESS("과제 등록 성공"),
     ASSIGNMENT_DELETE_SUCCESS("과제 삭제 성공"),
