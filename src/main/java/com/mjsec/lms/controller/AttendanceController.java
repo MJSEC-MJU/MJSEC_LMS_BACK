@@ -4,6 +4,7 @@ import com.mjsec.lms.dto.AttendanceDto;
 import com.mjsec.lms.dto.AttendanceResponse;
 import com.mjsec.lms.dto.SuccessResponse;
 import com.mjsec.lms.service.AttendanceService;
+import com.mjsec.lms.type.ResponseMessage;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -37,6 +38,7 @@ public class AttendanceController {
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
+                        ResponseMessage.ATTENDANCE_CREATE_SUCCESS,
                         attendanceResponse
                 )
         );
@@ -59,6 +61,7 @@ public class AttendanceController {
 
         return ResponseEntity.ok(
                         SuccessResponse.of(
+                                ResponseMessage.ATTENDANCE_GET_SUCCESS,
                                 attendanceResponseList
                         )
                 );

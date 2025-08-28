@@ -33,6 +33,10 @@ public enum ResponseMessage {
     FEEDBACK_UPDATE_SUCCESS("과제 피드백 수정 성공"),
     FEEDBACK_DELETE_SUCCESS("과제 피드백 삭제 성공"),
 
+    //출석체크
+    ATTENDANCE_GET_SUCCESS("출석체크 조회 성공"),
+    ATTENDANCE_CREATE_SUCCESS("출석체크 성공"),
+
     // Announcement관련
     POST_ANNOUNCEMENT_SUCCESS("공지사항 등록 성공"),
     GET_ANNOUNCEMENT_SUCCESS("전체 공지사항 목록 반환 성공"),
