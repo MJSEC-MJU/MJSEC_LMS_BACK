@@ -8,6 +8,7 @@ import com.mjsec.lms.repository.GroupMemberRepository;
 import com.mjsec.lms.repository.StudyGroupRepository;
 import com.mjsec.lms.repository.UserRepository;
 import com.mjsec.lms.type.ErrorCode;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +42,7 @@ public class MentorService {
         StudyGroup studyGroup = studyGroupRepository.findByStudyId(groupId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.STUDY_NOT_FOUND));
 
-        if(user != studyGroup.getCreator()) {
+        if(!Objects.equals(user.getUserId(), studyGroup.getCreator().getUserId())) {
             throw new RestApiException(ErrorCode.MENTOR_ONLY_CAN_ADD_MEMBER);
         }
 
@@ -70,7 +71,7 @@ public class MentorService {
         StudyGroup studyGroup = studyGroupRepository.findByStudyId(groupId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.STUDY_NOT_FOUND));
 
-        if(user != studyGroup.getCreator()) {
+        if(!Objects.equals(user.getUserId(), studyGroup.getCreator().getUserId())) {
             throw new RestApiException(ErrorCode.MENTOR_ONLY_CAN_DELETE_MEMBER);
         }
 
