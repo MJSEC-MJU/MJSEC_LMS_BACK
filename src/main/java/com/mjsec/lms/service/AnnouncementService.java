@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -69,16 +70,17 @@ public class AnnouncementService {
     public List<AnnouncementResponseDto> getAnnouncements(Long currentUserStudentNumber ) {
 
         //전체 공지사항을  조회하려는 유저 확인하기
-       User user = validateUser(currentUserStudentNumber);
+        User user = validateUser(currentUserStudentNumber);
 
-       //공지사항이 존재하는지 확인하기
+        //공지사항이 존재하는지 확인하기
         List<Announcement> announcements = announcementRepository.findAll();
-        if(announcements.isEmpty()) {
+        if (announcements.isEmpty()) {
             throw new RestApiException(ErrorCode.ANNOUNCEMENT_NOT_FOUND);
         }
 
         return announcements.stream()
-                .map((AnnouncementMapper::toDto))
+                .sorted(Comparator.comparing(Announcement::getAnnouncementId).reversed())
+                .map(AnnouncementMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -112,6 +114,7 @@ public class AnnouncementService {
         //작성자 본인 확인
         if(!announcement.getCreator().getUserId().equals(user.getUserId())) {
             throw new RestApiException(ErrorCode.ANNOUNCEMENT_FORBIDDEN);
+        }
 
         //데이터가 null이 아닌 경우에만 업데이트
         if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty()) {
