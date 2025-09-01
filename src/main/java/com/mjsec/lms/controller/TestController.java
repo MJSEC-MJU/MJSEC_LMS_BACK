@@ -75,7 +75,7 @@ public class TestController {
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
-                        ResponseMessage.ASSIGNMENT_SUCCESS,
+                        ResponseMessage.TEST_SUCCESS,
                         status
                 )
         );
