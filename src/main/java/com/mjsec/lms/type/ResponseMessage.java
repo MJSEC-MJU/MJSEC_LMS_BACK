@@ -50,7 +50,8 @@ public enum ResponseMessage {
     DELETE_ANNOUNCEMENT_SUCCESS("공지사항 삭제 성공"),
 
     // Mentor 관련
-    ADD_MEMBER_SUCCESS("스터디원 추가 성공")
+    ADD_MEMBER_SUCCESS("스터디원 추가 성공"),
+    DELETE_MEMBER_SUCCESS("스터디원 삭제 성공")
     ;
     private final String message;
 }

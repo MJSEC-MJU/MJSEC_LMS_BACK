@@ -1,14 +1,13 @@
 package com.mjsec.lms.controller;
 
 import com.mjsec.lms.dto.SuccessResponse;
-import com.mjsec.lms.repository.StudyGroupRepository;
-import com.mjsec.lms.repository.UserRepository;
 import com.mjsec.lms.service.MentorService;
 import com.mjsec.lms.type.ResponseMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,6 +33,22 @@ public class MentorController {
         return ResponseEntity.status(HttpStatus.OK).body(
                 SuccessResponse.of(
                         ResponseMessage.ADD_MEMBER_SUCCESS
+                )
+        );
+    }
+
+    @DeleteMapping("/group/{groupId}/delete-member/{studentNumber}")
+    public ResponseEntity<SuccessResponse<Void>> deleteMember(
+            @PathVariable("groupId") Long groupId,
+            @PathVariable("studentNumber") Long studentNumber,
+            Authentication authentication)
+    {
+        Long currentStudentNumber = (Long) authentication.getPrincipal();
+        mentorService.deleteMember(currentStudentNumber, groupId, studentNumber);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                SuccessResponse.of(
+                        ResponseMessage.DELETE_MEMBER_SUCCESS
                 )
         );
     }

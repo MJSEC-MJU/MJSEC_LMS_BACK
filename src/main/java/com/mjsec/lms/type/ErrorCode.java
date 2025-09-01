@@ -79,7 +79,8 @@ public enum ErrorCode {
     ANNOUNCEMENT_FORBIDDEN(HttpStatus. FORBIDDEN,"본인이 작성한 공지사항만 수정/삭제할 수 있습니다."),
 
     //멘토
-    MENTOR_ONLY_CAN_ADD_MEMBER(HttpStatus.BAD_REQUEST, "멘토만 스터디원을 추가할 수 있습니다.")
+    MENTOR_ONLY_CAN_ADD_MEMBER(HttpStatus.BAD_REQUEST, "멘토만 스터디원을 추가할 수 있습니다."),
+    MENTOR_ONLY_CAN_DELETE_MEMBER(HttpStatus.BAD_REQUEST, "멘토만 스터디원을 삭제할 수 있습니다.")
     ;
   
     private final HttpStatus status;
