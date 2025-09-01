@@ -38,16 +38,19 @@ public enum ResponseMessage {
     FEEDBACK_UPDATE_SUCCESS("과제 피드백 수정 성공"),
     FEEDBACK_DELETE_SUCCESS("과제 피드백 삭제 성공"),
 
-    //출석체크
+    // 출석체크 관련
     ATTENDANCE_GET_SUCCESS("출석체크 조회 성공"),
     ATTENDANCE_CREATE_SUCCESS("출석체크 성공"),
 
-    // Announcement관련
+    // Announcement 관련
     POST_ANNOUNCEMENT_SUCCESS("공지사항 등록 성공"),
     GET_ANNOUNCEMENT_SUCCESS("전체 공지사항 목록 반환 성공"),
     DETAIL_ANNOUNCEMENT_SUCCESS("공지사항 상제 조회 성공"),
     UPDATE_ANNOUNCEMENT_SUCCESS("공지사항 수정 성공"),
-    DELETE_ANNOUNCEMENT_SUCCESS("공지사항 삭제 성공")
+    DELETE_ANNOUNCEMENT_SUCCESS("공지사항 삭제 성공"),
+
+    // Mentor 관련
+    ADD_MEMBER_SUCCESS("스터디원 추가 성공")
     ;
     private final String message;
 }
