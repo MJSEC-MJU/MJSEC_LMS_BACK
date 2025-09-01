@@ -5,6 +5,7 @@ import com.mjsec.lms.exception.RestApiException;
 import com.mjsec.lms.repository.*;
 import com.mjsec.lms.type.ErrorCode;
 import com.mjsec.lms.type.GroupMemberRole;
+import com.mjsec.lms.type.UserRole;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -132,6 +133,16 @@ public class ValidationUtils {
 
         return groupMemberRepository.findRoleByUserIdAndStudyId(userId, groupId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.STUDY_USER_NOT_FOUND));
+    }
+
+    // 로그인한 사용자가 ADMIN인지 확인하기
+    public void validateAdminRole(Long currentStudentNumber) {
+
+        User user = validateUser(currentStudentNumber);
+
+        if(user.getRole() != UserRole.ROLE_ADMIN){
+            throw new RestApiException(ErrorCode.UNAUTHORIZED);
+        }
     }
 
     // ========== 복합 접근 검증 ==========

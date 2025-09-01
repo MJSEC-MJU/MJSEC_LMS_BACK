@@ -3,6 +3,18 @@ spring:
     redis:
       host: localhost
       port: 6379
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${GMAIL_USERNAME}
+    password: ${GMAIL_APP_PASSWORD}
+    properties:
+      mail:
+        debug: true
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
   jwt:
     secret: ${JWT_SECRET}
@@ -44,3 +56,22 @@ admin:
 server:
   error:
     include-stacktrace: never
+    
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, scheduledtasks
+  endpoint:
+    health:
+      show-details: when_authorized
+    scheduledtasks:
+      enabled: true
+
+logging:
+  level:
+    com.mjsec.lms.service.ScheduledTaskService: INFO
+    com.mjsec.lms.service.com.mjsec.lms.service.WeeklyAlertService: INFO
+    com.mjsec.lms.service.EmailService: INFO
+    org.springframework.scheduling: DEBUG #개발할 때만
+
