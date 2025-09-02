@@ -1,10 +1,13 @@
 package com.mjsec.lms.service;
 
 import com.mjsec.lms.domain.PendingUser;
+import com.mjsec.lms.domain.StudyGroup;
 import com.mjsec.lms.domain.User;
 import com.mjsec.lms.dto.PendingUserDto;
+import com.mjsec.lms.dto.StudyGroupDto.StudyGroupRequestDto;
 import com.mjsec.lms.exception.RestApiException;
 import com.mjsec.lms.repository.PendingUserRepository;
+import com.mjsec.lms.repository.StudyGroupRepository;
 import com.mjsec.lms.repository.UserRepository;
 import com.mjsec.lms.type.ErrorCode;
 import com.mjsec.lms.type.UserRole;
@@ -19,12 +22,15 @@ public class AdminService {
 
     private final PendingUserRepository pendingUserRepository;
     private final UserRepository userRepository;
+    private final StudyGroupRepository studyGroupRepository;
 
 
-    public AdminService(PendingUserRepository pendingUserRepository, UserRepository userRepository) {
+    public AdminService(PendingUserRepository pendingUserRepository, UserRepository userRepository,
+                        StudyGroupRepository studyGroupRepository) {
 
         this.pendingUserRepository = pendingUserRepository;
         this.userRepository = userRepository;
+        this.studyGroupRepository = studyGroupRepository;
     }
 
     /**
@@ -77,5 +83,28 @@ public class AdminService {
         userRepository.save(user);
         pendingUserRepository.delete(pendingUser);
         log.info("Moved pending user to approved user: {}", user.getStudentNumber());
+    }
+
+    /**
+     * 스터디 그룹을 생성하는 메소드
+     * @param requestDto 스터디 그룹명, 스터디 소개, 스터디 타입, 멘토 학번
+     */
+    public void createGroup(StudyGroupRequestDto requestDto) {
+
+        User mentor = userRepository.findByStudentNumber(requestDto.getMentorStudentNumber())
+                .orElseThrow(() -> new RestApiException(ErrorCode.INVALID_MENTOR_STUDENT_NUMBER));
+
+        if(studyGroupRepository.existsByName(requestDto.getName())){
+            throw new RestApiException(ErrorCode.STUDY_GROUP_ALREADY_EXIST);
+        }
+
+        StudyGroup studyGroup = StudyGroup.builder()
+                .name(requestDto.getName())
+                .category(requestDto.getCategory().name())
+                .content(requestDto.getContent())
+                .creator(mentor)
+                .build();
+
+        studyGroupRepository.save(studyGroup);
     }
 }

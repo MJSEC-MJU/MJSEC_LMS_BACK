@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,13 +33,25 @@ public class AnnouncementService {
     // 공지사항 생성하기
     public Announcement  createAnnouncement(AnnouncementRequestDto dto, Long currentUserStudentNumber) {
 
-        //유저가 맞는지 확인 + 관리자인지 확인
+        //유저가 맞는지 확인
         User user = validateUser(currentUserStudentNumber);
+
+        //관리자인지 확인
         if (user.getRole() != UserRole.ROLE_ADMIN) {
             throw new RestApiException(ErrorCode.ANNOUNCEMENT_UNAUTHORIZED_ROLE);
         }
 
-        //공지사항 타입이 비어있는지 확인
+        //제목이 비어있는지 확인
+        if(dto.getTitle() == null || dto.getTitle().trim().isEmpty()) {
+            throw new RestApiException(ErrorCode.ANNOUNCEMENT_TITLE_REQUIRED);
+        }
+
+        //내용이 비어있는지 확인
+        if(dto.getContent() == null || dto.getContent().trim().isEmpty()) {
+            throw new RestApiException(ErrorCode.ANNOUNCEMENT_CONTENT_REQUIRED);
+        }
+
+        //타입이 비어있는지 확인
         if (dto.getType() == null) {
             throw new RestApiException(ErrorCode.ANNOUNCEMENT_TYPE_REQUIRED);
         }
@@ -57,16 +70,17 @@ public class AnnouncementService {
     public List<AnnouncementResponseDto> getAnnouncements(Long currentUserStudentNumber ) {
 
         //전체 공지사항을  조회하려는 유저 확인하기
-       User user = validateUser(currentUserStudentNumber);
+        User user = validateUser(currentUserStudentNumber);
 
-       //공지사항이 존재하는지 확인하기
+        //공지사항이 존재하는지 확인하기
         List<Announcement> announcements = announcementRepository.findAll();
-        if(announcements.isEmpty()) {
+        if (announcements.isEmpty()) {
             throw new RestApiException(ErrorCode.ANNOUNCEMENT_NOT_FOUND);
         }
 
         return announcements.stream()
-                .map((AnnouncementMapper::toDto))
+                .sorted(Comparator.comparing(Announcement::getAnnouncementId).reversed())
+                .map(AnnouncementMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -74,8 +88,7 @@ public class AnnouncementService {
     public AnnouncementResponseDto  getAnnouncementDetail(Long announcementId,Long currentUserStudentNumber){
 
         //유저 존재 확인
-        User user = userRepository.findByStudentNumber(currentUserStudentNumber)
-                .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
+        User user = validateUser(currentUserStudentNumber);
 
         //공지사항 존재 확인
         Announcement announcement = announcementRepository.findById(announcementId)
@@ -86,8 +99,10 @@ public class AnnouncementService {
     //공지사항 수정하기
     public AnnouncementResponseDto updateAnnouncement(Long announcementId, AnnouncementRequestDto dto,Long currentUserStudentNumber) {
 
-        // 유저 확인 + 관리자 권한 확인
+        // 유저 확인
         User user = validateUser(currentUserStudentNumber);
+
+        //관리자 권한 확인
         if (user.getRole() != UserRole.ROLE_ADMIN) {
             throw new RestApiException(ErrorCode.ANNOUNCEMENT_UNAUTHORIZED_ROLE);
         }
@@ -96,9 +111,9 @@ public class AnnouncementService {
         Announcement announcement = announcementRepository.findById(announcementId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.ANNOUNCEMENT_NOT_FOUND));
 
-        //작성자 확인(공지사항 작성자 id와 수정하려는 유저 id를 비교)
+        //작성자 본인 확인
         if(!announcement.getCreator().getUserId().equals(user.getUserId())) {
-            throw new RestApiException(ErrorCode.ANNOUNCEMENT_UNAUTHORIZED_ROLE);
+            throw new RestApiException(ErrorCode.ANNOUNCEMENT_FORBIDDEN);
         }
 
         //데이터가 null이 아닌 경우에만 업데이트
@@ -124,8 +139,10 @@ public class AnnouncementService {
     @Transactional
     public void  deleteAnnouncement(Long announcementId, Long currentUserStudentNumber) {
 
-        //유저 권한 + 관리자 권한 확인
+        //유저 권한 확인
         User user = validateUser(currentUserStudentNumber);
+
+        // 관리자 권한 확인
         if (user.getRole() != UserRole.ROLE_ADMIN) {
             throw new RestApiException(ErrorCode.ANNOUNCEMENT_UNAUTHORIZED_ROLE);
         }
@@ -137,7 +154,7 @@ public class AnnouncementService {
 
         //작성자 본인이 맞는지 확인
         if (!announcement.getCreator().getUserId().equals(user.getUserId())) {
-            throw new RestApiException(ErrorCode.ANNOUNCEMENT_UNAUTHORIZED_ROLE);
+            throw new RestApiException(ErrorCode.ANNOUNCEMENT_FORBIDDEN);
         }
 
         announcementRepository.delete(announcement);

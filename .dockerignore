@@ -1,0 +1,13 @@
+# Gradle
+.gradle/
+build/
+
+# IDE 설정
+*.iml
+.idea/
+
+# OS
+.DS_Store
+
+# 도커 컴포즈 파일 (필요 없으면 제외)
+docker-compose*.yml
