@@ -49,9 +49,13 @@ public enum ResponseMessage {
     UPDATE_ANNOUNCEMENT_SUCCESS("공지사항 수정 성공"),
     DELETE_ANNOUNCEMENT_SUCCESS("공지사항 삭제 성공"),
 
+    //테스트 관련
+    TEST_SUCCESS("테스트 성공"),
+
     // Mentor 관련
     ADD_MEMBER_SUCCESS("스터디원 추가 성공"),
     DELETE_MEMBER_SUCCESS("스터디원 삭제 성공")
+
     ;
     private final String message;
 }
