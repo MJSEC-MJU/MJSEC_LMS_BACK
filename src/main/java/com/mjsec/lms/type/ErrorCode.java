@@ -69,13 +69,19 @@ public enum ErrorCode {
     //출석 체크
     DUPLICATE_ATTENDANCE_CHECK(HttpStatus.BAD_REQUEST, "중복된 출석체크입니다."),
     INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, "끝일자가 시작일자보다 빠릅니다."),
+
     //공지사항
     ANNOUNCEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "공지사항을 찾을 수 없습니다."),
-    ANNOUNCEMENT_UNAUTHORIZED_ROLE(HttpStatus.FORBIDDEN, "관리자만 관리할 수 있습니다.."),
+    ANNOUNCEMENT_UNAUTHORIZED_ROLE(HttpStatus.FORBIDDEN, "관리자만 관리할 수 있습니다."),
     ANNOUNCEMENT_TYPE_REQUIRED(HttpStatus.BAD_REQUEST, "공지 타입은 필수입니다."),
     ANNOUNCEMENT_TITLE_REQUIRED(HttpStatus.BAD_REQUEST, "공지사항 제목은 필수입니다."),
     ANNOUNCEMENT_CONTENT_REQUIRED(HttpStatus.BAD_REQUEST, "공지사항 내용은 필수입니다."),
-    ANNOUNCEMENT_FORBIDDEN(HttpStatus. FORBIDDEN,"본인이 작성한 공지사항만 수정/삭제할 수 있습니다. ");
+    ANNOUNCEMENT_FORBIDDEN(HttpStatus. FORBIDDEN,"본인이 작성한 공지사항만 수정/삭제할 수 있습니다."),
+
+    //멘토
+    MENTOR_ONLY_CAN_ADD_MEMBER(HttpStatus.BAD_REQUEST, "멘토만 스터디원을 추가할 수 있습니다."),
+    MENTOR_ONLY_CAN_DELETE_MEMBER(HttpStatus.BAD_REQUEST, "멘토만 스터디원을 삭제할 수 있습니다.")
+    ;
   
     private final HttpStatus status;
     private final String message;

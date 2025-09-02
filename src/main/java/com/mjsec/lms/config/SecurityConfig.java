@@ -81,7 +81,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/users/announcements/**").hasAnyRole("ADMIN", "USER")
                         .requestMatchers("/api/v1/users/**").permitAll() // 임시로 허용
-
+                        .requestMatchers("/api/v1/mentor/**").hasAnyRole("ADMIN", "USER")
                 );
 
         return http.build();
