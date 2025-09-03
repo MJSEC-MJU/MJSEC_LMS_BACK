@@ -106,12 +106,10 @@ public class MentorService {
                 .orElseThrow(() -> new RestApiException(ErrorCode.STUDY_USER_NOT_FOUND));
 
         groupMember.setWarn(groupMember.getWarn() + 1);
+        groupMemberRepository.save(groupMember);
 
         if(groupMember.getWarn() == 3) {
             groupMemberRepository.delete(groupMember);
-        }
-        else {
-            groupMemberRepository.save(groupMember);
         }
     }
 }
