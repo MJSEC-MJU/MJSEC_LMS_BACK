@@ -47,21 +47,21 @@ public class ValidationUtils {
     private final StudyGroupRepository studyGroupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final AttendanceRepository attendanceRepository;
-    private final AssignmentRepository assignmentRepository;
+    private final PlanRepository planRepository;
     private final SubmissionRepository submissionRepository;
 
     public ValidationUtils(UserRepository userRepository,
                            StudyGroupRepository studyGroupRepository,
                            GroupMemberRepository groupMemberRepository,
                            AttendanceRepository attendanceRepository,
-                           AssignmentRepository assignmentRepository,
+                           PlanRepository planRepository,
                            SubmissionRepository submissionRepository) {
 
         this.userRepository = userRepository;
         this.studyGroupRepository = studyGroupRepository;
         this.groupMemberRepository = groupMemberRepository;
         this.attendanceRepository = attendanceRepository;
-        this.assignmentRepository = assignmentRepository;
+        this.planRepository = planRepository;
         this.submissionRepository = submissionRepository;
     }
 
@@ -82,9 +82,9 @@ public class ValidationUtils {
     }
 
     // 과제 존재 여부를 확인하고 Assignment 객체를 반환
-    public Assignment validateAssignment(Long assignmentId) {
+    public Plan validatePlan(Long assignmentId) {
 
-        return assignmentRepository.findById(assignmentId)
+        return planRepository.findById(assignmentId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.ASSIGNMENT_NOT_FOUND));
     }
 
@@ -205,7 +205,7 @@ public class ValidationUtils {
     // 제출물 접근 검증 (과제와 제출물 존재, 관계 검증)
     public AssignmentSubmission validateSubmissionAccess(Long assignmentId, Long submitId) {
 
-        validateAssignment(assignmentId);
+        validatePlan(assignmentId);
         AssignmentSubmission submission = validateSubmission(submitId);
         validateAssignmentIdInAssignmentSubmission(assignmentId, submission);
         return submission;
@@ -214,7 +214,7 @@ public class ValidationUtils {
     // 제출물이 해당 과제에 속하는지 검증
     public void validateAssignmentIdInAssignmentSubmission(Long assignmentId, AssignmentSubmission assignmentSubmission) {
 
-        if (!assignmentSubmission.getAssignment().getAssignId().equals(assignmentId)) {
+        if (!assignmentSubmission.getPlan().getPlanId().equals(assignmentId)) {
             log.warn("Assignment id mismatch between assignment and assignment submission");
             throw new RestApiException(ErrorCode.SUBMISSION_ASSIGNMENT_MISMATCH);
         }

@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AssignmentCommentDto {
+public class PlanCommentDto {
 
     @NotBlank(message = "댓글을 입력해주세요!")
     private String content;

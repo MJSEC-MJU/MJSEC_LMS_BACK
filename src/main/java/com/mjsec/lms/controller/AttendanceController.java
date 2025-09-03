@@ -14,7 +14,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/groups/")
+@RequestMapping("/api/v1/group")
 public class AttendanceController {
 
     private final AttendanceService attendanceService;

@@ -15,16 +15,16 @@ import java.util.stream.Collectors;
 @Slf4j
 public class WeeklyAlertService {
 
-    private final AssignmentRepository assignmentRepository;
+    private final PlanRepository planRepository;
     private final SubmissionRepository submissionRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final EmailService emailService;
 
-    public WeeklyAlertService(AssignmentRepository assignmentRepository,
+    public WeeklyAlertService(PlanRepository planRepository,
                               SubmissionRepository submissionRepository,
                               GroupMemberRepository groupMemberRepository,
                               EmailService emailService) {
-        this.assignmentRepository = assignmentRepository;
+        this.planRepository = planRepository;
         this.submissionRepository = submissionRepository;
         this.groupMemberRepository = groupMemberRepository;
         this.emailService = emailService;
@@ -38,28 +38,28 @@ public class WeeklyAlertService {
         LocalDateTime now = LocalDateTime.now();
 
         // 마감된 모든 과제들 조회
-        List<Assignment> expiredAssignments = assignmentRepository.findAll().stream()
+        List<Plan> expiredPlans = planRepository.findAll().stream()
                 .filter(assignment -> assignment.getEndDate() != null && assignment.getEndDate().isBefore(now))
                 .collect(Collectors.toList());
 
-        if (expiredAssignments.isEmpty()) {
+        if (expiredPlans.isEmpty()) {
             log.info("No expired assignments found. Weekly report will not be sent.");
             return;
         }
 
-        log.info("Found {} expired assignments to process", expiredAssignments.size());
+        log.info("Found {} expired assignments to process", expiredPlans.size());
 
         // 스터디 그룹별로 과제들을 그룹핑하고 미제출 정보 생성
         Map<String, List<AssignmentNotSubmittedInfo>> reportData = new HashMap<>();
 
-        Map<StudyGroup, List<Assignment>> assignmentsByStudyGroup = expiredAssignments.stream()
-                .collect(Collectors.groupingBy(Assignment::getStudyGroup));
+        Map<StudyGroup, List<Plan>> assignmentsByStudyGroup = expiredPlans.stream()
+                .collect(Collectors.groupingBy(Plan::getStudyGroup));
 
-        for (Map.Entry<StudyGroup, List<Assignment>> entry : assignmentsByStudyGroup.entrySet()) {
+        for (Map.Entry<StudyGroup, List<Plan>> entry : assignmentsByStudyGroup.entrySet()) {
             StudyGroup studyGroup = entry.getKey();
-            List<Assignment> assignments = entry.getValue();
+            List<Plan> plans = entry.getValue();
 
-            List<AssignmentNotSubmittedInfo> notSubmittedInfos = generateNotSubmittedInfos(studyGroup, assignments);
+            List<AssignmentNotSubmittedInfo> notSubmittedInfos = generateNotSubmittedInfos(studyGroup, plans);
 
             if (!notSubmittedInfos.isEmpty()) {
                 reportData.put(studyGroup.getName(), notSubmittedInfos);
@@ -77,9 +77,9 @@ public class WeeklyAlertService {
     }
 
     //특정 스터디 그룹의 과제 미제출 정보 생성
-    private List<AssignmentNotSubmittedInfo> generateNotSubmittedInfos(StudyGroup studyGroup, List<Assignment> assignments) {
+    private List<AssignmentNotSubmittedInfo> generateNotSubmittedInfos(StudyGroup studyGroup, List<Plan> plans) {
         log.info("Generating report for study group: {} with {} assignments",
-                studyGroup.getName(), assignments.size());
+                studyGroup.getName(), plans.size());
 
         // 해당 스터디 그룹의 모든 멘티 조회
         List<GroupMember> mentees = groupMemberRepository.findAll().stream()
@@ -90,10 +90,10 @@ public class WeeklyAlertService {
         List<AssignmentNotSubmittedInfo> result = new ArrayList<>();
 
         // 각 과제별로 미제출자 확인
-        for (Assignment assignment : assignments) {
+        for (Plan plan : plans) {
             // 과제를 제출한 사용자 ID 목록
             List<Long> submittedUserIds = submissionRepository
-                    .findAssignmentSubmissionsByAssignmentAssignId(assignment.getAssignId())
+                    .findAssignmentSubmissionsByAssignmentAssignId(plan.getPlanId())
                     .stream()
                     .map(submission -> submission.getSubmitter().getUserId())
                     .collect(Collectors.toList());
@@ -106,14 +106,14 @@ public class WeeklyAlertService {
 
             if (!notSubmittedStudents.isEmpty()) {
                 AssignmentNotSubmittedInfo info = AssignmentNotSubmittedInfo.builder()
-                        .assignmentTitle(assignment.getTitle())
-                        .endDate(assignment.getEndDate())
+                        .planTitle(plan.getTitle())
+                        .endDate(plan.getEndDate())
                         .notSubmittedStudents(notSubmittedStudents)
                         .build();
 
                 result.add(info);
                 log.info("Assignment '{}' has {} not submitted students",
-                        assignment.getTitle(), notSubmittedStudents.size());
+                        plan.getTitle(), notSubmittedStudents.size());
             }
         }
 

@@ -25,11 +25,6 @@ public class AssignmentSubmission extends BaseEntity {
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
-    /* 파일 올리기 X - 일단 지움
-    @Column(name = "file_url", columnDefinition = "TEXT")
-    private String fileUrl;
-     */
-
     //혹시 모를 IPv6를 위한 45자 설정
     @Column(name = "submitter_ip", length = 45)
     private String submitterIp;
@@ -47,6 +42,6 @@ public class AssignmentSubmission extends BaseEntity {
     private User submitter;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assign_id")
-    private Assignment assignment;
+    @JoinColumn(name = "plan_id")
+    private Plan plan;
 }

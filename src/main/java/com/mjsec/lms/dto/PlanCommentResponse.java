@@ -7,11 +7,11 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-public class AssignmentCommentResponse {
+public class PlanCommentResponse {
 
     private Long commentId;
 
-    private Long assignmentId;
+    private Long planId;
 
     private String content;
 

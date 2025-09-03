@@ -24,11 +24,7 @@ public enum ResponseMessage {
     //User 관련
     USER_GET_PAGE_SUCCESS("유저 페이지 조회 성공"),
 
-    // Assignment 관련
-    ASSIGNMENT_CREATE_SUCCESS("과제 등록 성공"),
-    ASSIGNMENT_DELETE_SUCCESS("과제 삭제 성공"),
-    ASSIGNMENT_UPDATE_SUCCESS("과제 수정 성공"),
-    ASSIGNMENT_SUCCESS("과제 조회 성공"),
+    // 과제
     ASSIGNMENT_SUBMIT_SUCCESS("과제 제출 성공"),
     ASSIGNMENT_SUBMIT_CHECK_SUCCESS("과제 제출 확인 성공"),
     ASSIGNMENT_SUBMIT_UPDATE_SUCCESS("과제 제출 내용 수정 성공"),
@@ -37,6 +33,12 @@ public enum ResponseMessage {
     COMMENT_CREATE_SUCCESS("댓글 생성 성공"),
     FEEDBACK_UPDATE_SUCCESS("과제 피드백 수정 성공"),
     FEEDBACK_DELETE_SUCCESS("과제 피드백 삭제 성공"),
+
+    // 계획
+    PLAN_CREATE_SUCCESS("계획 등록 성공"),
+    PLAN_DELETE_SUCCESS("계획 삭제 성공"),
+    PLAN_UPDATE_SUCCESS("계획 수정 성공"),
+    PLAN_SUCCESS("계획 조회 성공"),
 
     // 출석체크 관련
     ATTENDANCE_GET_SUCCESS("출석체크 조회 성공"),

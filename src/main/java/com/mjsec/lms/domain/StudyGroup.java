@@ -43,5 +43,5 @@ public class StudyGroup extends BaseEntity {
 
     @Builder.Default
     @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Assignment> assignments = new ArrayList<>();
+    private List<Plan> plans = new ArrayList<>();
 }
