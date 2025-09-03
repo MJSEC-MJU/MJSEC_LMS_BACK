@@ -25,7 +25,9 @@ spring:
     password: ${DB_PASSWORD}
   jpa:
     defer-datasource-initialization: true
-    hibernate:
+    hibernat
+
+    
       ddl-auto: update
     open-in-view: false
     properties:
