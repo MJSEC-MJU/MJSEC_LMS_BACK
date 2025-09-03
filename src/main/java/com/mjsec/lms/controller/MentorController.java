@@ -43,12 +43,30 @@ public class MentorController {
             @PathVariable("studentNumber") Long studentNumber,
             Authentication authentication)
     {
+
         Long currentStudentNumber = (Long) authentication.getPrincipal();
         mentorService.deleteMember(currentStudentNumber, groupId, studentNumber);
 
         return ResponseEntity.status(HttpStatus.OK).body(
                 SuccessResponse.of(
                         ResponseMessage.DELETE_MEMBER_SUCCESS
+                )
+        );
+    }
+
+    @PostMapping("/warn/{groupId}/{studentNumber}")
+    public ResponseEntity<SuccessResponse<Void>> warnMember(
+            @PathVariable("groupId") Long groupId,
+            @PathVariable("studentNumber") Long studentNumber,
+            Authentication authentication)
+    {
+
+        Long currentStudentNumber = (Long) authentication.getPrincipal();
+        mentorService.warnMember(currentStudentNumber, groupId, studentNumber);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                SuccessResponse.of(
+                        ResponseMessage.WARN_MEMBER_SUCCESS
                 )
         );
     }
