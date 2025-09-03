@@ -76,6 +76,7 @@ public class PlanService {
     }
 
     // 계획 상세 조회하기
+    @Transactional(readOnly = true)
     public DetailPlanResponse getDetailPlan(Long groupId, Long assignmentId, Long currentUserStudentNumber) {
 
         log.info("getDetailPlan called");
@@ -175,7 +176,7 @@ public class PlanService {
     // Plan를 DetailPlanResponse로 변환
     private DetailPlanResponse createDetailPlanResponse(Plan plan) {
 
-        List<PlanComment> assignmentCommentList = planCommentRepository.findAllByAssignmentAssignId(plan.getPlanId());
+        List<PlanComment> assignmentCommentList = planCommentRepository.findAllByPlanPlanId(plan.getPlanId());
         List<PlanCommentResponse> commentList = assignmentCommentList.stream()
                 .map(this::createPlanCommentResponse)
                 .collect(Collectors.toList());

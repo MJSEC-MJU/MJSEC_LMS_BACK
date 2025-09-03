@@ -160,7 +160,7 @@ public class EmailService {
                         .append("'>")
 
                         .append("<h4 style='color: #e74c3c; margin: 0 0 10px 0; font-size: 16px;'>")
-                        .append("📝 ").append(assignmentInfo.getAssignmentTitle())
+                        .append("📝 ").append(assignmentInfo.getPlanTitle())
                         .append("</h4>")
 
                         .append("<p style='margin: 5px 0; font-size: 14px; color: #7f8c8d;'>")

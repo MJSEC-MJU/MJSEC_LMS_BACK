@@ -78,14 +78,14 @@ public class MentorController {
     @PutMapping("/group/{groupId}/plan/{planId}")
     public ResponseEntity<SuccessResponse<DetailPlanResponse>> updatePlan(
             @PathVariable Long groupId,
-            @PathVariable Long assignId,
+            @PathVariable Long planId,
             @RequestBody PlanDto dto,
             Authentication authentication) {
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
-        DetailPlanResponse detailAssignmentResponse = planService.updatePlan(groupId, assignId, dto, currentUserStudentNumber);
+        DetailPlanResponse detailAssignmentResponse = planService.updatePlan(groupId, planId, dto, currentUserStudentNumber);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
@@ -99,13 +99,13 @@ public class MentorController {
     @DeleteMapping("/group/{groupId}/plan/{planId}")
     public ResponseEntity<SuccessResponse<Void>> deletePlan(
             @PathVariable Long groupId,
-            @PathVariable Long assignId,
+            @PathVariable Long planId,
             Authentication authentication) {
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
-        planService.deletePlan(groupId, assignId, currentUserStudentNumber);
+        planService.deletePlan(groupId, planId, currentUserStudentNumber);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(

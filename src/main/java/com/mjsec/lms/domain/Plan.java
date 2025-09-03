@@ -32,6 +32,7 @@ public class Plan extends BaseEntity {
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @Builder.Default
     private boolean hasAssignment = false;
 
     @Column(name = "start_date")
@@ -54,5 +55,5 @@ public class Plan extends BaseEntity {
 
     @Builder.Default
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<AssignmentComment> comments = new ArrayList<>();
+    private List<PlanComment> comments = new ArrayList<>();
 }

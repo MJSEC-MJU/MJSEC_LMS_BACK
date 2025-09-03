@@ -71,7 +71,7 @@ public class AssignmentSubmissionService {
         validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
         Plan plan = validationUtils.validatePlan(assignmentId);
 
-        return submissionRepository.findAssignmentSubmissionsByAssignmentAssignId(plan.getPlanId())
+        return submissionRepository.findAssignmentSubmissionsByPlanPlanId(plan.getPlanId())
                 .stream()
                 .map(this::createSubmissionResponse)
                 .collect(Collectors.toList());

@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> {
 
-    public List<PlanComment> findAllByAssignmentAssignId(Long assignId);
+    public List<PlanComment> findAllByPlanPlanId(Long planId);
 }

@@ -93,7 +93,7 @@ public class WeeklyAlertService {
         for (Plan plan : plans) {
             // 과제를 제출한 사용자 ID 목록
             List<Long> submittedUserIds = submissionRepository
-                    .findAssignmentSubmissionsByAssignmentAssignId(plan.getPlanId())
+                    .findAssignmentSubmissionsByPlanPlanId(plan.getPlanId())
                     .stream()
                     .map(submission -> submission.getSubmitter().getUserId())
                     .collect(Collectors.toList());

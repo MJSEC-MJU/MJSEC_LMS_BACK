@@ -194,7 +194,7 @@ public class ValidationUtils {
     public void validateDuplicateSubmission(Long userId, Long assignmentId) {
 
         boolean alreadySubmitted = submissionRepository
-                .existsBySubmitterUserIdAndAssignmentAssignId(userId, assignmentId);
+                .existsBySubmitterUserIdAndPlanPlanId(userId, assignmentId);
 
         if (alreadySubmitted) {
             log.warn("User {} attempted duplicate submission for assignment {}", userId, assignmentId);

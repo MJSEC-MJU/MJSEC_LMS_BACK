@@ -50,13 +50,13 @@ public class AssignmentController {
     @GetMapping("/{groupId}/plan/{planId}")
     public ResponseEntity<SuccessResponse<DetailPlanResponse>> getDetailedPlan(
             @PathVariable Long groupId,
-            @PathVariable Long assignId,
+            @PathVariable Long planId,
             Authentication authentication) {
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
-        DetailPlanResponse detailPlanResponse = planService.getDetailPlan(groupId, assignId, currentUserStudentNumber);
+        DetailPlanResponse detailPlanResponse = planService.getDetailPlan(groupId, planId, currentUserStudentNumber);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
@@ -67,11 +67,11 @@ public class AssignmentController {
     }
 
     //과제 제출하기 (멘티가)
-    @PostMapping("/{groupId}/assignment-submit/{assignId}")
+    @PostMapping("/{groupId}/assignment-submit/{planId}")
     public ResponseEntity<SuccessResponse<SubmissionResponse>> submitAssignment(
             @Valid @RequestBody SubmissionDto dto,
             @PathVariable Long groupId,
-            @PathVariable Long assignId,
+            @PathVariable Long planId,
             Authentication authentication,
             HttpServletRequest request) {
 
@@ -81,7 +81,7 @@ public class AssignmentController {
         //클라이언트 IP 뽑아내기
         String clientIpAddr = IpUtils.getClientIp(request);
 
-        SubmissionResponse submissionResponse = assignmentSubmissionService.submitAssignment(groupId, assignId, currentUserStudentNumber, dto, clientIpAddr);
+        SubmissionResponse submissionResponse = assignmentSubmissionService.submitAssignment(groupId, planId, currentUserStudentNumber, dto, clientIpAddr);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
@@ -94,17 +94,17 @@ public class AssignmentController {
     /**
      * 전체 과제 제출 리스트 확인 가능
      */
-    @GetMapping("/{groupId}/assignment-submit/{assignId}/submission")
+    @GetMapping("/{groupId}/assignment-submit/{planId}/submission")
     public ResponseEntity<SuccessResponse<List<SubmissionResponse>>> getSubmissionList(
             @PathVariable Long groupId,
-            @PathVariable Long assignId,
+            @PathVariable Long planId,
             Authentication authentication
     ) {
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
-        List<SubmissionResponse> submissionResponseList = assignmentSubmissionService.getSubmissionList(groupId, assignId, currentUserStudentNumber);
+        List<SubmissionResponse> submissionResponseList = assignmentSubmissionService.getSubmissionList(groupId, planId, currentUserStudentNumber);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
@@ -119,17 +119,17 @@ public class AssignmentController {
      * 멘티 (자기 자신 과제만 조회 가능)
      * 멘토 (나머지도 다 가능)
      */
-    @GetMapping("/{groupId}/assignment-submit/{assignId}/submission/{submitId}")
+    @GetMapping("/{groupId}/assignment-submit/{planId}/submission/{submitId}")
     public ResponseEntity<SuccessResponse<DetailSubmissionResponse>> getUserDetailedSubmission(
             @PathVariable Long groupId,
-            @PathVariable Long assignId,
+            @PathVariable Long planId,
             @PathVariable Long submitId,
             Authentication authentication) {
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
-        DetailSubmissionResponse detailSubmissionResponse = assignmentSubmissionService.getDetailedSubmission(groupId, assignId, submitId, currentUserStudentNumber);
+        DetailSubmissionResponse detailSubmissionResponse = assignmentSubmissionService.getDetailedSubmission(groupId, planId, submitId, currentUserStudentNumber);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
@@ -140,10 +140,10 @@ public class AssignmentController {
     }
 
     //과제 제출 수정하기
-    @PutMapping("/{groupId}/assignment-submit/{assignId}/submission/{submitId}")
+    @PutMapping("/{groupId}/assignment-submit/{planId}/submission/{submitId}")
     public ResponseEntity<SuccessResponse<DetailSubmissionResponse>> updateSubmission(
             @PathVariable Long groupId,
-            @PathVariable Long assignId,
+            @PathVariable Long planId,
             @PathVariable Long submitId,
             @RequestBody SubmissionDto dto,
             Authentication authentication){
@@ -151,7 +151,7 @@ public class AssignmentController {
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
-        DetailSubmissionResponse detailSubmissionResponse = assignmentSubmissionService.updateAssignmentSubmission(groupId, assignId, submitId, currentUserStudentNumber, dto);
+        DetailSubmissionResponse detailSubmissionResponse = assignmentSubmissionService.updateAssignmentSubmission(groupId, planId, submitId, currentUserStudentNumber, dto);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
@@ -162,17 +162,17 @@ public class AssignmentController {
     }
 
     //과제 제출 삭제하기
-    @DeleteMapping("/{groupId}/assignment-submit/{assignId}/submission/{submitId}")
+    @DeleteMapping("/{groupId}/assignment-submit/{planId}/submission/{submitId}")
     public ResponseEntity<SuccessResponse<Void>> deleteSubmission(
             @PathVariable Long groupId,
-            @PathVariable Long assignId,
+            @PathVariable Long planId,
             @PathVariable Long submitId,
             Authentication authentication){
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
-        assignmentSubmissionService.deleteAssignmentSubmission(groupId, assignId, submitId, currentUserStudentNumber);
+        assignmentSubmissionService.deleteAssignmentSubmission(groupId, planId, submitId, currentUserStudentNumber);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
@@ -182,17 +182,17 @@ public class AssignmentController {
     }
 
     //댓글 생성하기
-    @PostMapping("/{groupId}/assignment/{assignId}/create-comment")
+    @PostMapping("/{groupId}/assignment/{planId}/create-comment")
     public ResponseEntity<SuccessResponse<PlanCommentResponse>> createAssignmentComment(
             @PathVariable Long groupId,
-            @PathVariable Long assignId,
+            @PathVariable Long planId,
             @RequestBody PlanCommentDto dto,
             Authentication authentication){
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
-        PlanCommentResponse assignmentComment = planService.createPlanComment(groupId, assignId, currentUserStudentNumber, dto);
+        PlanCommentResponse assignmentComment = planService.createPlanComment(groupId, planId, currentUserStudentNumber, dto);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
@@ -203,10 +203,10 @@ public class AssignmentController {
     }
 
     //과제 제출 피드백 남기기
-    @PostMapping("/{groupId}/assignment-submit/{assignId}/submission/{submitId}/feedback")
+    @PostMapping("/{groupId}/assignment-submit/{planId}/submission/{submitId}/feedback")
     public ResponseEntity<SuccessResponse<Void>> leaveFeedback(
             @PathVariable Long groupId,
-            @PathVariable Long assignId,
+            @PathVariable Long planId,
             @PathVariable Long submitId,
             @RequestBody SubmissionFeedbackDto dto,
             Authentication authentication){
@@ -214,7 +214,7 @@ public class AssignmentController {
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
-        assignmentSubmissionService.leaveFeedback(groupId, assignId, submitId, currentUserStudentNumber, dto);
+        assignmentSubmissionService.leaveFeedback(groupId, planId, submitId, currentUserStudentNumber, dto);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
@@ -225,10 +225,10 @@ public class AssignmentController {
 
 
     //과제 피드백 수정하기
-    @PutMapping("/{groupId}/assignment-submit/{assignId}/submission/{submitId}/feedback")
+    @PutMapping("/{groupId}/assignment-submit/{planId}/submission/{submitId}/feedback")
     public ResponseEntity<SuccessResponse<SubmissionFeedbackDto>> updateFeedback(
             @PathVariable Long groupId,
-            @PathVariable Long assignId,
+            @PathVariable Long planId,
             @PathVariable Long submitId,
             @RequestBody SubmissionFeedbackDto dto,
             Authentication authentication){
@@ -236,7 +236,7 @@ public class AssignmentController {
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
-        SubmissionFeedbackDto submissionFeedbackDto = assignmentSubmissionService.updateFeedback(groupId, assignId, submitId, currentUserStudentNumber, dto);
+        SubmissionFeedbackDto submissionFeedbackDto = assignmentSubmissionService.updateFeedback(groupId, planId, submitId, currentUserStudentNumber, dto);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
@@ -246,17 +246,17 @@ public class AssignmentController {
     }
 
     //과제 피드백 삭제하기
-    @DeleteMapping("/{groupId}/assignment-submit/{assignId}/submission/{submitId}/feedback")
+    @DeleteMapping("/{groupId}/assignment-submit/{planId}/submission/{submitId}/feedback")
     public ResponseEntity<SuccessResponse<Void>> deleteFeedback(
             @PathVariable Long groupId,
-            @PathVariable Long assignId,
+            @PathVariable Long planId,
             @PathVariable Long submitId,
             Authentication authentication) {
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
-        assignmentSubmissionService.deleteFeedback(groupId, assignId, submitId, currentUserStudentNumber);
+        assignmentSubmissionService.deleteFeedback(groupId, planId, submitId, currentUserStudentNumber);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
