@@ -32,12 +32,6 @@ public class Announcement extends BaseEntity {
     @Column(length = 50)
     private AnnouncementRole type;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime updatedAt;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User creator;
