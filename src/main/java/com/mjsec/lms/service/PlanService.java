@@ -75,6 +75,25 @@ public class PlanService {
         return planResponses;
     }
 
+    //과제가 있는 계획만 조회하기
+    public List<PlanResponse> getOnlyAssignmentPlan(Long groupId, Long currentUserStudentNumber){
+
+        log.info("getOnlyAssignmentPlan called");
+
+        validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
+
+        List<Plan> planList = planRepository.findAllByStudyGroup_StudyIdAndHasAssignmentTrue(groupId);
+
+        log.info("Found {} assignment-plans in StudyGroup", planList.size());
+
+        List<PlanResponse> planResponses = planList.stream()
+                .map(this::createResponse)
+                .collect(Collectors.toList());
+
+        log.info("get Only Assignment Plans Successfully!");
+        
+        return planResponses;
+    }
     // 계획 상세 조회하기
     @Transactional(readOnly = true)
     public DetailPlanResponse getDetailPlan(Long groupId, Long assignmentId, Long currentUserStudentNumber) {

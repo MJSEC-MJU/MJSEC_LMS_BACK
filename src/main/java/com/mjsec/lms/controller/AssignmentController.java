@@ -46,6 +46,25 @@ public class AssignmentController {
         );
     }
 
+    //과제가 있는 계획만 조회하기
+    @GetMapping("/{groupId}/assignment-plan")
+    public ResponseEntity<SuccessResponse<List<PlanResponse>>> getOnlyAssignmentPlan(
+            @PathVariable Long groupId,
+            Authentication authentication){
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        List<PlanResponse> ResponseList = planService.getOnlyAssignmentPlan(groupId, currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.PLAN_SUCCESS,
+                        ResponseList
+                )
+        );
+    }
+
     //계획 상세 조회하기
     @GetMapping("/{groupId}/plan/{planId}")
     public ResponseEntity<SuccessResponse<DetailPlanResponse>> getDetailedPlan(
@@ -67,7 +86,7 @@ public class AssignmentController {
     }
 
     //과제 제출하기 (멘티가)
-    @PostMapping("/{groupId}/assignment-submit/{planId}")
+    @PostMapping("/{groupId}/assignment/submit/{planId}")
     public ResponseEntity<SuccessResponse<SubmissionResponse>> submitAssignment(
             @Valid @RequestBody SubmissionDto dto,
             @PathVariable Long groupId,
@@ -94,7 +113,7 @@ public class AssignmentController {
     /**
      * 전체 과제 제출 리스트 확인 가능
      */
-    @GetMapping("/{groupId}/assignment-submit/{planId}/submission")
+    @GetMapping("/{groupId}/assignment/submit/{planId}")
     public ResponseEntity<SuccessResponse<List<SubmissionResponse>>> getSubmissionList(
             @PathVariable Long groupId,
             @PathVariable Long planId,
@@ -119,7 +138,7 @@ public class AssignmentController {
      * 멘티 (자기 자신 과제만 조회 가능)
      * 멘토 (나머지도 다 가능)
      */
-    @GetMapping("/{groupId}/assignment-submit/{planId}/submission/{submitId}")
+    @GetMapping("/{groupId}/assignment/submit/{planId}/submission/{submitId}")
     public ResponseEntity<SuccessResponse<DetailSubmissionResponse>> getUserDetailedSubmission(
             @PathVariable Long groupId,
             @PathVariable Long planId,
@@ -140,7 +159,7 @@ public class AssignmentController {
     }
 
     //과제 제출 수정하기
-    @PutMapping("/{groupId}/assignment-submit/{planId}/submission/{submitId}")
+    @PutMapping("/{groupId}/assignment/submit/{planId}/submission/{submitId}")
     public ResponseEntity<SuccessResponse<DetailSubmissionResponse>> updateSubmission(
             @PathVariable Long groupId,
             @PathVariable Long planId,
@@ -162,7 +181,7 @@ public class AssignmentController {
     }
 
     //과제 제출 삭제하기
-    @DeleteMapping("/{groupId}/assignment-submit/{planId}/submission/{submitId}")
+    @DeleteMapping("/{groupId}/assignment/submit/{planId}/submission/{submitId}")
     public ResponseEntity<SuccessResponse<Void>> deleteSubmission(
             @PathVariable Long groupId,
             @PathVariable Long planId,
@@ -182,8 +201,8 @@ public class AssignmentController {
     }
 
     //댓글 생성하기
-    @PostMapping("/{groupId}/assignment/{planId}/create-comment")
-    public ResponseEntity<SuccessResponse<PlanCommentResponse>> createAssignmentComment(
+    @PostMapping("/{groupId}/plan/{planId}/create-comment")
+    public ResponseEntity<SuccessResponse<PlanCommentResponse>> createPlanComment(
             @PathVariable Long groupId,
             @PathVariable Long planId,
             @RequestBody PlanCommentDto dto,
@@ -203,7 +222,7 @@ public class AssignmentController {
     }
 
     //과제 제출 피드백 남기기
-    @PostMapping("/{groupId}/assignment-submit/{planId}/submission/{submitId}/feedback")
+    @PostMapping("/{groupId}/assignment/submit/{planId}/submission/{submitId}/feedback")
     public ResponseEntity<SuccessResponse<Void>> leaveFeedback(
             @PathVariable Long groupId,
             @PathVariable Long planId,
@@ -225,7 +244,7 @@ public class AssignmentController {
 
 
     //과제 피드백 수정하기
-    @PutMapping("/{groupId}/assignment-submit/{planId}/submission/{submitId}/feedback")
+    @PutMapping("/{groupId}/assignment/submit/{planId}/submission/{submitId}/feedback")
     public ResponseEntity<SuccessResponse<SubmissionFeedbackDto>> updateFeedback(
             @PathVariable Long groupId,
             @PathVariable Long planId,

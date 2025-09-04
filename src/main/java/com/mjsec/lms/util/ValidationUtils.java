@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 @Component
@@ -81,11 +82,11 @@ public class ValidationUtils {
                 .orElseThrow(() -> new RestApiException(ErrorCode.STUDY_NOT_FOUND));
     }
 
-    // 과제 존재 여부를 확인하고 Assignment 객체를 반환
+    // 계획 존재 여부를 확인하고 Plan 객체를 반환
     public Plan validatePlan(Long assignmentId) {
 
         return planRepository.findById(assignmentId)
-                .orElseThrow(() -> new RestApiException(ErrorCode.ASSIGNMENT_NOT_FOUND));
+                .orElseThrow(() -> new RestApiException(ErrorCode.PLAN_NOT_FOUND));
     }
 
     // 제출물 존재 여부를 확인하고 AssignmentSubmission 객체를 반환
@@ -189,6 +190,19 @@ public class ValidationUtils {
     }
 
     // ========== 과제 관련 검증 ==========
+
+    //계획 중 과제가 포함인지 확인
+    public void validateAssignmentSubmissionAllowed(Long planId){
+
+        log.info("validate Assignment Submission Allowed");
+
+        Plan plan = planRepository.findById(planId)
+                .orElseThrow(() -> new RestApiException(ErrorCode.PLAN_NOT_FOUND));
+
+        if(!plan.isHasAssignment()){
+            throw new RestApiException(ErrorCode.ASSIGNMENT_NOT_FOUND);
+        }
+    }
 
     // 중복된 과제 제출인지 확인
     public void validateDuplicateSubmission(Long userId, Long assignmentId) {
