@@ -1,10 +1,9 @@
 package com.mjsec.lms.controller;
 
-
 import com.mjsec.lms.dto.*;
 import com.mjsec.lms.service.AssignmentService;
 import com.mjsec.lms.type.ResponseMessage;
-import com.mjsec.lms.util.IpUtil;
+import com.mjsec.lms.util.IpUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +19,7 @@ public class AssignmentController {
     private final AssignmentService assignmentService;
 
     public AssignmentController(AssignmentService assignmentService) {
+
         this.assignmentService = assignmentService;
     }
 
@@ -135,7 +135,7 @@ public class AssignmentController {
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
         //클라이언트 IP 뽑아내기
-        String clientIpAddr = IpUtil.getClientIp(request);
+        String clientIpAddr = IpUtils.getClientIp(request);
 
         SubmissionResponse submissionResponse = assignmentService.submitAssignment(groupId, assignId, currentUserStudentNumber, dto, clientIpAddr);
 
