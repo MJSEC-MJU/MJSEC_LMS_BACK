@@ -40,6 +40,10 @@ services:
       DB_USERNAME: ${MYSQL_USER}
       DB_PASSWORD: ${MYSQL_PASSWORD}
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE}?serverTimezone=UTC&CharacterEncoding=UTF-8
+      
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      
       # Gmail - application.yml에서 사용하는 변수명
       GMAIL_USERNAME: ${GMAIL_USERNAME}
       GMAIL_APP_PASSWORD: ${GMAIL_PASSWORD}
