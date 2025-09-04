@@ -1,0 +1,87 @@
+name: MJSEC LMS CI
+
+on:
+  push: { branches: [ dev ] }
+  pull_request: { branches: [ dev ] }
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+    
+    env:
+      MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+      MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+      MYSQL_USER: ${{ secrets.MYSQL_USER }}
+      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+      SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
+      SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
+      SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+      SPRING_JPA_DATABASE_PLATFORM: ${{ secrets.SPRING_JPA_DATABASE_PLATFORM }}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${{ secrets.SPRING_JPA_HIBERNATE_DDL_AUTO }}
+      SPRING_REDIS_HOST: ${{ secrets.SPRING_REDIS_HOST }}
+      SPRING_REDIS_PORT: ${{ secrets.SPRING_REDIS_PORT }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      ADMIN_NUMBER: ${{ secrets.ADMIN_NUMBER }}
+      ADMIN_NAME: ${{ secrets.ADMIN_NAME }}
+      ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
+      GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Create .env
+        run: |
+          {
+            echo "MYSQL_ROOT_PASSWORD=${{ env.MYSQL_ROOT_PASSWORD }}"
+            echo "MYSQL_DATABASE=${{ env.MYSQL_DATABASE }}"
+            echo "MYSQL_USER=${{ env.MYSQL_USER }}"
+            echo "MYSQL_PASSWORD=${{ env.MYSQL_PASSWORD }}"
+            echo "SPRING_DATASOURCE_URL=${{ env.SPRING_DATASOURCE_URL }}"
+            echo "SPRING_DATASOURCE_USERNAME=${{ env.SPRING_DATASOURCE_USERNAME }}"
+            echo "SPRING_DATASOURCE_PASSWORD=${{ env.SPRING_DATASOURCE_PASSWORD }}"
+            echo "SPRING_JPA_DATABASE_PLATFORM=${{ env.SPRING_JPA_DATABASE_PLATFORM }}"
+            echo "SPRING_JPA_HIBERNATE_DDL_AUTO=${{ env.SPRING_JPA_HIBERNATE_DDL_AUTO }}"
+            echo "SPRING_REDIS_HOST=${{ env.SPRING_REDIS_HOST }}"
+            echo "SPRING_REDIS_PORT=${{ env.SPRING_REDIS_PORT }}"
+            echo "JWT_SECRET=${{ env.JWT_SECRET }}"
+            echo "ADMIN_NUMBER=${{ env.ADMIN_NUMBER }}"
+            echo "ADMIN_NAME=${{ env.ADMIN_NAME }}"
+            echo "ADMIN_EMAIL=${{ env.ADMIN_EMAIL }}"
+            echo "ADMIN_PASSWORD=${{ env.ADMIN_PASSWORD }}"
+            echo "GMAIL_USERNAME=${{ env.GMAIL_USERNAME }}"
+            echo "GMAIL_PASSWORD=${{ env.GMAIL_PASSWORD }}"
+          } > .env
+          cat .env | sed 's/^\(.*PASSWORD\|JWT_SECRET\)=.*/\1=****/'
+
+      - name: Show Docker versions
+        run: |
+          docker --version
+          docker compose version
+
+      - name: Docker Compose Up (db/redis/app)
+        run: |
+          docker compose up -d db redis app
+          docker compose ps
+
+      - name: Wait for MySQL
+        run: |
+          for i in $(seq 1 30); do
+            if docker compose exec -T db mysqladmin ping -h 127.0.0.1 -uroot -p"${{ env.MYSQL_ROOT_PASSWORD }}" --silent; then
+              echo "MySQL is ready"; exit 0
+            fi
+            echo "Waiting for MySQL... ($i/30)"; sleep 2
+          done
+          echo "MySQL did not become ready"; docker compose logs db; exit 1
+
+      - name: Run Tests in Docker
+        run: docker compose exec -T app mvn test
+
+      - name: App logs (tail)
+        if: always()
+        run: docker compose logs --no-color --tail=200 app || true
+
+      - name: Stop containers
+        if: always()
+        run: docker compose down -v

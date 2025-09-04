@@ -7,8 +7,9 @@ services:
       MYSQL_DATABASE:      ${MYSQL_DATABASE}
       MYSQL_USER:          ${MYSQL_USER}
       MYSQL_PASSWORD:      ${MYSQL_PASSWORD}
+      
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
     networks:
@@ -17,16 +18,12 @@ services:
   redis:
     image: redis:6-alpine
     container_name: mjsec-redis
-    environment:
-      # REDIS_PASSWORD: ${REDIS_PASSWORD}
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
       - mjsec-network
-    # requirepass를 쓰려면 이렇게:
-    # command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
 
   app:
     build:
@@ -36,26 +33,22 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # Spring Datasource
-      SPRING_DATASOURCE_URL:          ${SPRING_DATASOURCE_URL}
-      SPRING_DATASOURCE_USERNAME:     ${SPRING_DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD:     ${SPRING_DATASOURCE_PASSWORD}
-      SPRING_JPA_DATABASE_PLATFORM:   ${SPRING_JPA_DATABASE_PLATFORM}
-      SPRING_JPA_HIBERNATE_DDL_AUTO:  ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      # Database - application.yml에서 사용하는 변수명
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_USERNAME: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
 
-      # Redis
-      SPRING_REDIS_HOST:  ${SPRING_REDIS_HOST}
-      SPRING_REDIS_PORT:  ${SPRING_REDIS_PORT}
-
-      # 메일 자동 설정 완전 비활성화 — 메일 안 쓸 때 안전장치
-      # SPRING_AUTOCONFIGURE_EXCLUDE: "org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration,org.springframework.boot.autoconfigure.mail.MailSenderValidatorAutoConfiguration"
+      # Gmail - application.yml에서 사용하는 변수명
+      GMAIL_USERNAME: ${GMAIL_USERNAME}
+      GMAIL_APP_PASSWORD: ${GMAIL_PASSWORD}
 
       # JWT, Admin
-      JWT_SECRET:      ${JWT_SECRET}
-      ADMIN_NUMBER:    ${ADMIN_NUMBER}
-      ADMIN_NAME:      ${ADMIN_NAME}
-      ADMIN_EMAIL:     ${ADMIN_EMAIL}
-      ADMIN_PASSWORD:  ${ADMIN_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_NUMBER: ${ADMIN_NUMBER}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      
     depends_on:
       - db
       - redis
