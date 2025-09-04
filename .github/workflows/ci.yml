@@ -1,3 +1,4 @@
+
 name: MJSEC LMS CI
 
 on:
@@ -13,17 +14,8 @@ jobs:
       MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
       MYSQL_USER: ${{ secrets.MYSQL_USER }}
       MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-      SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
-      SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
-      SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
-      SPRING_JPA_DATABASE_PLATFORM: ${{ secrets.SPRING_JPA_DATABASE_PLATFORM }}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: ${{ secrets.SPRING_JPA_HIBERNATE_DDL_AUTO }}
-      SPRING_REDIS_HOST: ${{ secrets.SPRING_REDIS_HOST }}
-      SPRING_REDIS_PORT: ${{ secrets.SPRING_REDIS_PORT }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       ADMIN_NUMBER: ${{ secrets.ADMIN_NUMBER }}
-      ADMIN_NAME: ${{ secrets.ADMIN_NAME }}
-      ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
       ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
       GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
       GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
@@ -38,16 +30,11 @@ jobs:
             echo "MYSQL_DATABASE=${{ env.MYSQL_DATABASE }}"
             echo "MYSQL_USER=${{ env.MYSQL_USER }}"
             echo "MYSQL_PASSWORD=${{ env.MYSQL_PASSWORD }}"
-            echo "DB_HOST=db"
-            echo "DB_PORT=3306"
-            echo "DB_NAME=${{ env.MYSQL_DATABASE }}"
-            echo "DB_USERNAME=${{ env.MYSQL_USER }}"
-            echo "DB_PASSWORD=${{ env.MYSQL_PASSWORD }}"
             echo "JWT_SECRET=${{ env.JWT_SECRET }}"
             echo "ADMIN_NUMBER=${{ env.ADMIN_NUMBER }}"
             echo "ADMIN_PASSWORD=${{ env.ADMIN_PASSWORD }}"
             echo "GMAIL_USERNAME=${{ env.GMAIL_USERNAME }}"
-            echo "GMAIL_APP_PASSWORD=${{ env.GMAIL_PASSWORD }}"
+            echo "GMAIL_PASSWORD=${{ env.GMAIL_PASSWORD }}"
           } > .env
           cat .env | sed 's/^\(.*PASSWORD\|JWT_SECRET\)=.*/\1=****/'
 
@@ -63,13 +50,24 @@ jobs:
 
       - name: Wait for MySQL
         run: |
-          for i in $(seq 1 30); do
+          echo "Waiting for MySQL to be ready..."
+          for i in $(seq 1 60); do
             if docker compose exec -T db mysqladmin ping -h 127.0.0.1 -uroot -p"${{ env.MYSQL_ROOT_PASSWORD }}" --silent; then
-              echo "MySQL is ready"; exit 0
+              echo "MySQL is ready!"
+              # MySQL이 준비되었어도 추가로 5초 더 기다리기
+              sleep 5
+              break
             fi
-            echo "Waiting for MySQL... ($i/30)"; sleep 2
+            echo "Waiting for MySQL... ($i/60)"
+            sleep 3
           done
-          echo "MySQL did not become ready"; docker compose logs db; exit 1
+          
+          # 최종 확인
+          if ! docker compose exec -T db mysqladmin ping -h 127.0.0.1 -uroot -p"${{ env.MYSQL_ROOT_PASSWORD }}" --silent; then
+            echo "MySQL failed to become ready"
+            docker compose logs db
+            exit 1
+          fi
 
       - name: Run Tests in Docker
         run: docker compose exec -T app mvn test
