@@ -1,4 +1,3 @@
-
 name: MJSEC LMS CI
 
 on:
@@ -48,26 +47,39 @@ jobs:
           docker compose up -d db redis app
           docker compose ps
 
-      - name: Wait for MySQL
+      - name: Wait for MySQL and restart app
         run: |
           echo "Waiting for MySQL to be ready..."
           for i in $(seq 1 60); do
             if docker compose exec -T db mysqladmin ping -h 127.0.0.1 -uroot -p"${{ env.MYSQL_ROOT_PASSWORD }}" --silent; then
               echo "MySQL is ready!"
-              # MySQL이 준비되었어도 추가로 5초 더 기다리기
-              sleep 5
               break
             fi
             echo "Waiting for MySQL... ($i/60)"
             sleep 3
           done
           
-          # 최종 확인
+          # MySQL 준비 확인
           if ! docker compose exec -T db mysqladmin ping -h 127.0.0.1 -uroot -p"${{ env.MYSQL_ROOT_PASSWORD }}" --silent; then
             echo "MySQL failed to become ready"
             docker compose logs db
             exit 1
           fi
+          
+          echo "MySQL is ready, now restarting app..."
+          docker compose restart app
+          sleep 20
+          
+          echo "Waiting for app to be ready..."
+          for i in $(seq 1 30); do
+            if docker compose ps app | grep -q "running"; then
+              echo "App is running!"
+              sleep 10  # 완전 시작 대기
+              break
+            fi
+            echo "Waiting for app to start... ($i/30)"
+            sleep 5
+          done
 
       - name: Run Tests in Docker
         run: docker compose exec -T app mvn test
