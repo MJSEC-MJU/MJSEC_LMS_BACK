@@ -1,0 +1,73 @@
+name: MJSEC LMS CI
+
+on:
+  push: { branches: [ dev ] }
+  pull_request: { branches: [ dev ] }
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+    
+    env:
+      MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+      MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+      MYSQL_USER: ${{ secrets.MYSQL_USER }}
+      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      ADMIN_NUMBER: ${{ secrets.ADMIN_NUMBER }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
+      GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Create .env
+        run: |
+          {
+            echo "MYSQL_ROOT_PASSWORD=${{ env.MYSQL_ROOT_PASSWORD }}"
+            echo "MYSQL_DATABASE=${{ env.MYSQL_DATABASE }}"
+            echo "MYSQL_USER=${{ env.MYSQL_USER }}"
+            echo "MYSQL_PASSWORD=${{ env.MYSQL_PASSWORD }}"
+            echo "JWT_SECRET=${{ env.JWT_SECRET }}"
+            echo "ADMIN_NUMBER=${{ env.ADMIN_NUMBER }}"
+            echo "ADMIN_PASSWORD=${{ env.ADMIN_PASSWORD }}"
+            echo "GMAIL_USERNAME=${{ env.GMAIL_USERNAME }}"
+            echo "GMAIL_PASSWORD=${{ env.GMAIL_PASSWORD }}"
+          } > .env
+          cat .env | sed 's/^\(.*PASSWORD\|JWT_SECRET\)=.*/\1=****/'
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      - name: Docker Compose Build and Up
+        run: docker-compose up --build -d
+
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do
+            docker-compose exec -T db mysqladmin ping -h localhost --silent && break
+            echo "Waiting for MySQL..."
+            sleep 2
+          done
+
+      - name: Run Gradle Tests in Docker
+        run: docker-compose run --rm test
+
+      - name: Start Backend Container
+        run: docker-compose up -d app
+
+      - name: Check Backend Container Logs
+        run: docker-compose logs app
+
+      - name: Stop containers
+        if: always()
+        run: docker-compose down
+
+      - name: Upload Test Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: Back/build/reports/tests/test
