@@ -56,10 +56,10 @@ jobs:
         run: docker-compose run --rm test
 
       - name: Start Backend Container
-        run: docker-compose up -d backend
+        run: docker-compose up -d app
 
       - name: Check Backend Container Logs
-        run: docker-compose logs backend
+        run: docker-compose logs app
 
       - name: Stop containers
         if: always()
