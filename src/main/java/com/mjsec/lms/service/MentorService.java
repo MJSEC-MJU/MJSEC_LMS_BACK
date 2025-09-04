@@ -62,6 +62,10 @@ public class MentorService {
         User mentee = userRepository.findByStudentNumber(studentNumber)
                 .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
 
+        if(groupMemberRepository.existsByUserAndStudyGroup(mentee, studyGroup)){
+            throw new RestApiException(ErrorCode.ALREADY_JOINED_GROUP);
+        }
+
         GroupMember groupMember = GroupMember.builder()
                 .user(mentee)
                 .studyGroup(studyGroup)
