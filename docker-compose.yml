@@ -66,9 +66,42 @@ services:
       - mjsec-network
     # (아래 3단계에서 Dockerfile HEALTHCHECK 추가 시 compose의 healthcheck는 생략 가능)
 
+  test:
+    image: gradle:8.1.1-jdk17
+    container_name: mjsec-test
+    working_dir: /app
+    volumes:
+      - ./Back:/app
+      - gradle_cache:/home/gradle/.gradle
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_USERNAME: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE}?serverTimezone=UTC&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      GMAIL_USERNAME: ${GMAIL_USERNAME}
+      GMAIL_APP_PASSWORD: ${GMAIL_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_NUMBER: ${ADMIN_NUMBER}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    entrypoint: ["sh", "-c"]
+    command: ["./gradlew test --stacktrace"]
+    networks:
+      - mjsec-network
+  
 volumes:
   db_data:
   redis_data:
+  gradle_cache:
 
 networks:
   mjsec-network:
