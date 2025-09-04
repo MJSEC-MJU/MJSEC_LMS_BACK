@@ -4,17 +4,28 @@ services:
     container_name: mjsec-mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE:      ${MYSQL_DATABASE}
-      MYSQL_USER:          ${MYSQL_USER}
-      MYSQL_PASSWORD:      ${MYSQL_PASSWORD}
-      
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      # (선택) 초기 인코딩/인증 설정
+    command: [
+      "--character-set-server=utf8mb4",
+      "--collation-server=utf8mb4_unicode_ci",
+      "--default-authentication-plugin=mysql_native_password"
+    ]
     ports:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
     networks:
       - mjsec-network
-
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
+    
   redis:
     image: redis:6-alpine
     container_name: mjsec-redis
@@ -33,31 +44,27 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # Database - application.yml에서 사용하는 변수명
       DB_HOST: db
       DB_PORT: 3306
       DB_NAME: ${MYSQL_DATABASE}
       DB_USERNAME: ${MYSQL_USER}
       DB_PASSWORD: ${MYSQL_PASSWORD}
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE}?serverTimezone=UTC&CharacterEncoding=UTF-8
-      
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE}?serverTimezone=UTC&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&useSSL=false
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
-      
-      # Gmail - application.yml에서 사용하는 변수명
       GMAIL_USERNAME: ${GMAIL_USERNAME}
       GMAIL_APP_PASSWORD: ${GMAIL_PASSWORD}
-
-      # JWT, Admin
       JWT_SECRET: ${JWT_SECRET}
       ADMIN_NUMBER: ${ADMIN_NUMBER}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
-      
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - mjsec-network
+    # (아래 3단계에서 Dockerfile HEALTHCHECK 추가 시 compose의 healthcheck는 생략 가능)
 
 volumes:
   db_data:

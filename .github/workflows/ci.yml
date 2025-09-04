@@ -36,83 +36,38 @@ jobs:
             echo "GMAIL_PASSWORD=${{ env.GMAIL_PASSWORD }}"
           } > .env
           cat .env | sed 's/^\(.*PASSWORD\|JWT_SECRET\)=.*/\1=****/'
-
-      - name: Show Docker versions
+      - name: Install Docker Compose
         run: |
-          docker --version
-          docker compose version
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
 
-      - name: Docker Compose Up (db/redis/app)
-        run: |
-          docker compose up -d db redis app
-          docker compose ps
+      - name: Docker Compose Build and Up
+        run: docker-compose up --build -d
 
-      - name: Wait for MySQL and restart app
+      - name: Wait for MySQL
         run: |
-          echo "Waiting for MySQL to be ready..."
-          for i in $(seq 1 60); do
-            if docker compose exec -T db mysqladmin ping -h 127.0.0.1 -uroot -p"${{ env.MYSQL_ROOT_PASSWORD }}" --silent; then
-              echo "MySQL is ready!"
-              break
-            fi
-            echo "Waiting for MySQL... ($i/60)"
-            sleep 3
-          done
-          
-          # MySQL 준비 확인
-          if ! docker compose exec -T db mysqladmin ping -h 127.0.0.1 -uroot -p"${{ env.MYSQL_ROOT_PASSWORD }}" --silent; then
-            echo "MySQL failed to become ready"
-            docker compose logs db
-            exit 1
-          fi
-          
-          echo "MySQL is ready, now restarting app..."
-          docker compose restart app
-          sleep 20
-          
-          echo "Waiting for app to be ready..."
-          for i in $(seq 1 30); do
-            if docker compose ps app | grep -q "running"; then
-              echo "App is running!"
-              sleep 10  # 완전 시작 대기
-              break
-            fi
-            echo "Waiting for app to start... ($i/30)"
-            sleep 5
+          for i in {1..30}; do
+            docker-compose exec -T db mysqladmin ping -h localhost --silent && break
+            echo "Waiting for MySQL..."
+            sleep 2
           done
 
-      - name: Run Tests in Docker
-        run: |
-          # 앱이 정상적으로 실행되고 있으면 기본적인 헬스체크로 테스트 대체
-          if docker compose ps app | grep -q "running"; then
-            echo "Application is running successfully!"
-            echo "Testing API endpoints..."
-            
-            # 기본 헬스체크
-            if curl -f -s http://localhost:8080/actuator/health > /dev/null; then
-              echo "✅ Health check passed"
-            else
-              echo "❌ Health check failed"
-              exit 1
-            fi
-            
-            # Swagger UI 접근 테스트
-            if curl -f -s http://localhost:8080/swagger-ui.html > /dev/null; then
-              echo "✅ Swagger UI accessible"
-            else
-              echo "❌ Swagger UI not accessible"
-            fi
-            
-            echo "✅ Basic integration tests passed!"
-          else
-            echo "❌ Application is not running"
-            exit 1
-          fi
+      - name: Run Gradle Tests in Docker
+        run: docker-compose run --rm test
 
-      - name: App logs (tail)
-        if: always()
-        run: docker compose logs --no-color --tail=200 app || true
+      - name: Start Backend Container
+        run: docker-compose up -d backend
+
+      - name: Check Backend Container Logs
+        run: docker-compose logs backend
 
       - name: Stop containers
         if: always()
-        run: docker compose down -v
+        run: docker-compose down
+
+      - name: Upload Test Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: Back/build/reports/tests/test
