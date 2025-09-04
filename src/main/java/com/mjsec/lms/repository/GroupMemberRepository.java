@@ -27,4 +27,7 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> 
 
     //특정 스터디 그룹의 모든 멤버 조회
     List<GroupMember> findByStudyGroup_StudyId(Long studyId);
+
+    // 유저와 스터디 그룹 정보를 받아 이미 있는 멤버인지 확인
+    boolean existsByUserAndStudyGroup(User user, StudyGroup studyGroup);
 }
