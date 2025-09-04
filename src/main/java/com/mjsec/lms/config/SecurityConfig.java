@@ -79,8 +79,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/groups/**").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/users/announcements/**").hasAnyRole("ADMIN", "USER")
-                        .requestMatchers("/api/v1/users/**").permitAll() // 임시로 허용
+                        .requestMatchers("/api/v1/user/announcements/**").hasAnyRole("ADMIN", "USER")
+                        .requestMatchers("/api/v1/user/**").permitAll() // 임시로 허용
 
                 );
 
