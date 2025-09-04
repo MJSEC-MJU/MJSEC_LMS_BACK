@@ -71,7 +71,7 @@ services:
     container_name: mjsec-test
     working_dir: /app
     volumes:
-      - ./Back:/app
+      - .:/app
       - gradle_cache:/home/gradle/.gradle
     environment:
       SPRING_PROFILES_ACTIVE: local
