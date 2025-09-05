@@ -2,7 +2,9 @@ package com.mjsec.lms.service;
 
 import com.mjsec.lms.domain.Attendance;
 import com.mjsec.lms.domain.StudyActivity;
+import com.mjsec.lms.domain.StudyGroup;
 import com.mjsec.lms.domain.User;
+import com.mjsec.lms.dto.SimpleStudyActivityResponse;
 import com.mjsec.lms.dto.StudyActivityDto;
 import com.mjsec.lms.dto.StudyActivityResponse;
 import com.mjsec.lms.dto.StudyAttendanceDto;
@@ -60,6 +62,45 @@ public class StudyGroupService {
         return createStudyActivityResponse(savedStudyActivity,attendanceList);
     }
 
+    // 스터디 활동 글 전체 조회
+    public List<SimpleStudyActivityResponse> getStudyActivityList(Long groupId, Long currentUserStudentNumber){
+
+        log.info("getStudyActivityList called");
+
+        //검증 로직 (사용자, 스터디그룹)
+        validationUtils.validateBasicAccess(groupId,currentUserStudentNumber);
+
+        List<StudyActivity> studyActivityList = studyActivityRepository.findAllByStudyGroupId(groupId);
+
+        return createSimpleStudyActivityList(studyActivityList);
+    }
+
+    // 스터디 활동 글 삭제
+    public void deleteStudyActivity(Long groupId, Long activityId, Long currentUserStudentNumber){
+
+        log.info("deleteStudyActivity called");
+
+        User user = validationUtils.validateBasicAccess(groupId,currentUserStudentNumber);
+        validationUtils.validateMentorRole(user.getUserId(), groupId);
+        StudyActivity studyActivity = validationUtils.validateStudyActivity(activityId);
+
+        studyActivityRepository.delete(studyActivity);
+
+        log.info("StudyActivity({}) deleted", activityId);
+    }
+
+    //활동 글 상세 조회
+    public StudyActivityResponse getStudyActivity(Long groupId, Long activityId, Long currentUserStudentNumber){
+
+        log.info("getStudyActivity called");
+
+        User user = validationUtils.validateBasicAccess(groupId,currentUserStudentNumber);
+        StudyGroup studyGroup = validationUtils.validateStudyGroup(groupId);
+        validationUtils.validateGroupMembership(user,studyGroup);
+        StudyActivity studyActivity = validationUtils.validateStudyActivity(activityId);
+
+        return createStudyActivityResponse(studyActivity, studyActivity.getAttendances());
+    }
 
     /*
     DTO 생성용 메서드
@@ -72,6 +113,7 @@ public class StudyGroupService {
                 .title(studyActivityDto.getTitle())
                 .content(studyActivityDto.getContent())
                 .studyGroup(studyGroupRepository.findById(groupId).orElseThrow())
+                .week(studyActivityDto.getWeek())
                 .build();
 
         return studyActivityRepository.save(studyActivity);
@@ -86,6 +128,7 @@ public class StudyGroupService {
                         .studyGroup(savedStudyActivity.getStudyGroup())
                         .studyActivity(savedStudyActivity)
                         .type(attendanceDto.getType())
+                        .week(savedStudyActivity.getWeek())
                         .attendanceDate(LocalDate.now())
                         .build())
                 .collect(Collectors.toList());
@@ -93,6 +136,7 @@ public class StudyGroupService {
         return attendanceRepository.saveAll(attendances);
     }
 
+    // 스터디 활동 글 Response 반환
     public StudyActivityResponse createStudyActivityResponse(StudyActivity studyActivity, List<Attendance> attendanceList){
 
         List<StudyAttendanceDto> studyAttendanceDtoList = attendanceList.stream()
@@ -107,9 +151,23 @@ public class StudyGroupService {
                 .StudyActivityId(studyActivity.getActivityId())
                 .title(studyActivity.getTitle())
                 .content(studyActivity.getContent())
+                .week(studyActivity.getWeek())
                 .studyAttendanceDtoList(studyAttendanceDtoList)
                 .createdAt(studyActivity.getCreatedAt())
                 .build();
+    }
+
+    //SimpleStudyActivity 리스트로 반환
+    public List<SimpleStudyActivityResponse> createSimpleStudyActivityList(List<StudyActivity> studyActivityList){
+
+        return studyActivityList.stream()
+                .map(activity -> SimpleStudyActivityResponse.builder()
+                        .activityId(activity.getActivityId())
+                        .title(activity.getTitle())
+                        .week(activity.getWeek())
+                        .createdAt(activity.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
     }
 
 

@@ -14,4 +14,6 @@ public class StudyActivityDto {
     private String content;
 
     private List<StudyAttendanceDto> studyAttendanceDtoList;
+
+    private String week;
 }

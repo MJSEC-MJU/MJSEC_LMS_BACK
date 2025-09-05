@@ -85,7 +85,10 @@ public enum ErrorCode {
     //멘토
     MENTOR_ONLY_CAN_ADD_MEMBER(HttpStatus.BAD_REQUEST, "멘토만 스터디원을 추가할 수 있습니다."),
     MENTOR_ONLY_CAN_DELETE_MEMBER(HttpStatus.BAD_REQUEST, "멘토만 스터디원을 삭제할 수 있습니다."),
-    ALREADY_JOINED_GROUP(HttpStatus.BAD_REQUEST, "이미 스터디 그룹에 속해 있는 멘티 입니다.")
+    ALREADY_JOINED_GROUP(HttpStatus.BAD_REQUEST, "이미 스터디 그룹에 속해 있는 멘티 입니다."),
+
+    //활동 글
+    STUDY_ACTIVITY_NOT_FOUND(HttpStatus.NOT_FOUND, "활동 글을 찾을 수 없습니다."),
     ;
   
     private final HttpStatus status;

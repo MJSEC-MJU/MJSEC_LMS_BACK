@@ -19,6 +19,8 @@ public class StudyActivityResponse {
 
     private List<StudyAttendanceDto> studyAttendanceDtoList;
 
+    private String week;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

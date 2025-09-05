@@ -47,4 +47,6 @@ public class Attendance extends BaseEntity{
 
     @Column(name = "attendance_date", nullable = false)
     private LocalDate attendanceDate;
+
+    private String week;
 }

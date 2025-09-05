@@ -63,6 +63,8 @@ public enum ResponseMessage {
 
     //활동 글 관련
     STUDY_ACTIVITY_SUCCESS("활동 글 생성 성공"),
+    STUDY_ACTIVITY_GET_SUCCESS("활동 글 조회 성공"),
+    STUDY_ACTIVITY_DELETE_SUCCESS("활동 글 삭제 성공"),
     ;
     private final String message;
 }

@@ -31,6 +31,9 @@ public class StudyActivity extends BaseEntity{
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @Column(name="week", nullable = false, length = 50)
+    private String week;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "study_id")
     private StudyGroup studyGroup;
