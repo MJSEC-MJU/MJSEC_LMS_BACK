@@ -37,6 +37,10 @@ public class Attendance extends BaseEntity{
     @JoinColumn(name = "study_id")
     private StudyGroup studyGroup;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "activity_id")
+    private StudyActivity studyActivity;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AttendanceType type;

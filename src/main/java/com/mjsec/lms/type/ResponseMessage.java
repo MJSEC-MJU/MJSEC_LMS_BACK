@@ -59,7 +59,10 @@ public enum ResponseMessage {
     // Mentor 관련
     ADD_MEMBER_SUCCESS("스터디원 추가 성공"),
     DELETE_MEMBER_SUCCESS("스터디원 삭제 성공"),
-    WARN_MEMBER_SUCCESS("수동 경고 부여 성공")
+    WARN_MEMBER_SUCCESS("수동 경고 부여 성공"),
+
+    //활동 글 관련
+    STUDY_ACTIVITY_SUCCESS("활동 글 생성 성공"),
     ;
     private final String message;
 }
