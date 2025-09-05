@@ -15,7 +15,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.regex.Pattern;
 
 @Component
@@ -50,13 +49,15 @@ public class ValidationUtils {
     private final AttendanceRepository attendanceRepository;
     private final PlanRepository planRepository;
     private final SubmissionRepository submissionRepository;
+    private final PlanCommentRepository planCommentRepository;
 
     public ValidationUtils(UserRepository userRepository,
                            StudyGroupRepository studyGroupRepository,
                            GroupMemberRepository groupMemberRepository,
                            AttendanceRepository attendanceRepository,
                            PlanRepository planRepository,
-                           SubmissionRepository submissionRepository) {
+                           SubmissionRepository submissionRepository,
+                           PlanCommentRepository planCommentRepository) {
 
         this.userRepository = userRepository;
         this.studyGroupRepository = studyGroupRepository;
@@ -64,6 +65,7 @@ public class ValidationUtils {
         this.attendanceRepository = attendanceRepository;
         this.planRepository = planRepository;
         this.submissionRepository = submissionRepository;
+        this.planCommentRepository = planCommentRepository;
     }
 
     // ========== 기본 엔티티 검증 ==========
@@ -83,9 +85,9 @@ public class ValidationUtils {
     }
 
     // 계획 존재 여부를 확인하고 Plan 객체를 반환
-    public Plan validatePlan(Long assignmentId) {
+    public Plan validatePlan(Long planId) {
 
-        return planRepository.findById(assignmentId)
+        return planRepository.findById(planId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.PLAN_NOT_FOUND));
     }
 
@@ -144,6 +146,12 @@ public class ValidationUtils {
         if(user.getRole() != UserRole.ROLE_ADMIN){
             throw new RestApiException(ErrorCode.UNAUTHORIZED);
         }
+    }
+
+    //댓글 작성자 본인인지 확인하기
+    public PlanComment validateCommentAccess(Long commentId, Long userId){
+
+        return planCommentRepository.findByCommentIdAndAuthor_UserId(commentId,userId).orElseThrow(()-> new RestApiException(ErrorCode.PLAN_COMMENT_NOT_FOUND));
     }
 
     // ========== 복합 접근 검증 ==========
@@ -268,7 +276,7 @@ public class ValidationUtils {
     public void validateComment(String content) {
 
         if (content == null || content.trim().isEmpty()) {
-            throw new RestApiException(ErrorCode.ASSIGNMENT_COMMENT_REQUIRED);
+            throw new RestApiException(ErrorCode.PLAN_COMMENT_REQUIRED);
         }
     }
 

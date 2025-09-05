@@ -7,6 +7,7 @@ import com.mjsec.lms.type.ResponseMessage;
 import com.mjsec.lms.util.IpUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -211,15 +212,57 @@ public class AssignmentController {
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
-        PlanCommentResponse assignmentComment = planService.createPlanComment(groupId, planId, currentUserStudentNumber, dto);
+        PlanCommentResponse planCommentResponse = planService.createPlanComment(groupId, planId, currentUserStudentNumber, dto);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
                         ResponseMessage.COMMENT_CREATE_SUCCESS,
-                        assignmentComment
+                        planCommentResponse
                 )
         );
     }
+
+    //댓글 수정하기
+    @PutMapping("/{groupId}/plan/{planId}/comment/{commentId}")
+    public ResponseEntity<SuccessResponse<PlanCommentResponse>> updatePlanComment(
+            @PathVariable Long groupId,
+            @PathVariable Long planId,
+            @PathVariable Long commentId,
+            @RequestBody PlanCommentDto dto,
+            Authentication authentication){
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        PlanCommentResponse planCommentResponse = planService.updatePlanComment(groupId, planId, commentId, currentUserStudentNumber,dto);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.COMMENT_UPDATE_SUCCESS,
+                        planCommentResponse
+                )
+        );
+    }
+
+    @DeleteMapping("/{groupId}/plan/{planId}/comment/{commentId}")
+    public ResponseEntity<SuccessResponse<Void>> deletePlanComment(
+            @PathVariable Long groupId,
+            @PathVariable Long planId,
+            @PathVariable Long commentId,
+            Authentication authentication){
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        planService.deletePlanComment(groupId,planId,commentId,currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.COMMENT_DELETE_SUCCESS
+                )
+        );
+    }
+
 
     //과제 제출 피드백 남기기
     @PostMapping("/{groupId}/assignment/submit/{planId}/submission/{submitId}/feedback")

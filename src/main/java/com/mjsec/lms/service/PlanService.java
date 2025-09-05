@@ -33,7 +33,7 @@ public class PlanService {
     @Transactional
     public DetailPlanResponse createPlan(Long groupId, PlanDto dto, Long currentUserStudentNumber) {
 
-        log.info("createAssignment called with groupId: {}, dto: {}, currentUserStudentNumber: {}", groupId, dto, currentUserStudentNumber);
+        log.info("createPlan called with groupId: {}, dto: {}, currentUserStudentNumber: {}", groupId, dto, currentUserStudentNumber);
 
         User user = validationUtils.validateMentorAccess(groupId, currentUserStudentNumber);
         StudyGroup studyGroup = validationUtils.validateStudyGroup(groupId);
@@ -52,7 +52,7 @@ public class PlanService {
                 .build();
 
         planRepository.save(plan);
-        log.info("Assignment created successfully: {}", plan);
+        log.info("Plan created successfully: {}", plan);
 
         return createDetailPlanResponse(plan);
     }
@@ -71,7 +71,7 @@ public class PlanService {
                 .map(this::createResponse)
                 .collect(Collectors.toList());
 
-        log.info("get Assignment Successfully!");
+        log.info("get Plan Successfully!");
         return planResponses;
     }
 
@@ -94,6 +94,7 @@ public class PlanService {
         
         return planResponses;
     }
+
     // 계획 상세 조회하기
     @Transactional(readOnly = true)
     public DetailPlanResponse getDetailPlan(Long groupId, Long assignmentId, Long currentUserStudentNumber) {
@@ -159,6 +160,36 @@ public class PlanService {
         return createPlanCommentResponse(planComment);
     }
 
+    //댓글 수정 기능
+    @Transactional
+    public PlanCommentResponse updatePlanComment(Long groupId, Long planId, Long commentId, Long currentUserStudentNumber, PlanCommentDto dto){
+
+        log.info("update PlanComment called");
+
+        User user = validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
+        validationUtils.validatePlan(planId);
+        PlanComment planComment = validationUtils.validateCommentAccess(commentId,user.getUserId());
+
+        updateCommentData(planComment, dto);
+
+        return createPlanCommentResponse(planComment);
+    }
+
+    //댓글 삭제 기능
+    @Transactional
+    public void deletePlanComment(Long groupId, Long planId, Long commentId, Long currentUserStudentNumber){
+
+        log.info("delete PlanComment called");
+
+        User user = validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
+        validationUtils.validatePlan(planId);
+        PlanComment planComment = validationUtils.validateCommentAccess(commentId, user.getUserId());
+
+        planCommentRepository.delete(planComment);
+
+        log.info("Successfully deleted PlanComment!");
+    }
+
     /**
      * === 데이터 처리 메서드들 ===
      */
@@ -185,7 +216,17 @@ public class PlanService {
         plan.setHasAssignment(dto.isHasAssignment());
 
         planRepository.save(plan);
-        log.info("Assignment updated successfully: {}", plan);
+        log.info("Plan updated successfully: {}", plan);
+    }
+
+    private void updateCommentData(PlanComment planComment, PlanCommentDto dto){
+
+        if(dto.getContent() != null && !dto.getContent().trim().isEmpty()){
+            planComment.setContent(dto.getContent());
+        }
+
+        planCommentRepository.save(planComment);
+        log.info("Plan Comment updated successfully: {}",planComment);
     }
 
     /**
@@ -231,14 +272,14 @@ public class PlanService {
 
 
     // 계획 댓글 Response 생성해서 반환하기
-    private PlanCommentResponse createPlanCommentResponse(PlanComment assignmentComment) {
+    private PlanCommentResponse createPlanCommentResponse(PlanComment planComment) {
 
         return PlanCommentResponse.builder()
-                .commentId(assignmentComment.getCommentId())
-                .content(assignmentComment.getContent())
-                .planId(assignmentComment.getPlan().getPlanId())
-                .creatorName(assignmentComment.getAuthor().getName())
-                .createdAt(assignmentComment.getCreatedAt())
+                .commentId(planComment.getCommentId())
+                .content(planComment.getContent())
+                .planId(planComment.getPlan().getPlanId())
+                .creatorName(planComment.getAuthor().getName())
+                .createdAt(planComment.getCreatedAt())
                 .build();
     }
 }

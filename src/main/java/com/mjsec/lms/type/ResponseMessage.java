@@ -31,6 +31,8 @@ public enum ResponseMessage {
     ASSIGNMENT_SUBMIT_DELETE_SUCCESS("제출한 과제 삭제 성공"),
     FEEDBACK_LEAVE_SUCCESS("과제 피드백 남기기 성공"),
     COMMENT_CREATE_SUCCESS("댓글 생성 성공"),
+    COMMENT_UPDATE_SUCCESS("댓글 수정 성공"),
+    COMMENT_DELETE_SUCCESS("댓글 삭제 성공"),
     FEEDBACK_UPDATE_SUCCESS("과제 피드백 수정 성공"),
     FEEDBACK_DELETE_SUCCESS("과제 피드백 삭제 성공"),
 

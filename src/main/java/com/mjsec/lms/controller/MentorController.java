@@ -80,12 +80,12 @@ public class MentorController {
             Authentication authentication) {
 
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
-        DetailPlanResponse detailAssignmentResponse = planService.updatePlan(groupId, planId, dto, currentUserStudentNumber);
+        DetailPlanResponse detailPlanResponse = planService.updatePlan(groupId, planId, dto, currentUserStudentNumber);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
                         ResponseMessage.PLAN_UPDATE_SUCCESS,
-                        detailAssignmentResponse
+                        detailPlanResponse
                 )
         );
     }

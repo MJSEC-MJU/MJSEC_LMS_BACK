@@ -56,7 +56,8 @@ public enum ErrorCode {
     INVALID_URL_FORMAT(HttpStatus.BAD_REQUEST, "유효하지 않은 URL입니다."),
     WARNING_CONTENT(HttpStatus.BAD_REQUEST, "허용되지 않은 내용입니다."),
     DUPLICATE_SUBMISSION(HttpStatus.BAD_REQUEST, "중복된 과제 제출입니다."),
-    ASSIGNMENT_COMMENT_REQUIRED(HttpStatus.BAD_REQUEST, "과제 댓글 내용이 없습니다"),
+    PLAN_COMMENT_REQUIRED(HttpStatus.BAD_REQUEST, "계획 댓글 내용이 없습니다."),
+    PLAN_COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."),
 
     //과제 피드백
     FEEDBACK_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 피드백을 남겼습니다."),
