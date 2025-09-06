@@ -50,6 +50,7 @@ public class ValidationUtils {
     private final PlanRepository planRepository;
     private final SubmissionRepository submissionRepository;
     private final PlanCommentRepository planCommentRepository;
+    private final StudyActivityRepository studyActivityRepository;
 
     public ValidationUtils(UserRepository userRepository,
                            StudyGroupRepository studyGroupRepository,
@@ -57,7 +58,8 @@ public class ValidationUtils {
                            AttendanceRepository attendanceRepository,
                            PlanRepository planRepository,
                            SubmissionRepository submissionRepository,
-                           PlanCommentRepository planCommentRepository) {
+                           PlanCommentRepository planCommentRepository,
+                           StudyActivityRepository studyActivityRepository) {
 
         this.userRepository = userRepository;
         this.studyGroupRepository = studyGroupRepository;
@@ -66,6 +68,7 @@ public class ValidationUtils {
         this.planRepository = planRepository;
         this.submissionRepository = submissionRepository;
         this.planCommentRepository = planCommentRepository;
+        this.studyActivityRepository = studyActivityRepository;
     }
 
     // ========== 기본 엔티티 검증 ==========
@@ -96,6 +99,13 @@ public class ValidationUtils {
 
         return submissionRepository.findById(submitId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.SUBMISSION_NOT_FOUND));
+    }
+
+    //스터디 활동 글의 존재 여부를 확인하고 StudyActivity 객체를 반환
+    public StudyActivity validateStudyActivity(Long activityId){
+
+        return studyActivityRepository.findById(activityId)
+                .orElseThrow(()-> new RestApiException(ErrorCode.STUDY_ACTIVITY_NOT_FOUND));
     }
 
     // ========== 멤버십 및 역할 검증 ==========

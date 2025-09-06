@@ -244,6 +244,7 @@ public class AssignmentController {
         );
     }
 
+    //계획 댓글 삭제하기
     @DeleteMapping("/{groupId}/plan/{planId}/comment/{commentId}")
     public ResponseEntity<SuccessResponse<Void>> deletePlanComment(
             @PathVariable Long groupId,
