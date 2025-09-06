@@ -27,7 +27,6 @@ public class JwtFilter extends OncePerRequestFilter {
     );
 
     public JwtFilter(JwtService jwtService) {
-
         this.jwtService = jwtService;
     }
 
@@ -38,9 +37,22 @@ public class JwtFilter extends OncePerRequestFilter {
         String requestURI = request.getRequestURI();
         log.info("Starting JWTFilter for request: {}", requestURI);
 
-        // Public Endpoint 인지 확인
+        // 컨텍스트패스 제거한 URI로 매칭 (로그용 requestURI는 그대로 유지)
+        String matchURI = requestURI;
+        String ctx = request.getContextPath();
+        if (ctx != null && !ctx.isEmpty() && matchURI.startsWith(ctx)) {
+            matchURI = matchURI.substring(ctx.length()); // "/api/..." 형태
+        }
+
+        // CORS 프리플라이트는 바로 통과
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // Public Endpoint 인지 확인 (컨텍스트패스 제거된 URI 사용)
         boolean isPublic = PUBLIC_ENDPOINTS.stream()
-                .anyMatch(pattern -> pathMatcher.match(pattern, requestURI));
+                .anyMatch(pattern -> pathMatcher.match(pattern, matchURI));
 
         if (isPublic) {
             log.info("Skipping JWT filter for public endpoint: {}", requestURI);
