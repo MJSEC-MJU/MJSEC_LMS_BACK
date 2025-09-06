@@ -15,6 +15,10 @@ spring:
           auth: true
           starttls:
             enable: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
   jwt:
     secret: ${JWT_SECRET}
@@ -67,6 +71,11 @@ management:
       show-details: when_authorized
     scheduledtasks:
       enabled: true
+
+file:
+  upload:
+    path: uploads/
+    max-size: 10485760
 
 logging:
   level:
