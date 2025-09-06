@@ -1,0 +1,30 @@
+name: Trigger Front CD on push
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+
+jobs:
+  trigger-front-cd:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch MJSEC_LMS_FRONT cd.yml with the same branch
+        env:
+          GH_PAT: ${{ secrets.FRONT_CI_TOKEN }} # Actions RW, Contents R
+        run: |
+          set -euo pipefail
+          BRANCH="${GITHUB_REF_NAME}"      # main / develop / staging / ...
+          api="https://api.github.com/repos/MJSEC-MJU/MJSEC_LMS_FRONT/actions/workflows/cd.yml/dispatches"
+          payload=$(jq -n \
+            --arg ref "$BRANCH" \
+            --arg caller_repo "${GITHUB_REPOSITORY}" \
+            --arg image_tag "${GITHUB_SHA:0:7}" \
+            '{ref:$ref, inputs:{caller_repo:$caller_repo, image_tag:$image_tag}}')
+          curl -sS -L -X POST "$api" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_PAT" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -d "$payload"
