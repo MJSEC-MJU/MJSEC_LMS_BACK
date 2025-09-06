@@ -67,6 +67,7 @@ public class AssignmentSubmissionService {
     }
 
     // 과제 제출 리스트 확인하기 (멘토/멘티)
+    @Transactional(readOnly = true)
     public List<SubmissionResponse> getSubmissionList(Long groupId, Long planId, Long currentUserStudentNumber) {
 
         log.info("getSubmissionList called");
@@ -86,6 +87,7 @@ public class AssignmentSubmissionService {
      * 멘티 (자기 자신 과제만 조회 가능)
      * 멘토 (나머지도 다 가능)
      */
+    @Transactional(readOnly = true)
     public DetailSubmissionResponse getDetailedSubmission(Long groupId, Long planId, Long submitId, Long currentUserStudentNumber) {
 
         log.info("getDetailedSubmission called");
