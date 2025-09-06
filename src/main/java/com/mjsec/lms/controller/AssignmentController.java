@@ -309,7 +309,7 @@ public class AssignmentController {
     }
 
     //과제 피드백 삭제하기
-    @DeleteMapping("/{groupId}/assignment-submit/{planId}/submission/{submitId}/feedback")
+    @DeleteMapping("/{groupId}/assignment/submit/{planId}/submission/{submitId}/feedback")
     public ResponseEntity<SuccessResponse<Void>> deleteFeedback(
             @PathVariable Long groupId,
             @PathVariable Long planId,

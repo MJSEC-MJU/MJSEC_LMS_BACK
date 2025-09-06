@@ -5,7 +5,6 @@ import com.mjsec.lms.security.CustomLoginFilter;
 import com.mjsec.lms.security.CustomLogoutFilter;
 import com.mjsec.lms.security.JwtFilter;
 import com.mjsec.lms.service.JwtService;
-import com.mjsec.lms.type.UserRole;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import org.springframework.context.annotation.Bean;
@@ -19,8 +18,8 @@ import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
-import static io.lettuce.core.AclCategory.ADMIN;
-import static org.hibernate.cfg.JdbcSettings.USER;
+// 추가 (프리플라이트 허용용)
+import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
@@ -31,7 +30,6 @@ public class SecurityConfig {
     private final PasswordEncoder passwordEncoder;
 
     public SecurityConfig(JwtService jwtService, UserRepository userRepository, PasswordEncoder passwordEncoder) {
-
         this.jwtService = jwtService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -54,6 +52,27 @@ public class SecurityConfig {
                         configuration.setMaxAge(3600L);
                         configuration.setExposedHeaders(Arrays.asList("Authorization", "access", "X-Custom-Header"));
 
+                        //환경변수 기반 허용 도메인 덧붙이기
+                        String corsAllowed = System.getenv("CORS_ALLOWED_ORIGINS"); // 콤마구분 목록
+                        String domain = System.getenv("CORS_DOMAIN");
+                        if (domain == null || domain.isBlank()) {
+                            domain = System.getenv("DOMAIN");
+                        }
+
+                        if (corsAllowed != null && !corsAllowed.isBlank()) {
+                            for (String s : corsAllowed.split("\\s*,\\s*")) {
+                                if (!s.isBlank()) {
+                                    configuration.addAllowedOriginPattern(s.trim());
+                                }
+                            }
+                        } else if (domain != null && !domain.isBlank()) {
+                            configuration.addAllowedOriginPattern("https://" + domain);
+                            configuration.addAllowedOriginPattern("https://*." + domain);
+                        }
+                        configuration.addAllowedOriginPattern("http://localhost:5173");
+                        configuration.addAllowedOriginPattern("http://localhost:8080");
+                        configuration.addAllowedHeader("Origin");
+
                         return configuration;
                     }
                 }));
@@ -75,6 +94,7 @@ public class SecurityConfig {
         // 경로별 인가 작업
         http
                 .authorizeHttpRequests((auth) -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/swagger-ui/*", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/group/**").permitAll()
