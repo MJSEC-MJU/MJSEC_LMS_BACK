@@ -1,9 +1,7 @@
 package com.mjsec.lms.controller;
 
-import com.mjsec.lms.dto.SimpleStudyActivityResponse;
-import com.mjsec.lms.dto.StudyActivityDto;
-import com.mjsec.lms.dto.StudyActivityResponse;
-import com.mjsec.lms.dto.SuccessResponse;
+import com.mjsec.lms.domain.GroupMember;
+import com.mjsec.lms.dto.*;
 import com.mjsec.lms.service.StudyGroupService;
 import com.mjsec.lms.type.ResponseMessage;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +21,27 @@ public class StudyGroupController {
         this.studyGroupService = studyGroupService;
     }
 
+    //스터디 멤버 전체 반환
+    @GetMapping("/{groupId}/member")
+    public ResponseEntity<SuccessResponse<List<StudyMemberResponse>>> getStudyGroupMemberList(
+            @PathVariable Long groupId,
+            Authentication authentication
+    ){
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        List<StudyMemberResponse> studyMemberResponseList = studyGroupService.getStudyMemberList(groupId, currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.STUDY_MEMBER_GET_SUCCESS,
+                        studyMemberResponseList
+                )
+        );
+    }
+
+    //활동 글 생성
     @PostMapping("/{groupId}/create-activity")
     public ResponseEntity<SuccessResponse<StudyActivityResponse>> createStudyActivity(
             @PathVariable Long groupId,
