@@ -21,6 +21,8 @@ public class StudyActivityResponse {
 
     private String week;
 
+    private String imageUrl;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

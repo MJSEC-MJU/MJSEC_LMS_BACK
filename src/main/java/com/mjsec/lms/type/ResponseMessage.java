@@ -65,6 +65,7 @@ public enum ResponseMessage {
     STUDY_ACTIVITY_SUCCESS("활동 글 생성 성공"),
     STUDY_ACTIVITY_GET_SUCCESS("활동 글 조회 성공"),
     STUDY_ACTIVITY_DELETE_SUCCESS("활동 글 삭제 성공"),
+    STUDY_ACTIVITY_UPDATE_SUCCESS("활동 글 수정 성공"),
 
     //스터디그룹 관련
     STUDY_MEMBER_GET_SUCCESS("스터디 전체 멤버 반환 성공"),

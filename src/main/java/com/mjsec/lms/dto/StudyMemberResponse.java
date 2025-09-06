@@ -10,6 +10,8 @@ public class StudyMemberResponse {
 
     private Long userId;
 
+    private Long studentNumber;
+
     private String name;
 
     private String email;

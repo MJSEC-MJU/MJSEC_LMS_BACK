@@ -7,6 +7,7 @@ import com.mjsec.lms.util.ValidationUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -22,12 +23,15 @@ public class StudyGroupService {
     private final UserRepository userRepository;
     private final AttendanceRepository attendanceRepository;
     private final GroupMemberRepository groupMemberRepository;
+    private final FileService fileService;
 
     StudyGroupService(StudyGroupRepository studyGroupRepository,
                       ValidationUtils validationUtils,
                       StudyActivityRepository studyActivityRepository,
                       UserRepository userRepository,
-                      AttendanceRepository attendanceRepository, GroupMemberRepository groupMemberRepository){
+                      AttendanceRepository attendanceRepository,
+                      GroupMemberRepository groupMemberRepository,
+                      FileService fileService){
 
         this.studyGroupRepository = studyGroupRepository;
         this.validationUtils = validationUtils;
@@ -35,6 +39,7 @@ public class StudyGroupService {
         this.userRepository = userRepository;
         this.attendanceRepository = attendanceRepository;
         this.groupMemberRepository = groupMemberRepository;
+        this.fileService = fileService;
     }
 
     //스터디 그룹 멤버 전체 반환
@@ -43,8 +48,8 @@ public class StudyGroupService {
 
         log.info("getStudyMemberList called");
 
-        User user = validationUtils.validateUser(currentUserStudentNumber);
-        StudyGroup studyGroup = validationUtils.validateStudyGroup(groupId);
+        validationUtils.validateUser(currentUserStudentNumber);
+        validationUtils.validateStudyGroup(groupId);
 
         List<GroupMember> groupMemberList = groupMemberRepository.findByStudyGroup_StudyId(groupId);
 
@@ -54,22 +59,50 @@ public class StudyGroupService {
     }
 
     //스터디 활동 글 + 출석체크 설정하기
-    public StudyActivityResponse createStudyActivity(Long groupId, Long currentUserStudentNumber, StudyActivityDto studyActivityDto){
+    @Transactional
+    public StudyActivityResponse createStudyActivity(Long groupId, Long currentUserStudentNumber,
+                                                     StudyActivityDto studyActivityDto, MultipartFile image) {
 
         log.info("createStudyActivity called!");
 
-        //검증 로직들 (사용자, 스터디그룹, 멘토 조건)
-        User user = validationUtils.validateBasicAccess(groupId,currentUserStudentNumber);
+        User user = validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
         validationUtils.validateMentorRole(user.getUserId(), groupId);
 
-        //스터디 활동 글 생성
-        StudyActivity savedStudyActivity = createStudyActivityData(groupId, studyActivityDto);
+        // 이미지가 있으면 업로드
+        if (image != null && !image.isEmpty()) {
+            String imageUrl = fileService.uploadImage(image);
+            studyActivityDto.setImageUrl(imageUrl);
+        }
 
-        //출석체크 리스트 생성
+        StudyActivity savedStudyActivity = createStudyActivityData(groupId, studyActivityDto);
         List<Attendance> attendanceList = createAttendanceListData(savedStudyActivity, studyActivityDto);
 
-        //활동글 Response 생성 후 반환
-        return createStudyActivityResponse(savedStudyActivity,attendanceList);
+        return createStudyActivityResponse(savedStudyActivity, attendanceList);
+    }
+
+    @Transactional
+    public StudyActivityResponse updateStudyActivity(Long groupId, Long activityId,
+                                                     Long currentUserStudentNumber, StudyActivityDto studyActivityDto, MultipartFile image) {
+
+        log.info("updateStudyActivity called");
+
+        User user = validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
+        validationUtils.validateMentorRole(user.getUserId(), groupId);
+        StudyActivity studyActivity = validationUtils.validateStudyActivity(activityId);
+
+        // 기존 이미지 삭제 (새 이미지가 있는 경우)
+        if (image != null && !image.isEmpty()) {
+            if (studyActivity.getImageUrl() != null) {
+                fileService.deleteImage(studyActivity.getImageUrl());
+            }
+            String newImageUrl = fileService.uploadImage(image);
+            studyActivity.setImageUrl(newImageUrl);
+        }
+
+        // 다른 필드들 업데이트
+        updateStudyActivityData(studyActivity, studyActivityDto);
+
+        return createStudyActivityResponse(studyActivity, studyActivity.getAttendances());
     }
 
     // 스터디 활동 글 전체 조회
@@ -100,6 +133,7 @@ public class StudyGroupService {
     }
 
     //활동 글 상세 조회
+    @Transactional(readOnly = true)
     public StudyActivityResponse getStudyActivity(Long groupId, Long activityId, Long currentUserStudentNumber){
 
         log.info("getStudyActivity called");
@@ -124,9 +158,24 @@ public class StudyGroupService {
                 .content(studyActivityDto.getContent())
                 .studyGroup(studyGroupRepository.findById(groupId).orElseThrow())
                 .week(studyActivityDto.getWeek())
+                .imageUrl(studyActivityDto.getImageUrl())
                 .build();
 
         return studyActivityRepository.save(studyActivity);
+    }
+
+    private void updateStudyActivityData(StudyActivity studyActivity, StudyActivityDto dto) {
+        if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty()) {
+            studyActivity.setTitle(dto.getTitle());
+        }
+        if (dto.getContent() != null && !dto.getContent().trim().isEmpty()) {
+            studyActivity.setContent(dto.getContent());
+        }
+        if (dto.getWeek() != null && !dto.getWeek().trim().isEmpty()) {
+            studyActivity.setWeek(dto.getWeek());
+        }
+
+        studyActivityRepository.save(studyActivity);
     }
     
     //StudyMemberResponse Dto로 반환
@@ -134,6 +183,7 @@ public class StudyGroupService {
 
         return StudyMemberResponse.builder()
                 .userId(groupMember.getUser().getUserId())
+                .studentNumber(groupMember.getUser().getStudentNumber())
                 .name(groupMember.getUser().getName())
                 .role(groupMember.getRole())
                 .email(groupMember.getUser().getEmail())
@@ -174,6 +224,7 @@ public class StudyGroupService {
                 .title(studyActivity.getTitle())
                 .content(studyActivity.getContent())
                 .week(studyActivity.getWeek())
+                .imageUrl(studyActivity.getImageUrl())
                 .studyAttendanceDtoList(studyAttendanceDtoList)
                 .createdAt(studyActivity.getCreatedAt())
                 .build();
@@ -187,6 +238,7 @@ public class StudyGroupService {
                         .activityId(activity.getActivityId())
                         .title(activity.getTitle())
                         .week(activity.getWeek())
+                        .imageUrl(activity.getImageUrl())
                         .createdAt(activity.getCreatedAt())
                         .build())
                 .collect(Collectors.toList());

@@ -3,6 +3,8 @@ package com.mjsec.lms.dto;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 public class PendingUserDto {
@@ -14,4 +16,6 @@ public class PendingUserDto {
     private String email;
 
     private String phoneNumber;
+
+    private LocalDateTime createdAt;
 }

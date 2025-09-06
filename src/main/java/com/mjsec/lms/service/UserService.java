@@ -53,6 +53,7 @@ public class UserService {
 
         return UserResponse.builder()
                 .userId(user.getUserId())
+                .name(user.getName())
                 .studentNumber(user.getStudentNumber())
                 .email(user.getEmail())
                 .phoneNumber(user.getPhoneNumber())

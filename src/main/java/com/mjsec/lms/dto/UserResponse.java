@@ -12,6 +12,8 @@ public class UserResponse {
 
     private Long userId;
 
+    private String name;
+
     private Long studentNumber;
 
     private String email;
