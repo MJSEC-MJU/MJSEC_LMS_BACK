@@ -6,19 +6,16 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "assignment_comment")
+@Table(name = "plan_comment")
 @SuperBuilder
-@SQLDelete(sql = "UPDATE assignment_comment SET deleted_at = NOW() WHERE comment_id = ?")
+@SQLDelete(sql = "UPDATE plan_comment SET deleted_at = NOW() WHERE comment_id = ?")
 @SQLRestriction("deleted_at is null")
-public class AssignmentComment extends BaseEntity {
+public class PlanComment extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,7 +27,7 @@ public class AssignmentComment extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assign_id")
-    private Assignment assignment;
+    private Plan plan;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

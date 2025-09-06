@@ -2,7 +2,6 @@ package com.mjsec.lms.controller;
 
 import com.mjsec.lms.dto.SuccessResponse;
 import com.mjsec.lms.service.WeeklyAlertService;
-import com.mjsec.lms.service.EmailService;
 import com.mjsec.lms.type.ResponseMessage;
 import com.mjsec.lms.util.ValidationUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +43,7 @@ public class TestController {
 
             return ResponseEntity.ok(
                     SuccessResponse.of(
-                            ResponseMessage.ASSIGNMENT_SUCCESS,
+                            ResponseMessage.PLAN_SUCCESS,
                             "과제 미제출자 알림 체크가 완료되었습니다."
                     )
             );

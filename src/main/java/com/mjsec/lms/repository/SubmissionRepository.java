@@ -10,9 +10,9 @@ import java.util.Optional;
 @Repository
 public interface SubmissionRepository extends JpaRepository<AssignmentSubmission, Long> {
 
-    boolean existsBySubmitterUserIdAndAssignmentAssignId(Long submitterUserId, Long assignmentAssignId);
+    boolean existsBySubmitterUserIdAndPlanPlanId(Long submitterUserId, Long planId);
 
-    Optional<AssignmentSubmission> findBySubmitterUserIdAndAssignmentAssignId(Long submitterUserId, Long assignmentAssignId);
+    Optional<AssignmentSubmission> findBySubmitterUserIdAndPlanPlanId(Long submitterUserId, Long planId);
 
-    List<AssignmentSubmission> findAssignmentSubmissionsByAssignmentAssignId(Long assignmentAssignId);
+    List<AssignmentSubmission> findAssignmentSubmissionsByPlanPlanId(Long planId);
 }

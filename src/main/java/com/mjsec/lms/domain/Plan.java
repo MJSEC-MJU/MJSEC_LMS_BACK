@@ -15,22 +15,25 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "assignment")
+@Table(name = "plan")
 @SuperBuilder
-@SQLDelete(sql = "UPDATE assignment SET deleted_at = NOW() WHERE assign_id = ?")
+@SQLDelete(sql = "UPDATE plan SET deleted_at = NOW() WHERE plan_id = ?")
 @SQLRestriction("deleted_at is null")
-public class Assignment extends BaseEntity {
+public class Plan extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "assign_id")
-    private Long assignId;
+    @Column(name = "plan_id")
+    private Long planId;
 
     @Column(name = "title", nullable = false, length = 200)
     private String title;
 
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
+
+    @Builder.Default
+    private boolean hasAssignment = false;
 
     @Column(name = "start_date")
     private LocalDateTime startDate;
@@ -47,10 +50,10 @@ public class Assignment extends BaseEntity {
     private StudyGroup studyGroup;
 
     @Builder.Default
-    @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<AssignmentSubmission> submissions = new ArrayList<>();
 
     @Builder.Default
-    @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<AssignmentComment> comments = new ArrayList<>();
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<PlanComment> comments = new ArrayList<>();
 }

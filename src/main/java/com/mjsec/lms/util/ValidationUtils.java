@@ -47,22 +47,25 @@ public class ValidationUtils {
     private final StudyGroupRepository studyGroupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final AttendanceRepository attendanceRepository;
-    private final AssignmentRepository assignmentRepository;
+    private final PlanRepository planRepository;
     private final SubmissionRepository submissionRepository;
+    private final PlanCommentRepository planCommentRepository;
 
     public ValidationUtils(UserRepository userRepository,
                            StudyGroupRepository studyGroupRepository,
                            GroupMemberRepository groupMemberRepository,
                            AttendanceRepository attendanceRepository,
-                           AssignmentRepository assignmentRepository,
-                           SubmissionRepository submissionRepository) {
+                           PlanRepository planRepository,
+                           SubmissionRepository submissionRepository,
+                           PlanCommentRepository planCommentRepository) {
 
         this.userRepository = userRepository;
         this.studyGroupRepository = studyGroupRepository;
         this.groupMemberRepository = groupMemberRepository;
         this.attendanceRepository = attendanceRepository;
-        this.assignmentRepository = assignmentRepository;
+        this.planRepository = planRepository;
         this.submissionRepository = submissionRepository;
+        this.planCommentRepository = planCommentRepository;
     }
 
     // ========== 기본 엔티티 검증 ==========
@@ -81,11 +84,11 @@ public class ValidationUtils {
                 .orElseThrow(() -> new RestApiException(ErrorCode.STUDY_NOT_FOUND));
     }
 
-    // 과제 존재 여부를 확인하고 Assignment 객체를 반환
-    public Assignment validateAssignment(Long assignmentId) {
+    // 계획 존재 여부를 확인하고 Plan 객체를 반환
+    public Plan validatePlan(Long planId) {
 
-        return assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new RestApiException(ErrorCode.ASSIGNMENT_NOT_FOUND));
+        return planRepository.findById(planId)
+                .orElseThrow(() -> new RestApiException(ErrorCode.PLAN_NOT_FOUND));
     }
 
     // 제출물 존재 여부를 확인하고 AssignmentSubmission 객체를 반환
@@ -145,6 +148,12 @@ public class ValidationUtils {
         }
     }
 
+    //댓글 작성자 본인인지 확인하기
+    public PlanComment validateCommentAccess(Long commentId, Long userId){
+
+        return planCommentRepository.findByCommentIdAndAuthor_UserId(commentId,userId).orElseThrow(()-> new RestApiException(ErrorCode.PLAN_COMMENT_NOT_FOUND));
+    }
+
     // ========== 복합 접근 검증 ==========
 
     // 기본 접근 검증 (사용자, 스터디 그룹 존재, 멤버십)
@@ -190,11 +199,24 @@ public class ValidationUtils {
 
     // ========== 과제 관련 검증 ==========
 
+    //계획 중 과제가 포함인지 확인
+    public void validateAssignmentSubmissionAllowed(Long planId){
+
+        log.info("validate Assignment Submission Allowed");
+
+        Plan plan = planRepository.findById(planId)
+                .orElseThrow(() -> new RestApiException(ErrorCode.PLAN_NOT_FOUND));
+
+        if(!plan.isHasAssignment()){
+            throw new RestApiException(ErrorCode.ASSIGNMENT_NOT_FOUND);
+        }
+    }
+
     // 중복된 과제 제출인지 확인
     public void validateDuplicateSubmission(Long userId, Long assignmentId) {
 
         boolean alreadySubmitted = submissionRepository
-                .existsBySubmitterUserIdAndAssignmentAssignId(userId, assignmentId);
+                .existsBySubmitterUserIdAndPlanPlanId(userId, assignmentId);
 
         if (alreadySubmitted) {
             log.warn("User {} attempted duplicate submission for assignment {}", userId, assignmentId);
@@ -205,7 +227,7 @@ public class ValidationUtils {
     // 제출물 접근 검증 (과제와 제출물 존재, 관계 검증)
     public AssignmentSubmission validateSubmissionAccess(Long assignmentId, Long submitId) {
 
-        validateAssignment(assignmentId);
+        validatePlan(assignmentId);
         AssignmentSubmission submission = validateSubmission(submitId);
         validateAssignmentIdInAssignmentSubmission(assignmentId, submission);
         return submission;
@@ -214,7 +236,7 @@ public class ValidationUtils {
     // 제출물이 해당 과제에 속하는지 검증
     public void validateAssignmentIdInAssignmentSubmission(Long assignmentId, AssignmentSubmission assignmentSubmission) {
 
-        if (!assignmentSubmission.getAssignment().getAssignId().equals(assignmentId)) {
+        if (!assignmentSubmission.getPlan().getPlanId().equals(assignmentId)) {
             log.warn("Assignment id mismatch between assignment and assignment submission");
             throw new RestApiException(ErrorCode.SUBMISSION_ASSIGNMENT_MISMATCH);
         }
@@ -254,7 +276,7 @@ public class ValidationUtils {
     public void validateComment(String content) {
 
         if (content == null || content.trim().isEmpty()) {
-            throw new RestApiException(ErrorCode.ASSIGNMENT_COMMENT_REQUIRED);
+            throw new RestApiException(ErrorCode.PLAN_COMMENT_REQUIRED);
         }
     }
 

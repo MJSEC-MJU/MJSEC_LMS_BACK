@@ -11,7 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 public class AssignmentNotSubmittedInfo {
 
-    private  String assignmentTitle;
+    private  String planTitle;
     private  LocalDateTime endDate;
     private  List<String> notSubmittedStudents;
 
