@@ -1,20 +1,12 @@
 package com.mjsec.lms.service;
 
-import com.mjsec.lms.domain.Attendance;
-import com.mjsec.lms.domain.StudyActivity;
-import com.mjsec.lms.domain.StudyGroup;
-import com.mjsec.lms.domain.User;
-import com.mjsec.lms.dto.SimpleStudyActivityResponse;
-import com.mjsec.lms.dto.StudyActivityDto;
-import com.mjsec.lms.dto.StudyActivityResponse;
-import com.mjsec.lms.dto.StudyAttendanceDto;
-import com.mjsec.lms.repository.AttendanceRepository;
-import com.mjsec.lms.repository.StudyActivityRepository;
-import com.mjsec.lms.repository.StudyGroupRepository;
-import com.mjsec.lms.repository.UserRepository;
+import com.mjsec.lms.domain.*;
+import com.mjsec.lms.dto.*;
+import com.mjsec.lms.repository.*;
 import com.mjsec.lms.util.ValidationUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -29,18 +21,36 @@ public class StudyGroupService {
     private final ValidationUtils validationUtils;
     private final UserRepository userRepository;
     private final AttendanceRepository attendanceRepository;
+    private final GroupMemberRepository groupMemberRepository;
 
     StudyGroupService(StudyGroupRepository studyGroupRepository,
                       ValidationUtils validationUtils,
                       StudyActivityRepository studyActivityRepository,
                       UserRepository userRepository,
-                      AttendanceRepository attendanceRepository){
+                      AttendanceRepository attendanceRepository, GroupMemberRepository groupMemberRepository){
 
         this.studyGroupRepository = studyGroupRepository;
         this.validationUtils = validationUtils;
         this.studyActivityRepository = studyActivityRepository;
         this.userRepository = userRepository;
         this.attendanceRepository = attendanceRepository;
+        this.groupMemberRepository = groupMemberRepository;
+    }
+
+    //스터디 그룹 멤버 전체 반환
+    @Transactional(readOnly = true)
+    public List<StudyMemberResponse> getStudyMemberList(Long groupId, Long currentUserStudentNumber){
+
+        log.info("getStudyMemberList called");
+
+        User user = validationUtils.validateUser(currentUserStudentNumber);
+        StudyGroup studyGroup = validationUtils.validateStudyGroup(groupId);
+
+        List<GroupMember> groupMemberList = groupMemberRepository.findByStudyGroup_StudyId(groupId);
+
+        return groupMemberList.stream()
+                .map(this::createStudyMemberResponse)
+                .collect(Collectors.toList());
     }
 
     //스터디 활동 글 + 출석체크 설정하기
@@ -117,6 +127,18 @@ public class StudyGroupService {
                 .build();
 
         return studyActivityRepository.save(studyActivity);
+    }
+    
+    //StudyMemberResponse Dto로 반환
+    private StudyMemberResponse createStudyMemberResponse(GroupMember groupMember){
+
+        return StudyMemberResponse.builder()
+                .userId(groupMember.getUser().getUserId())
+                .name(groupMember.getUser().getName())
+                .role(groupMember.getRole())
+                .email(groupMember.getUser().getEmail())
+                .ProfileImage(groupMember.getUser().getProfileImage())
+                .build();
     }
 
     //Dto와 StudyActivity 객체를 받아 출석체크 리스트를 저장하기
