@@ -38,10 +38,12 @@ public class JwtFilter extends OncePerRequestFilter {
         log.info("Starting JWTFilter for request: {}", requestURI);
 
         // 컨텍스트패스 제거한 URI로 매칭 (로그용 requestURI는 그대로 유지)
-        String matchURI = requestURI;
+        final String matchURI;
         String ctx = request.getContextPath();
-        if (ctx != null && !ctx.isEmpty() && matchURI.startsWith(ctx)) {
-            matchURI = matchURI.substring(ctx.length()); // "/api/..." 형태
+        if (ctx != null && !ctx.isEmpty() && requestURI.startsWith(ctx)) {
+            matchURI = requestURI.substring(ctx.length()); // "/api/..." 형태
+        } else {
+            matchURI = requestURI;
         }
 
         // CORS 프리플라이트는 바로 통과
