@@ -89,6 +89,7 @@ public enum ErrorCode {
 
     //활동 글
     STUDY_ACTIVITY_NOT_FOUND(HttpStatus.NOT_FOUND, "활동 글을 찾을 수 없습니다."),
+    DUPLICATE_WEEK(HttpStatus.BAD_REQUEST, "해당 주차의 활동 글이 이미 존재합니다."),
 
     //이미지
     FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다."),

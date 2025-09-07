@@ -5,6 +5,7 @@ import com.mjsec.lms.domain.StudyGroup;
 import com.mjsec.lms.domain.User;
 import com.mjsec.lms.dto.AttendanceDto;
 import com.mjsec.lms.dto.AttendanceResponse;
+import com.mjsec.lms.dto.WeeklyAttendanceResponse;
 import com.mjsec.lms.repository.AttendanceRepository;
 import com.mjsec.lms.util.ValidationUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -83,6 +87,61 @@ public class AttendanceService {
                 .map(this::createAttendanceResponse)
                 .toList();
     }
+
+    @Transactional(readOnly = true)
+    public List<WeeklyAttendanceResponse> getAttendanceByWeek(Long groupId, String week, Long currentUserStudentNumber) {
+
+        log.info("getAttendanceByWeek called for week: {}", week);
+
+        validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
+        StudyGroup studyGroup = validationUtils.validateStudyGroup(groupId);
+
+        List<Attendance> attendanceList = attendanceRepository.findByStudyGroupAndWeekOrderByUserStudentNumberAsc(studyGroup, week);
+
+        return attendanceList.stream()
+                .map(this::createWeeklyAttendanceResponse)
+                .toList();
+    }
+
+    // 전체 주차별 출석체크 상태 조회
+    @Transactional(readOnly = true)
+    public Map<String, List<WeeklyAttendanceResponse>> getAllWeeksAttendance(Long groupId, Long currentUserStudentNumber) {
+
+        log.info("getAllWeeksAttendance called");
+
+        validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
+        StudyGroup studyGroup = validationUtils.validateStudyGroup(groupId);
+
+        List<Attendance> allAttendanceList = attendanceRepository.findByStudyGroupOrderByWeekAscUserStudentNumberAsc(studyGroup);
+
+        // 주차별로 그룹핑
+        Map<String, List<WeeklyAttendanceResponse>> weeklyAttendanceMap = allAttendanceList.stream()
+                .map(this::createWeeklyAttendanceResponse)
+                .collect(Collectors.groupingBy(WeeklyAttendanceResponse::getWeek));
+
+        // 주차 순서대로 정렬 (1주차, 2주차, 3주차... 순서)
+        return weeklyAttendanceMap.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(this::compareWeeks))
+                .collect(LinkedHashMap::new,
+                        (map, entry) -> map.put(entry.getKey(), entry.getValue()),
+                        LinkedHashMap::putAll);
+    }
+
+    /*
+    그 외 Private 메서드
+     */
+
+    private int compareWeeks(String week1, String week2) {
+        try {
+            // "N주차" 형태에서 숫자 부분만 추출
+            int num1 = Integer.parseInt(week1.replaceAll("[^0-9]", ""));
+            int num2 = Integer.parseInt(week2.replaceAll("[^0-9]", ""));
+            return Integer.compare(num1, num2);
+        } catch (NumberFormatException e) {
+            // 숫자 추출 실패시 문자열 비교
+            return week1.compareTo(week2);
+        }
+    }
     
     /*
     데이터 저장용 메서드들
@@ -113,6 +172,16 @@ public class AttendanceService {
                 .type(attendance.getType())
                 .attendanceDate(attendance.getAttendanceDate())
                 .createdAt(attendance.getCreatedAt())
+                .build();
+    }
+
+    // 주차별 출석체크 응답 DTO 생성
+    private WeeklyAttendanceResponse createWeeklyAttendanceResponse(Attendance attendance) {
+        return WeeklyAttendanceResponse.builder()
+                .studentNumber(attendance.getUser().getStudentNumber())
+                .name(attendance.getUser().getName())
+                .attendanceType(attendance.getType())
+                .week(attendance.getWeek())
                 .build();
     }
 }
