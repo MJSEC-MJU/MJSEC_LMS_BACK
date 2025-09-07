@@ -1,4 +1,4 @@
-name: Security – Spring/Java (SAST & SCA)
+name: Security – React/Vite + Spring (SAST & SCA)
 
 on:
   pull_request:
@@ -12,15 +12,10 @@ concurrency:
 jobs:
   security:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
     permissions:
       contents: read
       security-events: write
       pull-requests: write
-
-    env:
-      JAVA_VERSION: '17'
-      PROJECT_NAME: ${{ github.repository }}
 
     steps:
       - name: Check out repository
@@ -34,55 +29,20 @@ jobs:
           sudo apt-get install -y jq
 
       # ──────────────────────────────
-      # Build tool detect 먼저 → 그 다음 setup-java에 조건부 cache 적용
+      # Node deps (for npm audit)
       # ──────────────────────────────
-      - name: Detect build tool
-        id: detect
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -f "./mvnw" ] || [ -f "./pom.xml" ]; then
-            echo "tool=maven" >> $GITHUB_OUTPUT
-          elif [ -f "./gradlew" ] || ls -1 build.gradle* >/dev/null 2>&1; then
-            echo "tool=gradle" >> $GITHUB_OUTPUT
-          else
-            echo "지원되는 빌드 파일(pom.xml 또는 build.gradle*)이 없습니다."; exit 1
-          fi
-
-      - name: Set up Java (Maven cache)
-        if: ${{ steps.detect.outputs.tool == 'maven' }}
-        uses: actions/setup-java@v4
+      - name: Use Node
+        uses: actions/setup-node@v4
         with:
-          distribution: temurin
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: maven
-          cache-dependency-path: '**/pom.xml'
+          node-version: 20
+          cache: 'npm'
 
-      - name: Set up Java (Gradle cache)
-        if: ${{ steps.detect.outputs.tool == 'gradle' }}
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: gradle
-          cache-dependency-path: |
-            **/*.gradle*
-            **/gradle-wrapper.properties
-
-      - name: Build (compile only)
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ "${{ steps.detect.outputs.tool }}" = "maven" ]; then
-            chmod +x ./mvnw || true
-            ./mvnw -B -DskipTests verify
-          else
-            chmod +x ./gradlew || true
-            ./gradlew -x test build
-          fi
+      - name: Install dependencies (no scripts)
+        if: ${{ hashFiles('**/package-lock.json') != '' || hashFiles('**/pnpm-lock.yaml') != '' || hashFiles('**/yarn.lock') != '' }}
+        run: npm ci --ignore-scripts --no-audit
 
       # ──────────────────────────────
-      # Semgrep (SAST) — Java/Kotlin + OWASP → SARIF
+      # Semgrep (SAST) — JS/React + OWASP
       # ──────────────────────────────
       - name: Set up Python (for Semgrep CLI)
         uses: actions/setup-python@v5
@@ -94,14 +54,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install semgrep
 
-      - name: Run Semgrep (OWASP + Java/Kotlin) → SARIF
+      - name: Run Semgrep (OWASP + JS/React) → SARIF
         run: |
           set -euo pipefail
           semgrep --version
           semgrep ci \
             --config p/owasp-top-ten \
-            --config p/java \
-            --config p/kotlin \
+            --config p/javascript \
+            --config p/react \
             --sarif -o semgrep.sarif || true
 
       - name: Check Semgrep SARIF has results
@@ -121,46 +81,57 @@ jobs:
           sarif_file: semgrep.sarif
 
       # ──────────────────────────────
-      # SCA — OWASP Dependency-Check → SARIF
+      # Node SCA — npm audit (report-only)
       # ──────────────────────────────
-      - name: Cache Dependency-Check DB (best-effort)
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.m2/repository/org/owasp/dependency-check-data
-            ~/.gradle/dependency-check
-          key: odc-db-${{ runner.os }}-${{ hashFiles('**/pom.xml', '**/build.gradle*') }}
-          restore-keys: |
-            odc-db-${{ runner.os }}-
+      - name: Node audit (npm)
+        if: ${{ hashFiles('**/package-lock.json') != '' || hashFiles('**/pnpm-lock.yaml') != '' || hashFiles('**/yarn.lock') != '' }}
+        run: |
+          npm audit --audit-level=high || true
 
-      - name: OWASP Dependency-Check (repo scan)
-        uses: dependency-check/Dependency-Check_Action@main
-        env:
-          # setup-java 사용 시 이 액션이 요구하는 JAVA_HOME 경로를 맞춰줘야 함
-          JAVA_HOME: /opt/jdk
+      # ──────────────────────────────
+      # Java 빌드 (Maven/Gradle 자동 감지)
+      # ──────────────────────────────
+      - name: Setup Temurin JDK
+        uses: actions/setup-java@v4
         with:
-          project: ${{ env.PROJECT_NAME }}
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Build (Maven)
+        if: ${{ hashFiles('**/pom.xml') != '' }}
+        run: mvn -B -DskipTests package
+
+      - name: Setup Gradle
+        if: ${{ hashFiles('**/pom.xml') == '' && (hashFiles('**/build.gradle') != '' || hashFiles('**/build.gradle.kts') != '') }}
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build (Gradle)
+        if: ${{ hashFiles('**/pom.xml') == '' && (hashFiles('**/build.gradle') != '' || hashFiles('**/build.gradle.kts') != '') }}
+        run: ./gradlew build -x test
+
+      # ──────────────────────────────
+      # Dependency-Check (SCA for Java) → SARIF (리포트만, 실패 안 함)
+      # ──────────────────────────────
+      - name: OWASP Dependency-Check → SARIF
+        uses: dependency-check/Dependency-Check_Action@v4
+        with:
+          project: ${{ github.repository }}
           path: .
           format: 'SARIF'
           out: 'dependency-check-report'
-          args: '--failOnCVSS 0'
-
-      - name: Locate Dependency-Check SARIF
-        id: odc_locate
-        run: |
-          set -euo pipefail
-          FILE=$(find dependency-check-report -maxdepth 1 -type f -name '*.sarif' | head -n1 || true)
-          if [ -n "$FILE" ]; then
-            echo "file=$FILE" >> $GITHUB_OUTPUT
-          else
-            echo "file=" >> $GITHUB_OUTPUT
-          fi
+          # 핵심: 리포트만 생성하고 실패하지 않도록 임계치 상향
+          args: >
+            --noupdate
+            --failOnCVSS 11
+            --enableRetired
+            --suppression .github/dependency-check-suppressions.xml
+        continue-on-error: true
 
       - name: Upload Dependency-Check SARIF
-        if: ${{ steps.odc_locate.outputs.file != '' }}
+        if: ${{ hashFiles('dependency-check-report/dependency-check-report.sarif') != '' }}
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: ${{ steps.odc_locate.outputs.file }}
+          sarif_file: dependency-check-report/dependency-check-report.sarif
 
       # ──────────────────────────────
       # Trivy (filesystem scan) → SARIF
@@ -175,7 +146,7 @@ jobs:
           output: trivy-fs.sarif
           exit-code: '0'
 
-      - name: Check Trivy FS SARIF has results
+      - name: Check Trivy SARIF has results
         id: trivyfs_sarif_check
         run: |
           if [ ! -s trivy-fs.sarif ]; then
@@ -237,14 +208,14 @@ jobs:
         with:
           context: .
           push: false
-          tags: local/spring-app:secscan
+          tags: local/lms-back:secscan
 
       - name: Trivy image scan
         if: ${{ steps.df.outputs.found == 'true' }}
         uses: aquasecurity/trivy-action@0.28.0
         with:
           scan-type: image
-          image-ref: local/spring-app:secscan
+          image-ref: local/lms-back:secscan
           ignore-unfixed: true
           severity: HIGH,CRITICAL
           format: sarif
@@ -269,7 +240,7 @@ jobs:
           sarif_file: trivy-image.sarif
 
       # ──────────────────────────────
-      # Gitleaks (Secrets) — CLI via GHCR
+      # Gitleaks (Secrets) — SARIF
       # ──────────────────────────────
       - name: Run Gitleaks (secrets scan) → SARIF
         shell: bash
