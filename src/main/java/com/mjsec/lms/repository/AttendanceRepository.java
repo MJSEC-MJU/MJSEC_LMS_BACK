@@ -40,4 +40,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     List<Attendance> findByStudyGroupOrderByWeekAscUserStudentNumberAsc(StudyGroup studyGroup);
 
     List<Attendance> findByStudyActivity(StudyActivity studyActivity);
+
+    // 특정 날짜의 모든 출석 기록 조회
+    List<Attendance> findByAttendanceDate(LocalDate attendanceDate);
 }

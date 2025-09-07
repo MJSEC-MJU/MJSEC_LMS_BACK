@@ -17,7 +17,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PendingUser extends BaseEntity {
+public class PendingUser{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

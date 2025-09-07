@@ -13,6 +13,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -82,6 +83,123 @@ public class EmailService {
             log.error("Failed to send weekly assignment report", e);
             throw new RuntimeException("주간 리포트 이메일 발송에 실패했습니다.", e);
         }
+    }
+
+    public void sendAbsenceAlert(String studyGroupName,
+                                 List<AttendanceAlertService.AbsenceInfo> absenceList,
+                                 LocalDate targetDate) {
+        try {
+            List<String> adminEmails = getAdminEmails();
+
+            for (String adminEmail : adminEmails) {
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+                helper.setFrom(fromEmail);
+                helper.setTo(adminEmail);
+                helper.setSubject("[LMS 결석 알림] " + studyGroupName + " - 10일 경과 결석자 알림 (" +
+                        targetDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + ")");
+
+                String htmlContent = buildAbsenceAlertContent(studyGroupName, absenceList, targetDate);
+                helper.setText(htmlContent, true);
+
+                mailSender.send(message);
+                log.info("Absence alert sent successfully to admin: {}", maskEmail(adminEmail));
+            }
+
+        } catch (MessagingException e) {
+            log.error("Failed to send absence alert email for study group: {}", studyGroupName, e);
+            throw new RuntimeException("결석 알림 이메일 발송에 실패했습니다.", e);
+        }
+    }
+
+    /**
+     * 결석 알림 이메일 HTML 내용 생성
+     */
+    private String buildAbsenceAlertContent(String studyGroupName,
+                                            List<AttendanceAlertService.AbsenceInfo> absenceList,
+                                            LocalDate targetDate) {
+
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy년 MM월 dd일");
+        DateTimeFormatter currentTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+        StringBuilder html = new StringBuilder();
+        html.append("<!DOCTYPE html>")
+                .append("<html>")
+                .append("<head><meta charset='UTF-8'></head>")
+                .append("<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>")
+                .append("<div style='max-width: 600px; margin: 0 auto; padding: 20px;'>")
+
+                // 헤더
+                .append("<h1 style='color: #e74c3c; text-align: center; border-bottom: 3px solid #e74c3c; padding-bottom: 15px;'>")
+                .append("🚨 LMS 결석자 알림</h1>")
+
+                // 알림 정보
+                .append("<div style='background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 5px solid #ffc107;'>")
+                .append("<h2 style='margin-top: 0; color: #856404;'>알림 정보</h2>")
+                .append("<p style='margin: 5px 0;'><strong>스터디 그룹:</strong> ").append(studyGroupName).append("</p>")
+                .append("<p style='margin: 5px 0;'><strong>결석 날짜:</strong> ").append(targetDate.format(dateFormatter)).append("</p>")
+                .append("<p style='margin: 5px 0;'><strong>경과 일수:</strong> 10일</p>")
+                .append("<p style='margin: 5px 0;'><strong>결석자 수:</strong> ").append(absenceList.size()).append("명</p>")
+                .append("</div>")
+
+                // 결석자 목록
+                .append("<div style='background-color: #f8d7da; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 5px solid #dc3545;'>")
+                .append("<h3 style='margin-top: 0; color: #721c24;'>📋 결석자 명단</h3>")
+                .append("<div style='background-color: white; padding: 15px; border-radius: 5px;'>");
+
+        // 결석자 목록을 표 형태로 생성
+        html.append("<table style='width: 100%; border-collapse: collapse; margin-top: 10px;'>")
+                .append("<thead>")
+                .append("<tr style='background-color: #dc3545; color: white;'>")
+                .append("<th style='padding: 10px; text-align: left; border: 1px solid #ddd;'>학번</th>")
+                .append("<th style='padding: 10px; text-align: left; border: 1px solid #ddd;'>이름</th>")
+                .append("<th style='padding: 10px; text-align: left; border: 1px solid #ddd;'>주차</th>")
+                .append("</tr>")
+                .append("</thead>")
+                .append("<tbody>");
+
+        for (int i = 0; i < absenceList.size(); i++) {
+            AttendanceAlertService.AbsenceInfo absence = absenceList.get(i);
+            String rowStyle = i % 2 == 0 ? "background-color: #f8f9fa;" : "background-color: white;";
+
+            html.append("<tr style='").append(rowStyle).append("'>")
+                    .append("<td style='padding: 8px; border: 1px solid #ddd;'>").append(absence.getStudentNumber()).append("</td>")
+                    .append("<td style='padding: 8px; border: 1px solid #ddd;'>").append(absence.getStudentName()).append("</td>")
+                    .append("<td style='padding: 8px; border: 1px solid #ddd;'>").append(absence.getWeek() != null ? absence.getWeek() : "-").append("</td>")
+                    .append("</tr>");
+        }
+
+        html.append("</tbody>")
+                .append("</table>")
+                .append("</div>")
+                .append("</div>")
+
+                // 안내 문구
+                .append("<div style='background-color: #d1ecf1; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 5px solid #bee5eb;'>")
+                .append("<h4 style='margin-top: 0; color: #0c5460;'>💡 안내사항</h4>")
+                .append("<ul style='margin: 10px 0; padding-left: 20px; color: #0c5460;'>")
+                .append("<li>위 학생들은 ").append(targetDate.format(dateFormatter)).append("에 결석한 후 10일이 경과되었습니다.</li>")
+                .append("<li>해당 학생들의 출석 상태를 확인하고 필요시 개별 연락을 취해주세요.</li>")
+                .append("<li>지속적인 결석이 우려되는 경우 적절한 조치를 취해주시기 바랍니다.</li>")
+                .append("</ul>")
+                .append("</div>")
+
+                // 푸터
+                .append("<div style='margin-top: 30px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; text-align: center;'>")
+                .append("<p style='margin: 0; font-size: 14px; color: #6c757d;'>")
+                .append("이 알림은 LMS 시스템에서 자동으로 발송되었습니다.</p>")
+                .append("<p style='margin: 5px 0 0 0; font-size: 12px; color: #adb5bd;'>")
+                .append("발송 시간: ").append(LocalDateTime.now().format(currentTimeFormatter))
+                .append(" | 문의사항이 있으시면 시스템 관리자에게 연락해주세요.")
+                .append("</p>")
+                .append("</div>")
+
+                .append("</div>")
+                .append("</body>")
+                .append("</html>");
+
+        return html.toString();
     }
 
     private String buildWeeklyReportContent(Map<String, List<AssignmentNotSubmittedInfo>> reportData,
