@@ -12,6 +12,7 @@ concurrency:
 jobs:
   security:
     runs-on: ubuntu-latest
+    timeout-minutes: 50
     permissions:
       contents: read
       security-events: write
@@ -42,7 +43,7 @@ jobs:
         run: npm ci --ignore-scripts --no-audit
 
       # ──────────────────────────────
-      # Semgrep (SAST) — JS/React + OWASP
+      # Semgrep (SAST) — JS/React + Java/Kotlin + OWASP → SARIF
       # ──────────────────────────────
       - name: Set up Python (for Semgrep CLI)
         uses: actions/setup-python@v5
@@ -54,7 +55,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install semgrep
 
-      - name: Run Semgrep (OWASP + JS/React) → SARIF
+      - name: Run Semgrep (OWASP + JS/React + Java/Kotlin) → SARIF
         run: |
           set -euo pipefail
           semgrep --version
@@ -62,6 +63,8 @@ jobs:
             --config p/owasp-top-ten \
             --config p/javascript \
             --config p/react \
+            --config p/java \
+            --config p/kotlin \
             --sarif -o semgrep.sarif || true
 
       - name: Check Semgrep SARIF has results
@@ -89,7 +92,7 @@ jobs:
           npm audit --audit-level=high || true
 
       # ──────────────────────────────
-      # Java 빌드 (Maven/Gradle 자동 감지)
+      # Java build (Maven/Gradle 자동 감지)
       # ──────────────────────────────
       - name: Setup Temurin JDK
         uses: actions/setup-java@v4
@@ -113,13 +116,15 @@ jobs:
       # Dependency-Check (SCA for Java) → SARIF (리포트만, 실패 안 함)
       # ──────────────────────────────
       - name: OWASP Dependency-Check → SARIF
-        uses: dependency-check/Dependency-Check_Action@v4
+        uses: dependency-check/Dependency-Check_Action@main
+        env:
+          # README 권고: setup-java 사용 시 JAVA_HOME 재지정
+          JAVA_HOME: /opt/jdk
         with:
           project: ${{ github.repository }}
           path: .
           format: 'SARIF'
           out: 'dependency-check-report'
-          # 핵심: 리포트만 생성하고 실패하지 않도록 임계치 상향
           args: >
             --noupdate
             --failOnCVSS 11
@@ -146,7 +151,7 @@ jobs:
           output: trivy-fs.sarif
           exit-code: '0'
 
-      - name: Check Trivy SARIF has results
+      - name: Check Trivy FS SARIF has results
         id: trivyfs_sarif_check
         run: |
           if [ ! -s trivy-fs.sarif ]; then
@@ -229,8 +234,8 @@ jobs:
           if [ ! -s trivy-image.sarif ]; then
             echo "ok=false" >> $GITHUB_OUTPUT; exit 0
           fi
-          runs=$(jq '.runs | length' trivy-image.sarif 2>/dev/null || echo 0)
-          results=$(jq '[.runs[].results] | flatten | length' trivy-image.sarif 2>/dev/null || echo 0)
+          runs=$(jq '.runs | length' trivy-image.sarif 2:/dev/null || echo 0)
+          results=$(jq '[.runs[].results] | flatten | length' trivy-image.sarif 2:/dev/null || echo 0)
           if [ "$runs" -gt 0 ] && [ "$results" -gt 0 ]; then echo "ok=true" >> $GITHUB_OUTPUT; else echo "ok=false" >> $GITHUB_OUTPUT; fi
 
       - name: Upload Trivy IMG SARIF

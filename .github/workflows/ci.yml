@@ -18,6 +18,9 @@ jobs:
       ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
       GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
       GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
+      WIKI_API_TOKEN: ${{ secrets.WIKI_API_TOKEN }}
+      WIKI_DOMAIN: ${{ secrets.WIKI_DOMAIN }}
+      WIKI_GROUP_ID: ${{ secrets.WIKI_GROUP_ID }}
       IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/mjsec-lms-back
 
     steps:
@@ -35,6 +38,9 @@ jobs:
             echo "ADMIN_PASSWORD=${{ env.ADMIN_PASSWORD }}"
             echo "GMAIL_USERNAME=${{ env.GMAIL_USERNAME }}"
             echo "GMAIL_PASSWORD=${{ env.GMAIL_PASSWORD }}"
+            echo "WIKI_API_TOKEN=${{ env.WIKI_API_TOKEN }}"
+            echo "WIKI_GROUP_ID=${{ env.WIKI_GROUP_ID }}"
+            echo "WIKI_DOMAIN=${{ env.WIKI_DOMAIN }}"
           } > .env
           cat .env | sed 's/^\(.*PASSWORD\|JWT_SECRET\)=.*/\1=****/'
 
