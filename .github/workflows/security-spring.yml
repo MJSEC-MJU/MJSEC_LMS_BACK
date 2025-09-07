@@ -34,15 +34,8 @@ jobs:
           sudo apt-get install -y jq
 
       # ──────────────────────────────
-      # Java toolchain + Build tool detect (Maven/Gradle)
+      # Build tool detect 먼저 → 그 다음 setup-java에 조건부 cache 적용
       # ──────────────────────────────
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: 'maven'
-
       - name: Detect build tool
         id: detect
         shell: bash
@@ -50,21 +43,31 @@ jobs:
           set -euo pipefail
           if [ -f "./mvnw" ] || [ -f "./pom.xml" ]; then
             echo "tool=maven" >> $GITHUB_OUTPUT
-            echo "cache_path=~/.m2/repository" >> $GITHUB_OUTPUT
           elif [ -f "./gradlew" ] || ls -1 build.gradle* >/dev/null 2>&1; then
             echo "tool=gradle" >> $GITHUB_OUTPUT
-            echo "cache_path=~/.gradle/caches" >> $GITHUB_OUTPUT
           else
-            echo "No Maven/Gradle build files found"; exit 1
+            echo "지원되는 빌드 파일(pom.xml 또는 build.gradle*)이 없습니다."; exit 1
           fi
 
-      - name: Cache deps
-        uses: actions/cache@v4
+      - name: Set up Java (Maven cache)
+        if: ${{ steps.detect.outputs.tool == 'maven' }}
+        uses: actions/setup-java@v4
         with:
-          path: ${{ steps.detect.outputs.cache_path }}
-          key: ${{ runner.os }}-${{ steps.detect.outputs.tool }}-${{ hashFiles('**/pom.xml', '**/build.gradle*', '**/settings.gradle*') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ steps.detect.outputs.tool }}-
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+          cache-dependency-path: '**/pom.xml'
+
+      - name: Set up Java (Gradle cache)
+        if: ${{ steps.detect.outputs.tool == 'gradle' }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: gradle
+          cache-dependency-path: |
+            **/*.gradle*
+            **/gradle-wrapper.properties
 
       - name: Build (compile only)
         shell: bash
@@ -120,7 +123,7 @@ jobs:
       # ──────────────────────────────
       # SCA — OWASP Dependency-Check → SARIF
       # ──────────────────────────────
-      - name: Cache Dependency-Check DB
+      - name: Cache Dependency-Check DB (best-effort)
         uses: actions/cache@v4
         with:
           path: |
@@ -133,6 +136,7 @@ jobs:
       - name: OWASP Dependency-Check (repo scan)
         uses: dependency-check/Dependency-Check_Action@main
         env:
+          # setup-java 사용 시 이 액션이 요구하는 JAVA_HOME 경로를 맞춰줘야 함
           JAVA_HOME: /opt/jdk
         with:
           project: ${{ env.PROJECT_NAME }}
