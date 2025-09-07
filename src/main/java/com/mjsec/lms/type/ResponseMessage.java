@@ -13,15 +13,18 @@ public enum ResponseMessage {
     LOGOUT_SUCCESS("로그아웃 성공"),
     STUDENT_NUMBER_CHECK_SUCCESS("사용 가능한 학번"),
     DUPLICATE_STUDENT_NUMBER("사용 중인 학번"),
-    EMAIL_CHECL_SUCCESS("사용 가능한 이메일"),
+    EMAIL_CHECK_SUCCESS("사용 가능한 이메일"),
     DUPLICATE_EMAIL("사용 중인 이메일"),
 
     // Admin 관련
     GET_ALL_PENDING_USER_SUCCESS("회원가입 승인 대기자 목록 반환 성공"),
     APPROVE_REGISTER_SUCCESS("회원가입 승인 완료"),
     CREATE_GROUP_SUCCESS("스터디 그룹 생성 성공"),
+    GET_ALL_USER_INFO_SUCCESS("전체 사용자 정보 조회 성공"),
+    DELETE_USER_SUCCESS("유저 삭제 성공"),
+    REFUSE_REGISTER_SUCCESS("회원가입 반려 완료"),
 
-    //User 관련
+    // User 관련
     USER_GET_PAGE_SUCCESS("유저 페이지 조회 성공"),
 
     // 과제
@@ -55,7 +58,7 @@ public enum ResponseMessage {
     UPDATE_ANNOUNCEMENT_SUCCESS("공지사항 수정 성공"),
     DELETE_ANNOUNCEMENT_SUCCESS("공지사항 삭제 성공"),
 
-    //테스트 관련
+    // 테스트 관련
     TEST_SUCCESS("테스트 성공"),
 
     // Mentor 관련
@@ -63,13 +66,13 @@ public enum ResponseMessage {
     DELETE_MEMBER_SUCCESS("스터디원 삭제 성공"),
     WARN_MEMBER_SUCCESS("수동 경고 부여 성공"),
 
-    //활동 글 관련
+    // 활동 글 관련
     STUDY_ACTIVITY_SUCCESS("활동 글 생성 성공"),
     STUDY_ACTIVITY_GET_SUCCESS("활동 글 조회 성공"),
     STUDY_ACTIVITY_DELETE_SUCCESS("활동 글 삭제 성공"),
     STUDY_ACTIVITY_UPDATE_SUCCESS("활동 글 수정 성공"),
 
-    //스터디그룹 관련
+    // 스터디그룹 관련
     STUDY_MEMBER_GET_SUCCESS("스터디 전체 멤버 반환 성공"),
     STUDY_MENTEE_GET_SUCCESS("스터디 멘티 멤버 반환 성공"),
     ;

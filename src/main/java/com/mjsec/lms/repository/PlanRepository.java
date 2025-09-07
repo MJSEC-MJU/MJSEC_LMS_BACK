@@ -1,7 +1,9 @@
 package com.mjsec.lms.repository;
 
 import com.mjsec.lms.domain.Plan;
+import com.mjsec.lms.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -34,4 +36,12 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
             @Param("studyId") Long studyId,
             @Param("currentTime") LocalDateTime currentTime
     );
+
+    @Modifying
+    @Query("DELETE FROM Plan p WHERE p.creator = :user")
+    void deleteByCreator(@Param("user") User user);
+
+    @Modifying
+    @Query("DELETE FROM Plan p WHERE p.studyGroup.creator = :user")
+    void deleteByStudyGroupCreator(@Param("user") User user);
 }
