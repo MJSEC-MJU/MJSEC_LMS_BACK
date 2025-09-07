@@ -82,5 +82,6 @@ logging:
     com.mjsec.lms.service.ScheduledTaskService: INFO
     com.mjsec.lms.service.com.mjsec.lms.service.WeeklyAlertService: INFO
     com.mjsec.lms.service.EmailService: INFO
+    com.mjsec.lms.service.WikiService: INFO
     org.springframework.scheduling: DEBUG #개발할 때만
 

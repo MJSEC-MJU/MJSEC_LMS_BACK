@@ -23,14 +23,18 @@ public class AdminService {
     private final PendingUserRepository pendingUserRepository;
     private final UserRepository userRepository;
     private final StudyGroupRepository studyGroupRepository;
+    private final WikiService wikiService;
 
 
-    public AdminService(PendingUserRepository pendingUserRepository, UserRepository userRepository,
-                        StudyGroupRepository studyGroupRepository) {
+    public AdminService(PendingUserRepository pendingUserRepository,
+                        UserRepository userRepository,
+                        StudyGroupRepository studyGroupRepository,
+                        WikiService wikiService) {
 
         this.pendingUserRepository = pendingUserRepository;
         this.userRepository = userRepository;
         this.studyGroupRepository = studyGroupRepository;
+        this.wikiService = wikiService;
     }
 
     /**
@@ -81,6 +85,28 @@ public class AdminService {
                 .build();
 
         userRepository.save(user);
+
+        try {
+            String wikiPassword = wikiService.extractPasswordFromEmail(pendingUser.getEmail());
+            boolean wikiCreated = wikiService.createWikiUser(
+                    pendingUser.getEmail(),
+                    pendingUser.getName(),
+                    wikiPassword
+            );
+
+            if (wikiCreated) {
+                log.info("Successfully created Wiki account for user: {}", pendingUser.getEmail());
+            } else {
+                // Wiki 계정 생성 실패해도 LMS 계정은 유지 (로그만 남김)
+                log.warn("Failed to create Wiki account for user: {} - LMS account still created",
+                        pendingUser.getEmail());
+            }
+        } catch (Exception e) {
+            // Wiki 서비스 오류가 LMS 계정 생성을 방해하지 않도록 예외 처리
+            log.error("Error occurred while creating Wiki account for user: {} - {}",
+                    pendingUser.getEmail(), e.getMessage());
+        }
+
         pendingUserRepository.delete(pendingUser);
         log.info("Moved pending user to approved user: {}", user.getStudentNumber());
     }
