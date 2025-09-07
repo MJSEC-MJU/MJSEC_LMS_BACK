@@ -12,6 +12,7 @@ concurrency:
 jobs:
   security:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
       security-events: write
@@ -122,35 +123,40 @@ jobs:
       - name: Cache Dependency-Check DB
         uses: actions/cache@v4
         with:
-          path: ~/.m2/repository/org/owasp/dependency-check-data
+          path: |
+            ~/.m2/repository/org/owasp/dependency-check-data
+            ~/.gradle/dependency-check
           key: odc-db-${{ runner.os }}-${{ hashFiles('**/pom.xml', '**/build.gradle*') }}
+          restore-keys: |
+            odc-db-${{ runner.os }}-
 
       - name: OWASP Dependency-Check (repo scan)
-        uses: jeremylong/DependencyCheck_Action@v4
+        uses: dependency-check/Dependency-Check_Action@main
+        env:
+          JAVA_HOME: /opt/jdk
         with:
           project: ${{ env.PROJECT_NAME }}
           path: .
           format: 'SARIF'
-          output_directory: 'dependency-check-report'
-          # (선택) NVD API key가 있으면 레이트리밋 회피 가능
-          # args: '--nvdApiKey ${{ secrets.NVD_API_KEY }}'
+          out: 'dependency-check-report'
+          args: '--failOnCVSS 0'
 
-      - name: Check Dependency-Check SARIF has results
-        id: odc_sarif_check
+      - name: Locate Dependency-Check SARIF
+        id: odc_locate
         run: |
-          FILE="dependency-check-report/dependency-check-report.sarif"
-          if [ ! -s "$FILE" ]; then
-            echo "ok=false" >> $GITHUB_OUTPUT; exit 0
+          set -euo pipefail
+          FILE=$(find dependency-check-report -maxdepth 1 -type f -name '*.sarif' | head -n1 || true)
+          if [ -n "$FILE" ]; then
+            echo "file=$FILE" >> $GITHUB_OUTPUT
+          else
+            echo "file=" >> $GITHUB_OUTPUT
           fi
-          runs=$(jq '.runs | length' "$FILE" 2>/dev/null || echo 0)
-          results=$(jq '[.runs[].results] | flatten | length' "$FILE" 2>/dev/null || echo 0)
-          if [ "$runs" -gt 0 ] && [ "$results" -gt 0 ]; then echo "ok=true" >> $GITHUB_OUTPUT; else echo "ok=false" >> $GITHUB_OUTPUT; fi
 
       - name: Upload Dependency-Check SARIF
-        if: ${{ steps.odc_sarif_check.outputs.ok == 'true' }}
+        if: ${{ steps.odc_locate.outputs.file != '' }}
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: dependency-check-report/dependency-check-report.sarif
+          sarif_file: ${{ steps.odc_locate.outputs.file }}
 
       # ──────────────────────────────
       # Trivy (filesystem scan) → SARIF
