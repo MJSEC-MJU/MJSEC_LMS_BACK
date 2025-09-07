@@ -30,20 +30,21 @@ jobs:
           sudo apt-get install -y jq
 
       # ──────────────────────────────
-      # Node deps (for npm audit)
+      # Node (프론트엔드가 있을 때만)
       # ──────────────────────────────
       - name: Use Node
+        if: ${{ hashFiles('**/package-lock.json', '**/npm-shrinkwrap.json', '**/pnpm-lock.yaml', '**/yarn.lock') != '' }}
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
       - name: Install dependencies (no scripts)
-        if: ${{ hashFiles('**/package-lock.json') != '' || hashFiles('**/pnpm-lock.yaml') != '' || hashFiles('**/yarn.lock') != '' }}
+        if: ${{ hashFiles('**/package-lock.json', '**/npm-shrinkwrap.json', '**/pnpm-lock.yaml', '**/yarn.lock') != '' }}
         run: npm ci --ignore-scripts --no-audit
 
       # ──────────────────────────────
-      # Semgrep (SAST) — JS/React + Java/Kotlin + OWASP → SARIF
+      # Semgrep (SAST) — Java/Kotlin + (옵션) JS/React → SARIF
       # ──────────────────────────────
       - name: Set up Python (for Semgrep CLI)
         uses: actions/setup-python@v5
@@ -55,17 +56,28 @@ jobs:
           python -m pip install --upgrade pip
           pip install semgrep
 
-      - name: Run Semgrep (OWASP + JS/React + Java/Kotlin) → SARIF
+      # 백엔드만 있어도 Java/Kotlin/OWASP 룰은 항상 실행.
+      # JS/React 룰은 락파일 있을 때만 추가로 돌리도록 나눔.
+      - name: Run Semgrep (OWASP + Java/Kotlin) → SARIF
         run: |
           set -euo pipefail
           semgrep --version
           semgrep ci \
             --config p/owasp-top-ten \
-            --config p/javascript \
-            --config p/react \
             --config p/java \
             --config p/kotlin \
             --sarif -o semgrep.sarif || true
+
+      - name: Run Semgrep (JS/React) → append SARIF
+        if: ${{ hashFiles('**/package-lock.json', '**/npm-shrinkwrap.json', '**/pnpm-lock.yaml', '**/yarn.lock') != '' }}
+        run: |
+          set -euo pipefail
+          semgrep ci \
+            --config p/javascript \
+            --config p/react \
+            --sarif -o semgrep-js.sarif || true
+          # SARIF 병합(간단 append; GitHub는 여러 SARIF 업로드도 지원)
+          jq -s '.[0].runs += .[1].runs | .[0]' semgrep.sarif semgrep-js.sarif > semgrep-merged.sarif && mv semgrep-merged.sarif semgrep.sarif
 
       - name: Check Semgrep SARIF has results
         id: semgrep_sarif_check
@@ -84,12 +96,11 @@ jobs:
           sarif_file: semgrep.sarif
 
       # ──────────────────────────────
-      # Node SCA — npm audit (report-only)
+      # Node SCA — npm audit (프론트엔드 있을 때만, report-only)
       # ──────────────────────────────
       - name: Node audit (npm)
-        if: ${{ hashFiles('**/package-lock.json') != '' || hashFiles('**/pnpm-lock.yaml') != '' || hashFiles('**/yarn.lock') != '' }}
-        run: |
-          npm audit --audit-level=high || true
+        if: ${{ hashFiles('**/package-lock.json', '**/npm-shrinkwrap.json', '**/pnpm-lock.yaml', '**/yarn.lock') != '' }}
+        run: npm audit --audit-level=high || true
 
       # ──────────────────────────────
       # Java build (Maven/Gradle 자동 감지)
@@ -113,13 +124,12 @@ jobs:
         run: ./gradlew build -x test
 
       # ──────────────────────────────
-      # Dependency-Check (SCA for Java) → SARIF (리포트만, 실패 안 함)
+      # Dependency-Check (Java SCA) → SARIF (리포트만, 실패 안함)
       # ──────────────────────────────
       - name: OWASP Dependency-Check → SARIF
         uses: dependency-check/Dependency-Check_Action@main
         env:
-          # README 권고: setup-java 사용 시 JAVA_HOME 재지정
-          JAVA_HOME: /opt/jdk
+          JAVA_HOME: /opt/jdk  # README 권고
         with:
           project: ${{ github.repository }}
           path: .
@@ -234,8 +244,8 @@ jobs:
           if [ ! -s trivy-image.sarif ]; then
             echo "ok=false" >> $GITHUB_OUTPUT; exit 0
           fi
-          runs=$(jq '.runs | length' trivy-image.sarif 2:/dev/null || echo 0)
-          results=$(jq '[.runs[].results] | flatten | length' trivy-image.sarif 2:/dev/null || echo 0)
+          runs=$(jq '.runs | length' trivy-image.sarif 2>/dev/null || echo 0)
+          results=$(jq '[.runs[].results] | flatten | length' trivy-image.sarif 2>/dev/null || echo 0)
           if [ "$runs" -gt 0 ] && [ "$results" -gt 0 ]; then echo "ok=true" >> $GITHUB_OUTPUT; else echo "ok=false" >> $GITHUB_OUTPUT; fi
 
       - name: Upload Trivy IMG SARIF
