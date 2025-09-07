@@ -3,6 +3,7 @@ package com.mjsec.lms.controller;
 import com.mjsec.lms.dto.AttendanceDto;
 import com.mjsec.lms.dto.AttendanceResponse;
 import com.mjsec.lms.dto.SuccessResponse;
+import com.mjsec.lms.dto.WeeklyAttendanceResponse;
 import com.mjsec.lms.service.AttendanceService;
 import com.mjsec.lms.type.ResponseMessage;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/group")
@@ -40,6 +42,47 @@ public class AttendanceController {
                 SuccessResponse.of(
                         ResponseMessage.ATTENDANCE_CREATE_SUCCESS,
                         attendanceResponse
+                )
+        );
+    }
+
+    //특정 주차의 출석체크 상태 조회
+    @GetMapping("/{groupId}/attendance/week/{week}")
+    public ResponseEntity<SuccessResponse<List<WeeklyAttendanceResponse>>> getAttendanceByWeek(
+            @PathVariable Long groupId,
+            @PathVariable String week,
+            Authentication authentication){
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        List<WeeklyAttendanceResponse> weeklyAttendanceList = attendanceService.getAttendanceByWeek(
+                groupId, week, currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.WEEKLY_ATTENDANCE_GET_SUCCESS,
+                        weeklyAttendanceList
+                )
+        );
+    }
+
+    // 전체 주차별 출석체크 상태 조회
+    @GetMapping("/{groupId}/attendance/all-weeks")
+    public ResponseEntity<SuccessResponse<Map<String, List<WeeklyAttendanceResponse>>>> getAllWeeksAttendance(
+            @PathVariable Long groupId,
+            Authentication authentication){
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        Map<String, List<WeeklyAttendanceResponse>> allWeeksAttendance = attendanceService.getAllWeeksAttendance(
+                groupId, currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.ALL_WEEKS_ATTENDANCE_GET_SUCCESS,
+                        allWeeksAttendance
                 )
         );
     }

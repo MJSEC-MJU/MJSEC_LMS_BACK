@@ -45,6 +45,8 @@ public enum ResponseMessage {
     // 출석체크 관련
     ATTENDANCE_GET_SUCCESS("출석체크 조회 성공"),
     ATTENDANCE_CREATE_SUCCESS("출석체크 성공"),
+    WEEKLY_ATTENDANCE_GET_SUCCESS("주차별 출석체크 조회 성공"),
+    ALL_WEEKS_ATTENDANCE_GET_SUCCESS("전체 주차별 출석체크 조회 성공"),
 
     // Announcement 관련
     POST_ANNOUNCEMENT_SUCCESS("공지사항 등록 성공"),
@@ -69,6 +71,7 @@ public enum ResponseMessage {
 
     //스터디그룹 관련
     STUDY_MEMBER_GET_SUCCESS("스터디 전체 멤버 반환 성공"),
+    STUDY_MENTEE_GET_SUCCESS("스터디 멘티 멤버 반환 성공"),
     ;
     private final String message;
 }

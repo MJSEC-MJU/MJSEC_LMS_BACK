@@ -375,6 +375,41 @@ public class ValidationUtils {
         }
     }
 
+    // ========== 활동 글 관련 검증 ==========
+
+    // 중복 주차 생성 방지 검증 (생성시)
+    public void validateDuplicateWeekForCreate(StudyGroup studyGroup, String week) {
+
+        if (week == null || week.trim().isEmpty()) {
+            return; // 주차가 없으면 검증하지 않음
+        }
+
+        boolean exists = studyActivityRepository.existsByStudyGroupAndWeek(studyGroup, week);
+
+        if (exists) {
+            log.warn("Duplicate week creation attempt: StudyGroup ID {}, Week {}",
+                    studyGroup.getStudyId(), week);
+            throw new RestApiException(ErrorCode.DUPLICATE_WEEK);
+        }
+    }
+
+    // 중복 주차 수정 방지 검증 (수정시)
+    public void validateDuplicateWeekForUpdate(StudyGroup studyGroup, String week, Long currentActivityId) {
+
+        if (week == null || week.trim().isEmpty()) {
+            return; // 주차가 없으면 검증하지 않음
+        }
+
+        boolean exists = studyActivityRepository.existsByStudyGroupAndWeekAndActivityIdNot(
+                studyGroup, week, currentActivityId);
+
+        if (exists) {
+            log.warn("Duplicate week update attempt: StudyGroup ID {}, Week {}, Current Activity ID {}",
+                    studyGroup.getStudyId(), week, currentActivityId);
+            throw new RestApiException(ErrorCode.DUPLICATE_WEEK);
+        }
+    }
+
     // ========== 유틸리티 메서드들 ==========
 
     // 문자열에서 URL 추출하기

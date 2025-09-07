@@ -43,6 +43,26 @@ public class StudyGroupController {
         );
     }
 
+    //스터디 멘티 멤버만 반환
+    @GetMapping("/{groupId}/mentee")
+    public ResponseEntity<SuccessResponse<List<StudyMemberResponse>>> getStudyMenteeList(
+            @PathVariable Long groupId,
+            Authentication authentication
+    ){
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        List<StudyMemberResponse> studyMenteeResponseList = studyGroupService.getStudyMenteeList(groupId, currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.STUDY_MENTEE_GET_SUCCESS,
+                        studyMenteeResponseList
+                )
+        );
+    }
+
     //활동 글 생성
     @PostMapping("/{groupId}/create-activity")
     public ResponseEntity<SuccessResponse<StudyActivityResponse>> createStudyActivity(
