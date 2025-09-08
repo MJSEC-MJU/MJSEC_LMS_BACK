@@ -3,6 +3,7 @@ package com.mjsec.lms.controller;
 import com.mjsec.lms.dto.PendingUserDto;
 import com.mjsec.lms.dto.StudyGroupDto.StudyGroupRequestDto;
 import com.mjsec.lms.dto.SuccessResponse;
+import com.mjsec.lms.dto.UserAdminResponseDto;
 import com.mjsec.lms.service.AdminService;
 import com.mjsec.lms.type.ResponseMessage;
 import jakarta.validation.Valid;
@@ -10,6 +11,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -49,6 +51,18 @@ public class AdminController {
         );
     }
 
+    @PostMapping("/member-refusal/{studentNumber}")
+    public ResponseEntity<SuccessResponse<Void>> refuseRegister(@PathVariable Long studentNumber) {
+
+        adminService.refuseRegister(studentNumber);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                SuccessResponse.of(
+                        ResponseMessage.REFUSE_REGISTER_SUCCESS
+                )
+        );
+    }
+
     @PostMapping("/group")
     public ResponseEntity<SuccessResponse<Void>> createGroup(@Valid @RequestBody StudyGroupRequestDto studyGroupDto){
 
@@ -57,6 +71,31 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.OK).body(
                 SuccessResponse.of(
                         ResponseMessage.CREATE_GROUP_SUCCESS
+                )
+        );
+    }
+
+    @GetMapping("/users")
+    public ResponseEntity<SuccessResponse<List<UserAdminResponseDto>>> getAllUsersForAdmin() {
+
+        List<UserAdminResponseDto> users = adminService.getAllUsersForAdmin();
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                SuccessResponse.of(
+                        ResponseMessage.GET_ALL_USER_INFO_SUCCESS,
+                        users
+                )
+        );
+    }
+
+    @DeleteMapping("/users/{userId}")
+    public ResponseEntity<SuccessResponse<Void>> deleteUser(@PathVariable("userId") Long userId) {
+
+        adminService.deleteUser(userId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                SuccessResponse.of(
+                        ResponseMessage.DELETE_USER_SUCCESS
                 )
         );
     }

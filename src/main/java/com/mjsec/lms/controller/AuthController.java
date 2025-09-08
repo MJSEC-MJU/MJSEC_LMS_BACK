@@ -51,7 +51,7 @@ public class AuthController {
         if(authService.checkEmail(email)) {
             return ResponseEntity.status(HttpStatus.OK).body(
                     SuccessResponse.of(
-                            ResponseMessage.EMAIL_CHECL_SUCCESS,
+                            ResponseMessage.EMAIL_CHECK_SUCCESS,
                             true
                     )
             );

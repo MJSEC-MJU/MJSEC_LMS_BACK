@@ -28,4 +28,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     //모든 관리자의 이메일 주소만 조회
     @Query("SELECT u.email FROM User u WHERE u.role = :role")
     List<String> findEmailsByRole(UserRole role);
+
+    Optional<User> findByUserId(Long userId);
 }

@@ -5,6 +5,7 @@ import com.mjsec.lms.domain.StudyGroup;
 import com.mjsec.lms.domain.User;
 import com.mjsec.lms.type.GroupMemberRole;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -30,4 +31,12 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> 
 
     // 유저와 스터디 그룹 정보를 받아 이미 있는 멤버인지 확인
     boolean existsByUserAndStudyGroup(User user, StudyGroup studyGroup);
+
+    @Modifying
+    @Query("DELETE FROM GroupMember g WHERE g.user = :user")
+    void deleteByUser(@Param("user") User user);
+
+    @Modifying
+    @Query("DELETE FROM GroupMember g WHERE g.studyGroup.creator = :user")
+    void deleteByStudyGroupCreator(@Param("user") User user);
 }
