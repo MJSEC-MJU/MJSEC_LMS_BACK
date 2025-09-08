@@ -9,6 +9,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -392,5 +393,20 @@ public class EmailService {
         return maskedLocal + domainPart;
     }
 
+    /**
+     * 비밀번호 변경을 위해 이메일로 인증 코드를 전송하는 메소드
+     * @param toEmail 수신자
+     * @param code 인증 코드
+     */
+    public void sendVerificationEmail(String toEmail, String code) {
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject("비밀번호 변경을 위한 인증 코드");
+        message.setText("인증 코드 : " + code);
+
+        mailSender.send(message);
+        log.info("이메일 전송 완료: {}", toEmail);
+    }
 }
 
