@@ -1,0 +1,90 @@
+name: Trigger Front CD on push
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+  # 수동 테스트용 (옵션)
+  workflow_dispatch:
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Install jq
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y jq
+
+      - name: Decide target ref (existence check + fallback to default)
+        env:
+          GH_PAT: ${{ secrets.FRONT_CI_TOKEN }}   # Fine-grained PAT (Actions: RW, Contents: R)
+          OWNER: MJSEC-MJU
+          REPO: MJSEC_LMS_FRONT
+          WF_PATH: .github/workflows/cd.yml
+        run: |
+          set -euo pipefail
+
+          SRC="${GITHUB_REF_NAME}"
+          # (선택) 브랜치 이름 매핑: dev -> develop
+          case "$SRC" in
+            dev) SRC_MAPPED="develop" ;;
+            *)   SRC_MAPPED="$SRC" ;;
+          esac
+
+          API="https://api.github.com/repos/$OWNER/$REPO"
+
+          # 기본 브랜치
+          DEFAULT_REF="$(curl -sS -H "Authorization: Bearer $GH_PAT" "$API" | jq -r .default_branch)"
+          if [ -z "$DEFAULT_REF" ] || [ "$DEFAULT_REF" = "null" ]; then
+            echo "::error::Failed to fetch default_branch"
+            exit 1
+          fi
+
+          # 1) 동일 브랜치 존재 여부
+          if curl -fsS -H "Authorization: Bearer $GH_PAT" "$API/branches/$SRC_MAPPED" >/dev/null; then
+            CANDIDATE="$SRC_MAPPED"
+          else
+            echo "::warning title=Branch not found::'$SRC_MAPPED' not in target; falling back to '$DEFAULT_REF'"
+            CANDIDATE="$DEFAULT_REF"
+          fi
+
+          # 2) 해당 ref에 워크플로우 파일 존재 여부
+          if ! curl -fsS -H "Authorization: Bearer $GH_PAT" \
+                 "$API/contents/$WF_PATH?ref=$CANDIDATE" >/dev/null; then
+            echo "::warning title=Workflow not found::No '$WF_PATH' on ref '$CANDIDATE'; falling back to '$DEFAULT_REF'"
+            CANDIDATE="$DEFAULT_REF"
+          fi
+
+          echo "TARGET_REF=$CANDIDATE" | tee -a "$GITHUB_ENV"
+
+      - name: Dispatch MJSEC_LMS_FRONT cd.yml
+        env:
+          GH_PAT: ${{ secrets.FRONT_CI_TOKEN }}
+        run: |
+          set -euo pipefail
+          api="https://api.github.com/repos/MJSEC-MJU/MJSEC_LMS_FRONT/actions/workflows/cd.yml/dispatches"
+          payload=$(jq -n \
+            --arg ref "${TARGET_REF}" \
+            --arg caller_repo "${GITHUB_REPOSITORY}" \
+            --arg image_tag "${GITHUB_SHA:0:7}" \
+            '{ref:$ref, inputs:{caller_repo:$caller_repo, image_tag:$image_tag}}')
+
+          http_code=$(curl -s -o /tmp/resp.json -w "%{http_code}" \
+            -X POST "$api" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_PAT" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -d "$payload")
+
+          echo "HTTP $http_code"
+          cat /tmp/resp.json || true
+          test "$http_code" -ge 200 -a "$http_code" -lt 300
+
+      - name: Link to target workflow runs
+        run: echo "➡ https://github.com/MJSEC-MJU/MJSEC_LMS_FRONT/actions/workflows/cd.yml"

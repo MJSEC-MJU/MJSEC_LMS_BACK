@@ -5,6 +5,9 @@ import com.mjsec.lms.domain.StudyActivity;
 import com.mjsec.lms.domain.StudyGroup;
 import com.mjsec.lms.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -43,4 +46,16 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
     // 특정 날짜의 모든 출석 기록 조회
     List<Attendance> findByAttendanceDate(LocalDate attendanceDate);
+
+    @Modifying
+    @Query("DELETE FROM Attendance a WHERE a.user = :user")
+    void deleteByUser(@Param("user") User user);
+
+    @Modifying
+    @Query("DELETE FROM Attendance a WHERE a.studyActivity.creator = :user")
+    void deleteByStudyActivityCreator(@Param("user") User user);
+
+    @Modifying
+    @Query("DELETE FROM Attendance a WHERE a.studyGroup.creator = :user")
+    void deleteByStudyGroupCreator(@Param("user") User user);
 }

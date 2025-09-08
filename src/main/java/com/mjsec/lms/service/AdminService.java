@@ -5,9 +5,17 @@ import com.mjsec.lms.domain.StudyGroup;
 import com.mjsec.lms.domain.User;
 import com.mjsec.lms.dto.PendingUserDto;
 import com.mjsec.lms.dto.StudyGroupDto.StudyGroupRequestDto;
+import com.mjsec.lms.dto.UserAdminResponseDto;
 import com.mjsec.lms.exception.RestApiException;
+import com.mjsec.lms.repository.AnnouncementRepository;
+import com.mjsec.lms.repository.AttendanceRepository;
+import com.mjsec.lms.repository.GroupMemberRepository;
 import com.mjsec.lms.repository.PendingUserRepository;
+import com.mjsec.lms.repository.PlanCommentRepository;
+import com.mjsec.lms.repository.PlanRepository;
+import com.mjsec.lms.repository.StudyActivityRepository;
 import com.mjsec.lms.repository.StudyGroupRepository;
+import com.mjsec.lms.repository.SubmissionRepository;
 import com.mjsec.lms.repository.UserRepository;
 import com.mjsec.lms.type.ErrorCode;
 import com.mjsec.lms.type.UserRole;
@@ -24,17 +32,33 @@ public class AdminService {
     private final UserRepository userRepository;
     private final StudyGroupRepository studyGroupRepository;
     private final WikiService wikiService;
+    private final PlanRepository planRepository;
+    private final StudyActivityRepository studyActivityRepository;
+    private final AttendanceRepository attendanceRepository;
+    private final GroupMemberRepository groupMemberRepository;
+    private final SubmissionRepository submissionRepository;
+    private final PlanCommentRepository planCommentRepository;
+    private final AnnouncementRepository announcementRepository;
 
 
-    public AdminService(PendingUserRepository pendingUserRepository,
-                        UserRepository userRepository,
-                        StudyGroupRepository studyGroupRepository,
-                        WikiService wikiService) {
+    public AdminService(PendingUserRepository pendingUserRepository, UserRepository userRepository,
+                        StudyGroupRepository studyGroupRepository, PlanRepository planRepository,
+                        StudyActivityRepository studyActivityRepository, AttendanceRepository attendanceRepository,
+                        GroupMemberRepository groupMemberRepository, SubmissionRepository submissionRepository,
+                        PlanCommentRepository planCommentRepository, AnnouncementRepository announcementRepository,
+                       WikiService wikiService) {
 
         this.pendingUserRepository = pendingUserRepository;
         this.userRepository = userRepository;
         this.studyGroupRepository = studyGroupRepository;
         this.wikiService = wikiService;
+        this.planRepository = planRepository;
+        this.studyActivityRepository = studyActivityRepository;
+        this.attendanceRepository = attendanceRepository;
+        this.groupMemberRepository = groupMemberRepository;
+        this.submissionRepository = submissionRepository;
+        this.planCommentRepository = planCommentRepository;
+        this.announcementRepository = announcementRepository;
     }
 
     /**
@@ -112,6 +136,21 @@ public class AdminService {
     }
 
     /**
+     * 회원가입 승인 요청을 반려하는 메소드
+     * @param studentNumber 학번
+     */
+    public void refuseRegister(Long studentNumber) {
+
+        log.info("Refuse registration for {}", studentNumber);
+
+        PendingUser pendingUser = pendingUserRepository.findByStudentNumber(studentNumber)
+                .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
+
+        pendingUserRepository.delete(pendingUser);
+        log.info("Deleted pending user for registration refusal: {}", studentNumber);
+    }
+
+    /**
      * 스터디 그룹을 생성하는 메소드
      * @param requestDto 스터디 그룹명, 스터디 소개, 스터디 타입, 멘토 학번
      */
@@ -132,5 +171,108 @@ public class AdminService {
                 .build();
 
         studyGroupRepository.save(studyGroup);
+    }
+
+    /**
+     * 모든 유저의 정보를 반환하는 메소드 (user_id, 학번, 이름, 이메일)
+     * @return List<UserAdminResponseDto>
+     */
+    public List<UserAdminResponseDto> getAllUsersForAdmin() {
+
+        return userRepository.findAll().stream()
+                .map(user -> UserAdminResponseDto.builder()
+                        .userId(user.getUserId())
+                        .studentNumber(user.getStudentNumber())
+                        .name(user.getName())
+                        .email(user.getEmail())
+                        .build())
+                .toList();
+    }
+
+
+    /**
+     * 사용자와 모든 연관 데이터를 삭제하는 메소드
+     * 외래키 제약조건을 고려하여 하위 데이터부터 상위 데이터 순으로 삭제
+     *
+     * @param userId 삭제할 사용자 ID
+     * @throws RestApiException 사용자를 찾을 수 없거나 삭제 중 오류 발생 시
+     */
+    @Transactional
+    public void deleteUser(Long userId) {
+
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
+
+        log.info("사용자 삭제 시도 - userId: {}, userName: {}", userId, user.getName());
+
+        try {
+            log.debug("1. 사용자 직접 관련 데이터 삭제 시작");
+
+            submissionRepository.deleteBySubmitter(user);
+            log.debug("- 과제 제출물 삭제 완료");
+
+            planCommentRepository.deleteByAuthor(user);
+            log.debug("- 댓글 삭제 완료");
+
+            attendanceRepository.deleteByUser(user);
+            log.debug("- 출석 정보 삭제 완료");
+
+            groupMemberRepository.deleteByUser(user);
+            log.debug("- 그룹 탈퇴 완료");
+
+            announcementRepository.deleteByCreator(user);
+            log.debug("- 공지사항 삭제 완료");
+
+            log.debug("2. Plan 관련 데이터 삭제 시작");
+
+            submissionRepository.deleteByPlanCreator(user);
+            log.debug("- Plan에 의한 제출물 삭제 완료");
+
+            planCommentRepository.deleteByPlanCreator(user);
+            log.debug("- Plan 댓글 삭제 완료");
+
+            planRepository.deleteByCreator(user);
+            log.debug("- Plan 삭제 완료");
+
+            log.debug("3. 스터디 활동 관련 데이터 삭제 시작");
+
+            attendanceRepository.deleteByStudyActivityCreator(user);
+            log.debug("- 출석 정보 삭제 완료");
+
+            studyActivityRepository.deleteByCreator(user);
+            log.debug("- 스터디 활동 삭제 완료");
+
+            log.debug("4. 스터디 그룹 관련 데이터 삭제 시작");
+
+            submissionRepository.deleteByStudyGroupCreator(user);
+            log.debug("- 스터디 제출물 삭제 완료");
+
+            planCommentRepository.deleteByStudyGroupCreator(user);
+            log.debug("- 스터디 그룹에서 작성한 댓글 삭제 완료");
+
+            attendanceRepository.deleteByStudyGroupCreator(user);
+            log.debug("- 출석 정보 삭제 완료");
+
+            groupMemberRepository.deleteByStudyGroupCreator(user);
+            log.debug("- 모든 그룹 탈퇴");
+
+            planRepository.deleteByStudyGroupCreator(user);
+            log.debug("- Plan 삭제 완료");
+
+            studyActivityRepository.deleteByStudyGroupCreator(user);
+            log.debug("- 멘토와 관련된 모든 스터디 활동 정보 삭제 완료");
+
+            studyGroupRepository.deleteByCreator(user);
+            log.debug("- 스터디 그룹 삭제 완료");
+
+            log.debug("5. 사용자 엔티티 삭제");
+            userRepository.delete(user);
+
+            log.info("사용자 삭제 완료 - userId: {}", userId);
+
+        } catch (Exception e) {
+            log.error("사용자 삭제 중 오류 발생 - userId: {}, error: {}", userId, e.getMessage(), e);
+            throw new RestApiException(ErrorCode.USER_DELETE_FAILED);
+        }
     }
 }
