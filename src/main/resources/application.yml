@@ -39,6 +39,12 @@ spring:
         show-sql: false
         jdbc:
           time_zone: Asia/Seoul
+wiki:
+  domain: ${WIKI_DOMAIN:wiki.mjsec.kr}
+  api:
+    token: ${WIKI_API_TOKEN:test-token}
+  group:
+    id: ${WIKI_GROUP_ID:10}
 
 springdoc:
   swagger-ui:
