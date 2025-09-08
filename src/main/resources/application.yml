@@ -39,6 +39,12 @@ spring:
         show-sql: false
         jdbc:
           time_zone: Asia/Seoul
+wiki:
+  domain: ${WIKI_DOMAIN:wiki.mjsec.kr}
+  api:
+    token: ${WIKI_API_TOKEN:test-token}
+  group:
+    id: ${WIKI_GROUP_ID:10}
 
 springdoc:
   swagger-ui:
@@ -84,5 +90,6 @@ logging:
     com.mjsec.lms.service.ScheduledTaskService: INFO
     com.mjsec.lms.service.com.mjsec.lms.service.WeeklyAlertService: INFO
     com.mjsec.lms.service.EmailService: INFO
+    com.mjsec.lms.service.WikiService: INFO
     org.springframework.scheduling: DEBUG #개발할 때만
 

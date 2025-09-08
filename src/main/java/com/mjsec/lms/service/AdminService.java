@@ -31,6 +31,7 @@ public class AdminService {
     private final PendingUserRepository pendingUserRepository;
     private final UserRepository userRepository;
     private final StudyGroupRepository studyGroupRepository;
+    private final WikiService wikiService;
     private final PlanRepository planRepository;
     private final StudyActivityRepository studyActivityRepository;
     private final AttendanceRepository attendanceRepository;
@@ -44,11 +45,13 @@ public class AdminService {
                         StudyGroupRepository studyGroupRepository, PlanRepository planRepository,
                         StudyActivityRepository studyActivityRepository, AttendanceRepository attendanceRepository,
                         GroupMemberRepository groupMemberRepository, SubmissionRepository submissionRepository,
-                        PlanCommentRepository planCommentRepository, AnnouncementRepository announcementRepository) {
+                        PlanCommentRepository planCommentRepository, AnnouncementRepository announcementRepository,
+                       WikiService wikiService) {
 
         this.pendingUserRepository = pendingUserRepository;
         this.userRepository = userRepository;
         this.studyGroupRepository = studyGroupRepository;
+        this.wikiService = wikiService;
         this.planRepository = planRepository;
         this.studyActivityRepository = studyActivityRepository;
         this.attendanceRepository = attendanceRepository;
@@ -106,6 +109,28 @@ public class AdminService {
                 .build();
 
         userRepository.save(user);
+
+        try {
+            String wikiPassword = wikiService.extractPasswordFromEmail(pendingUser.getEmail());
+            boolean wikiCreated = wikiService.createWikiUser(
+                    pendingUser.getEmail(),
+                    pendingUser.getName(),
+                    wikiPassword
+            );
+
+            if (wikiCreated) {
+                log.info("Successfully created Wiki account for user: {}", pendingUser.getEmail());
+            } else {
+                // Wiki 계정 생성 실패해도 LMS 계정은 유지 (로그만 남김)
+                log.warn("Failed to create Wiki account for user: {} - LMS account still created",
+                        pendingUser.getEmail());
+            }
+        } catch (Exception e) {
+            // Wiki 서비스 오류가 LMS 계정 생성을 방해하지 않도록 예외 처리
+            log.error("Error occurred while creating Wiki account for user: {} - {}",
+                    pendingUser.getEmail(), e.getMessage());
+        }
+
         pendingUserRepository.delete(pendingUser);
         log.info("Moved pending user to approved user: {}", user.getStudentNumber());
     }
