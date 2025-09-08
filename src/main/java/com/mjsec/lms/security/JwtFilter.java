@@ -23,7 +23,8 @@ public class JwtFilter extends OncePerRequestFilter {
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
-            "/api/v1/auth/**"
+            "/api/v1/auth/**",
+            "/api/v1/user/password/**"
     );
 
     public JwtFilter(JwtService jwtService) {

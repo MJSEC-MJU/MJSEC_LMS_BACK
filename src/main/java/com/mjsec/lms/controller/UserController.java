@@ -98,6 +98,10 @@ public class UserController {
             @RequestBody PasswordUpdateDto passwordUpdateDto)
     {
 
+        if (!authCodeService.isEmailVerified(passwordUpdateDto.getEmail())) {
+            throw new RestApiException(ErrorCode.EMAIL_VERIFICATION_PENDING);
+        }
+
         userService.updatePassword(passwordUpdateDto.getEmail(), passwordUpdateDto.getPassword());
 
         return ResponseEntity.status(HttpStatus.OK).body(
