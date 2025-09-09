@@ -81,8 +81,8 @@ file:
 
 logging:
   level:
-    com.mjsec.lms.service.ScheduledTaskService: INFO
+    com.mjsec.lms.service.com.mjsec.lms.domain.study.service.ScheduledTaskService: INFO
     com.mjsec.lms.service.com.mjsec.lms.service.WeeklyAlertService: INFO
-    com.mjsec.lms.service.EmailService: INFO
+    com.mjsec.lms.service.com.mjsec.lms.domain.study.service.EmailService: INFO
     org.springframework.scheduling: DEBUG #개발할 때만
 

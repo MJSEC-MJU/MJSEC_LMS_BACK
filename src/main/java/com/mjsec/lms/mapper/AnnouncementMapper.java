@@ -1,9 +1,9 @@
 package com.mjsec.lms.mapper;
 
-import com.mjsec.lms.domain.Announcement;
-import com.mjsec.lms.domain.User;
-import com.mjsec.lms.dto.AnnouncementRequestDto;
-import com.mjsec.lms.dto.AnnouncementResponseDto;
+import com.mjsec.lms.domain.study.Announcement;
+import com.mjsec.lms.domain.user.User;
+import com.mjsec.lms.dto.study.AnnouncementRequestDto;
+import com.mjsec.lms.dto.study.AnnouncementResponseDto;
 
 public class AnnouncementMapper {
     public static Announcement toEntity(AnnouncementRequestDto dto, User user) {

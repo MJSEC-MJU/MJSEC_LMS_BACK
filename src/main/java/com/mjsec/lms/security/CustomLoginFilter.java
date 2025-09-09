@@ -1,10 +1,10 @@
 package com.mjsec.lms.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mjsec.lms.domain.User;
-import com.mjsec.lms.dto.AuthDto;
-import com.mjsec.lms.repository.UserRepository;
-import com.mjsec.lms.service.JwtService;
+import com.mjsec.lms.domain.user.User;
+import com.mjsec.lms.dto.user.AuthDto;
+import com.mjsec.lms.repository.user.UserRepository;
+import com.mjsec.lms.service.user.JwtService;
 import com.mjsec.lms.type.ErrorCode;
 import com.mjsec.lms.type.UserRole;
 import jakarta.servlet.FilterChain;

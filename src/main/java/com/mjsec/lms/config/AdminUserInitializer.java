@@ -1,7 +1,7 @@
 package com.mjsec.lms.config;
 
-import com.mjsec.lms.domain.User;
-import com.mjsec.lms.repository.UserRepository;
+import com.mjsec.lms.domain.user.User;
+import com.mjsec.lms.repository.user.UserRepository;
 import com.mjsec.lms.type.UserRole;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;

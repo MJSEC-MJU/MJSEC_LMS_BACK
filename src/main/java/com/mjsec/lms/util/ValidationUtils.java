@@ -1,8 +1,15 @@
 package com.mjsec.lms.util;
 
-import com.mjsec.lms.domain.*;
+import com.mjsec.lms.domain.mentor.Plan;
+import com.mjsec.lms.domain.mentor.PlanComment;
+import com.mjsec.lms.domain.study.*;
+import com.mjsec.lms.domain.user.User;
+import com.mjsec.lms.repository.mentor.AttendanceRepository;
+import com.mjsec.lms.repository.mentor.PlanCommentRepository;
+import com.mjsec.lms.repository.mentor.PlanRepository;
+import com.mjsec.lms.repository.user.UserRepository;
 import com.mjsec.lms.exception.RestApiException;
-import com.mjsec.lms.repository.*;
+import com.mjsec.lms.repository.study.*;
 import com.mjsec.lms.type.ErrorCode;
 import com.mjsec.lms.type.GroupMemberRole;
 import com.mjsec.lms.type.UserRole;

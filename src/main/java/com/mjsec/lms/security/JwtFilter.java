@@ -1,6 +1,6 @@
 package com.mjsec.lms.security;
 
-import com.mjsec.lms.service.JwtService;
+import com.mjsec.lms.service.user.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

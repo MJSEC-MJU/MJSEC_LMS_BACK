@@ -1,10 +1,10 @@
 package com.mjsec.lms.config;
 
-import com.mjsec.lms.repository.UserRepository;
+import com.mjsec.lms.repository.user.UserRepository;
 import com.mjsec.lms.security.CustomLoginFilter;
 import com.mjsec.lms.security.CustomLogoutFilter;
 import com.mjsec.lms.security.JwtFilter;
-import com.mjsec.lms.service.JwtService;
+import com.mjsec.lms.service.user.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import org.springframework.context.annotation.Bean;
