@@ -109,8 +109,6 @@ public class CustomLoginFilter extends GenericFilterBean {
     }
 
     private void sendErrorResponse(HttpServletResponse response, int status, ErrorCode errorCode) throws IOException {
-        response.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
-        response.setHeader("Access-Control-Allow-Credentials", "true");
 
         response.setStatus(status);
         response.setContentType("application/json");
