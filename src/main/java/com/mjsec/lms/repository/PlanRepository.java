@@ -31,10 +31,16 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
     );
 
     //특정 스터디 그룹의 마감된 과제들 조회
-    @Query("SELECT a FROM Plan a WHERE a.studyGroup.studyId = :studyId AND a.endDate < :currentTime")
-    List<Plan> findExpiredPlansByStudyGroup(
+    @Query("SELECT p FROM Plan p WHERE p.studyGroup.studyId = :studyId AND p.endDate < :currentTime AND p.hasAssignment = true")
+    List<Plan> findExpiredAssignmentsByStudyGroup(
             @Param("studyId") Long studyId,
             @Param("currentTime") LocalDateTime currentTime
+    );
+
+    @Query("SELECT p FROM Plan p WHERE p.endDate BETWEEN :startTime AND :endTime AND p.hasAssignment = true")
+    List<Plan> findAssignmentsExpiredBetween(
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime
     );
 
     @Modifying

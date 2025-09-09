@@ -80,6 +80,11 @@ management:
     scheduledtasks:
       enabled: true
 
+alert:
+  assignment:
+    check-period-days: 7  # 최근 며칠간의 마감된 과제를 체크할지
+    max-assignments-per-email: 10 # 이메일당 최대 과제 수
+
 file:
   upload:
     path: uploads/
