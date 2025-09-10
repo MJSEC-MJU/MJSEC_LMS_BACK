@@ -101,8 +101,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/group/**").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/user/announcements/**").hasAnyRole("ADMIN", "USER")
-                        .requestMatchers("/api/v1/user/**").permitAll() // 임시로 허용
-                        .requestMatchers("/api/v1/test/**").permitAll() //임시로 허용 2트
+                        .requestMatchers("/api/v1/user/password/**").permitAll()
+                        .requestMatchers("/api/v1/user/user-page").hasAnyRole("ADMIN", "USER")
+                        .requestMatchers("/api/v1/test/**").permitAll() //임시로 허용
                         .requestMatchers("/api/v1/mentor/**").hasAnyRole("ADMIN", "USER")
                 );
 

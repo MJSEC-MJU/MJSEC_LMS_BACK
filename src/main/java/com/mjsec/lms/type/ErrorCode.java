@@ -26,6 +26,7 @@ public enum ErrorCode {
     FAILED_VERIFICATION(HttpStatus.BAD_REQUEST, "인증 코드가 올바르지 않거나 만료되었습니다."),
     AUTH_ATTEMPT_EXCEEDED(HttpStatus.BAD_REQUEST, "인증 횟수를 초과했습니다. 다시 시도해주세요."),
     EMPTY_EMAIL(HttpStatus.BAD_REQUEST, "이메일을 입력해주세요."),
+    NOT_REGISTERED_EMAIL(HttpStatus.BAD_REQUEST, "등록된 이메일이 아닙니다."),
 
     // 비밀번호 관련 에러
     EMPTY_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호를 입력해주세요."),
