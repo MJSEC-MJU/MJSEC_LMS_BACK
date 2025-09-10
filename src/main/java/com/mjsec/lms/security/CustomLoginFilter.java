@@ -109,6 +109,7 @@ public class CustomLoginFilter extends GenericFilterBean {
     }
 
     private void sendErrorResponse(HttpServletResponse response, int status, ErrorCode errorCode) throws IOException {
+
         response.setStatus(status);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
