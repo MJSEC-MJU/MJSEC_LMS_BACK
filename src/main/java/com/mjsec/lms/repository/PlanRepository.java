@@ -50,9 +50,4 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
     @Modifying
     @Query("DELETE FROM Plan p WHERE p.studyGroup.creator = :user")
     void deleteByStudyGroupCreator(@Param("user") User user);
-
-    @Query("SELECT p.planId FROM Plan p " +
-            "WHERE p.creator.userId = :userId " +
-            "AND p.studyGroup.studyId = :studyId")
-    List<Long> findIdsByCreatorIdAndStudyGroupId(@Param("userId") Long userId, @Param("studyId") Long studyId);
 }

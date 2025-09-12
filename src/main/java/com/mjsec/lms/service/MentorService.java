@@ -131,11 +131,6 @@ public class MentorService {
             studyActivityRepository.deleteAllById(activityIds);
         }
 
-        List<Long> planIds = planRepository.findIdsByCreatorIdAndStudyGroupId(userId, studyId);
-        if (!planIds.isEmpty()) {
-            planRepository.deleteAllById(planIds);
-        }
-
         groupMemberRepository.delete(groupMember);
     }
 
