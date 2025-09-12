@@ -4,10 +4,16 @@ import com.mjsec.lms.domain.GroupMember;
 import com.mjsec.lms.domain.StudyGroup;
 import com.mjsec.lms.domain.User;
 import com.mjsec.lms.exception.RestApiException;
+import com.mjsec.lms.repository.AttendanceRepository;
 import com.mjsec.lms.repository.GroupMemberRepository;
+import com.mjsec.lms.repository.PlanCommentRepository;
+import com.mjsec.lms.repository.PlanRepository;
+import com.mjsec.lms.repository.StudyActivityRepository;
 import com.mjsec.lms.repository.StudyGroupRepository;
+import com.mjsec.lms.repository.SubmissionRepository;
 import com.mjsec.lms.repository.UserRepository;
 import com.mjsec.lms.type.ErrorCode;
+import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,13 +25,25 @@ public class MentorService {
     private final UserRepository userRepository;
     private final StudyGroupRepository studyGroupRepository;
     private final GroupMemberRepository groupMemberRepository;
+    private final SubmissionRepository submissionRepository;
+    private final PlanCommentRepository planCommentRepository;
+    private final AttendanceRepository attendanceRepository;
+    private final StudyActivityRepository studyActivityRepository;
+    private final PlanRepository planRepository;
 
     public MentorService(UserRepository userRepository, StudyGroupRepository studyGroupRepository,
-                         GroupMemberRepository groupMemberRepository) {
+                         GroupMemberRepository groupMemberRepository, SubmissionRepository submissionRepository,
+                         PlanCommentRepository planCommentRepository, AttendanceRepository attendanceRepository,
+                         StudyActivityRepository studyActivityRepository, PlanRepository planRepository) {
 
         this.userRepository = userRepository;
         this.studyGroupRepository = studyGroupRepository;
         this.groupMemberRepository = groupMemberRepository;
+        this.submissionRepository = submissionRepository;
+        this.planCommentRepository = planCommentRepository;
+        this.attendanceRepository = attendanceRepository;
+        this.studyActivityRepository = studyActivityRepository;
+        this.planRepository = planRepository;
     }
 
     /**
@@ -75,7 +93,7 @@ public class MentorService {
     }
 
     /**
-     * 스터디 그룹에서 특정 멘티를 삭제시키는 메소드
+     * 스터디 그룹에서 특정 멘티를 삭제시키는 메소드 (그룹 멤버 엔티티와 연관이 있는 모든 엔티티 Soft Delete 처리)
      * @param currentStudentNumber 요청을 보낸 사용자의 학번
      * @param groupId 스터디 그룹의 Id
      * @param studentNumber 스터디 그룹 멘티의 학번
@@ -89,6 +107,34 @@ public class MentorService {
 
         GroupMember groupMember = groupMemberRepository.findByUserAndStudyGroup(mentee, studyGroup)
                 .orElseThrow(() -> new RestApiException(ErrorCode.STUDY_USER_NOT_FOUND));
+
+        Long userId = mentee.getUserId();
+        Long studyId = studyGroup.getStudyId();
+
+        List<Long> submissionIds = submissionRepository.findIdsByUserIdAndStudyGroupId(userId, studyId);
+        if (!submissionIds.isEmpty()) {
+            submissionRepository.deleteAllById(submissionIds);
+        }
+
+        List<Long> commentIds = planCommentRepository.findIdsByUserIdAndStudyGroupId(userId, studyId);
+        if (!commentIds.isEmpty()) {
+            planCommentRepository.deleteAllById(commentIds);
+        }
+
+        List<Long> attendanceIds = attendanceRepository.findIdsByUserIdAndStudyGroupId(userId, studyId);
+        if (!attendanceIds.isEmpty()) {
+            attendanceRepository.deleteAllById(attendanceIds);
+        }
+
+        List<Long> activityIds = studyActivityRepository.findIdsByCreatorIdAndStudyGroupId(userId, studyId);
+        if (!activityIds.isEmpty()) {
+            studyActivityRepository.deleteAllById(activityIds);
+        }
+
+        List<Long> planIds = planRepository.findIdsByCreatorIdAndStudyGroupId(userId, studyId);
+        if (!planIds.isEmpty()) {
+            planRepository.deleteAllById(planIds);
+        }
 
         groupMemberRepository.delete(groupMember);
     }

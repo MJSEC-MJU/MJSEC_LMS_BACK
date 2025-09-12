@@ -30,4 +30,9 @@ public interface StudyActivityRepository extends JpaRepository<StudyActivity, Lo
     @Modifying
     @Query("DELETE FROM StudyActivity s WHERE s.studyGroup.creator = :user")
     void deleteByStudyGroupCreator(@Param("user") User user);
+
+    @Query("SELECT s.activityId FROM StudyActivity s " +
+            "WHERE s.creator.userId = :userId " +
+            "AND s.studyGroup.studyId = :studyId")
+    List<Long> findIdsByCreatorIdAndStudyGroupId(@Param("userId") Long userId, @Param("studyId") Long studyId);
 }

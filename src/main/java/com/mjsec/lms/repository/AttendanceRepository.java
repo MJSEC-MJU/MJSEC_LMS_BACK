@@ -58,4 +58,9 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     @Modifying
     @Query("DELETE FROM Attendance a WHERE a.studyGroup.creator = :user")
     void deleteByStudyGroupCreator(@Param("user") User user);
+
+    @Query("SELECT a.attendanceId FROM Attendance a " +
+            "WHERE a.user.userId = :userId " +
+            "AND a.studyGroup.studyId = :studyId")
+    List<Long> findIdsByUserIdAndStudyGroupId(@Param("userId") Long userId, @Param("studyId") Long studyId);
 }

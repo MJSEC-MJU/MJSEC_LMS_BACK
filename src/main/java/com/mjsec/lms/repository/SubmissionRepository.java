@@ -1,6 +1,7 @@
 package com.mjsec.lms.repository;
 
 import com.mjsec.lms.domain.AssignmentSubmission;
+import com.mjsec.lms.domain.StudyGroup;
 import com.mjsec.lms.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -31,4 +32,9 @@ public interface SubmissionRepository extends JpaRepository<AssignmentSubmission
     @Modifying
     @Query("DELETE FROM AssignmentSubmission a WHERE a.plan.studyGroup.creator = :user")
     void deleteByStudyGroupCreator(@Param("user") User user);
+
+    @Query("SELECT a.submissionId FROM AssignmentSubmission a " +
+            "WHERE a.submitter.userId = :userId " +
+            "AND a.plan.studyGroup.studyId = :studyId")
+    List<Long> findIdsByUserIdAndStudyGroupId(@Param("userId") Long userId, @Param("studyId") Long studyId);
 }
