@@ -46,13 +46,11 @@ public class StudyGroupService {
     //스터디 그룹 멤버 전체 반환
     @Transactional(readOnly = true)
     public List<StudyMemberResponse> getStudyMemberList(Long groupId, Long currentUserStudentNumber){
-
-        log.info("getStudyMemberList called");
-
-        validationUtils.validateUser(currentUserStudentNumber);
-        validationUtils.validateStudyGroup(groupId);
+        log.info("getStudyMemberList called for group: {} by user: {}", groupId, currentUserStudentNumber);
 
         List<GroupMember> groupMemberList = groupMemberRepository.findByStudyGroup_StudyId(groupId);
+
+        log.info("Found {} members in study group: {}", groupMemberList.size(), groupId);
 
         return groupMemberList.stream()
                 .map(this::createStudyMemberResponse)
@@ -62,14 +60,12 @@ public class StudyGroupService {
     //스터디 그룹 멘티 멤버만 반환
     @Transactional(readOnly = true)
     public List<StudyMemberResponse> getStudyMenteeList(Long groupId, Long currentUserStudentNumber){
-
-        log.info("getStudyMenteeList called");
-
-        validationUtils.validateUser(currentUserStudentNumber);
-        validationUtils.validateStudyGroup(groupId);
+        log.info("getStudyMenteeList called for group: {} by user: {}", groupId, currentUserStudentNumber);
 
         // MENTEE 역할을 가진 멤버만 필터링하여 조회
         List<GroupMember> groupMenteeList = groupMemberRepository.findByStudyGroup_StudyIdAndRole(groupId, GroupMemberRole.MENTEE);
+
+        log.info("Found {} mentees in study group: {}", groupMenteeList.size(), groupId);
 
         return groupMenteeList.stream()
                 .map(this::createStudyMemberResponse)
@@ -81,14 +77,17 @@ public class StudyGroupService {
     public StudyActivityResponse createStudyActivity(Long groupId, Long currentUserStudentNumber,
                                                      StudyActivityDto studyActivityDto, MultipartFile image) {
 
-        log.info("createStudyActivity called!");
+        log.info("createStudyActivity called for group: {} by user: {}", groupId, currentUserStudentNumber);
 
         User user = validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
         validationUtils.validateMentorRole(user.getUserId(), groupId);
         StudyGroup studyGroup = validationUtils.validateStudyGroup(groupId);
 
-        // 중복 주차 검증 추가
+        // 기존 검증들
         validationUtils.validateDuplicateWeekForCreate(studyGroup, studyActivityDto.getWeek());
+
+        // 내용 검증 추가 (XSS/SQL Injection 방어)
+        validationUtils.validateActivityContent(studyActivityDto.getTitle(), studyActivityDto.getContent());
 
         // 이미지가 있으면 업로드
         if (image != null && !image.isEmpty()) {
@@ -99,22 +98,29 @@ public class StudyGroupService {
         StudyActivity savedStudyActivity = createStudyActivityData(groupId, studyActivityDto);
         List<Attendance> attendanceList = createAttendanceListData(savedStudyActivity, studyActivityDto);
 
+        log.info("StudyActivity created successfully with ID: {}", savedStudyActivity.getActivityId());
+
         return createStudyActivityResponse(savedStudyActivity, attendanceList);
     }
-
 
     @Transactional
     public StudyActivityResponse updateStudyActivity(Long groupId, Long activityId,
                                                      Long currentUserStudentNumber, StudyActivityDto studyActivityDto, MultipartFile image) {
 
-        log.info("updateStudyActivity called");
+        log.info("updateStudyActivity called for activity: {} in group: {} by user: {}",
+                activityId, groupId, currentUserStudentNumber);
 
         User user = validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
         validationUtils.validateMentorRole(user.getUserId(), groupId);
+
+        validationUtils.validateActivityBelongsToGroup(activityId, groupId); // 연관관계 검증
         StudyActivity studyActivity = validationUtils.validateStudyActivity(activityId);
+        validationUtils.validateActivityOwnership(studyActivity, user.getUserId()); // 소유권 검증
+        validationUtils.validateActivityContent(studyActivityDto.getTitle(), studyActivityDto.getContent()); // 내용 검증
+
         StudyGroup studyGroup = studyActivity.getStudyGroup();
 
-        // 중복 주차 검증 추가 (현재 활동 글 제외)
+        // 중복 주차 검증 (현재 활동 글 제외)
         validationUtils.validateDuplicateWeekForUpdate(studyGroup, studyActivityDto.getWeek(), activityId);
 
         // 이미지 처리 로직
@@ -126,30 +132,40 @@ public class StudyGroupService {
         // 출석체크 데이터도 업데이트
         List<Attendance> updatedAttendanceList = updateAttendanceData(studyActivity, studyActivityDto);
 
+        log.info("StudyActivity updated successfully: {}", activityId);
+
         return createStudyActivityResponse(studyActivity, updatedAttendanceList);
     }
 
     // 스터디 활동 글 전체 조회
+    @Transactional(readOnly = true)
     public List<SimpleStudyActivityResponse> getStudyActivityList(Long groupId, Long currentUserStudentNumber){
 
-        log.info("getStudyActivityList called");
+        log.info("getStudyActivityList called for group: {} by user: {}", groupId, currentUserStudentNumber);
 
-        //검증 로직 (사용자, 스터디그룹)
-        validationUtils.validateBasicAccess(groupId,currentUserStudentNumber);
+        // 기존 검증 유지 (이미 적절함 - 멤버십 체크 포함)
+        validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
 
         List<StudyActivity> studyActivityList = studyActivityRepository.findAllByStudyGroupId(groupId);
+
+        log.info("Found {} activities in study group: {}", studyActivityList.size(), groupId);
 
         return createSimpleStudyActivityList(studyActivityList);
     }
 
     // 스터디 활동 글 삭제
+    @Transactional
     public void deleteStudyActivity(Long groupId, Long activityId, Long currentUserStudentNumber){
 
-        log.info("deleteStudyActivity called");
+        log.info("deleteStudyActivity called for activity: {} in group: {} by user: {}",
+                activityId, groupId, currentUserStudentNumber);
 
-        User user = validationUtils.validateBasicAccess(groupId,currentUserStudentNumber);
+        User user = validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
         validationUtils.validateMentorRole(user.getUserId(), groupId);
+
+        validationUtils.validateActivityBelongsToGroup(activityId, groupId); // 연관관계 검증
         StudyActivity studyActivity = validationUtils.validateStudyActivity(activityId);
+        validationUtils.validateActivityOwnership(studyActivity, user.getUserId()); // 소유권 검증
 
         // 이미지가 있다면 파일 시스템에서 삭제
         if (studyActivity.getImageUrl() != null && !studyActivity.getImageUrl().trim().isEmpty()) {
@@ -165,19 +181,25 @@ public class StudyGroupService {
 
         studyActivityRepository.delete(studyActivity);
 
-        log.info("StudyActivity({}) deleted", activityId);
+        log.info("StudyActivity deleted successfully: {}", activityId);
     }
 
     //활동 글 상세 조회
     @Transactional(readOnly = true)
     public StudyActivityResponse getStudyActivity(Long groupId, Long activityId, Long currentUserStudentNumber){
 
-        log.info("getStudyActivity called");
+        log.info("getStudyActivity called for activity: {} in group: {} by user: {}",
+                activityId, groupId, currentUserStudentNumber);
 
-        User user = validationUtils.validateBasicAccess(groupId,currentUserStudentNumber);
+        User user = validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
         StudyGroup studyGroup = validationUtils.validateStudyGroup(groupId);
-        validationUtils.validateGroupMembership(user,studyGroup);
+        validationUtils.validateGroupMembership(user, studyGroup);
+
+        // 연관관계 검증 추가
+        validationUtils.validateActivityBelongsToGroup(activityId, groupId);
         StudyActivity studyActivity = validationUtils.validateStudyActivity(activityId);
+
+        log.info("Found study activity: {} with title: {}", activityId, studyActivity.getTitle());
 
         return createStudyActivityResponse(studyActivity, studyActivity.getAttendances());
     }
@@ -193,7 +215,7 @@ public class StudyGroupService {
 
         // 새 이미지가 업로드된 경우
         if (newImage != null && !newImage.isEmpty()) {
-            log.info("New image uploaded, processing image replacement");
+            log.info("New image uploaded, processing image replacement for activity: {}", studyActivity.getActivityId());
 
             // 기존 이미지가 있다면 삭제
             if (currentImageUrl != null && !currentImageUrl.trim().isEmpty()) {
@@ -212,7 +234,7 @@ public class StudyGroupService {
                 studyActivity.setImageUrl(newImageUrl);
                 log.info("New image uploaded successfully: {}", newImageUrl);
             } catch (Exception e) {
-                log.error("Failed to upload new image", e);
+                log.error("Failed to upload new image for activity: {}", studyActivity.getActivityId(), e);
                 // 새 이미지 업로드 실패시, 기존 이미지 URL 유지 (null로 설정하지 않음)
                 throw e; // 예외를 다시 던져서 트랜잭션 롤백 유도
             }
@@ -283,19 +305,27 @@ public class StudyGroupService {
     }
 
     private void updateStudyActivityData(StudyActivity studyActivity, StudyActivityDto dto) {
+        boolean isUpdated = false;
+
         if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty()) {
             studyActivity.setTitle(dto.getTitle());
+            isUpdated = true;
         }
         if (dto.getContent() != null && !dto.getContent().trim().isEmpty()) {
             studyActivity.setContent(dto.getContent());
+            isUpdated = true;
         }
         if (dto.getWeek() != null && !dto.getWeek().trim().isEmpty()) {
             studyActivity.setWeek(dto.getWeek());
+            isUpdated = true;
         }
 
-        studyActivityRepository.save(studyActivity);
+        if (isUpdated) {
+            studyActivityRepository.save(studyActivity);
+            log.info("StudyActivity data updated successfully: {}", studyActivity.getActivityId());
+        }
     }
-    
+
     //StudyMemberResponse Dto로 반환
     private StudyMemberResponse createStudyMemberResponse(GroupMember groupMember){
 
@@ -345,6 +375,7 @@ public class StudyGroupService {
                 .imageUrl(studyActivity.getImageUrl())
                 .studyAttendanceDtoList(studyAttendanceDtoList)
                 .createdAt(studyActivity.getCreatedAt())
+                .updatedAt(studyActivity.getUpdatedAt())
                 .build();
     }
 
@@ -361,6 +392,4 @@ public class StudyGroupService {
                         .build())
                 .collect(Collectors.toList());
     }
-
-
 }

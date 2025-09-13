@@ -1,10 +1,13 @@
 package com.mjsec.lms.controller;
 
+import com.mjsec.lms.domain.Plan;
+import com.mjsec.lms.domain.User;
 import com.mjsec.lms.dto.*;
 import com.mjsec.lms.service.AssignmentSubmissionService;
 import com.mjsec.lms.service.PlanService;
 import com.mjsec.lms.type.ResponseMessage;
 import com.mjsec.lms.util.IpUtils;
+import com.mjsec.lms.util.ValidationUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.apache.coyote.Response;
@@ -18,14 +21,17 @@ import java.util.List;
 @RequestMapping("/api/v1/group")
 public class AssignmentController {
 
+    private final ValidationUtils validationUtils;
     private final PlanService planService;
     private final AssignmentSubmissionService assignmentSubmissionService;
 
     public AssignmentController(PlanService planService,
-                                AssignmentSubmissionService assignmentSubmissionService) {
+                                AssignmentSubmissionService assignmentSubmissionService,
+                                ValidationUtils validationUtils) {
 
         this.planService = planService;
         this.assignmentSubmissionService = assignmentSubmissionService;
+        this.validationUtils = validationUtils;
     }
 
     //전체 계획 조회하기
@@ -76,6 +82,8 @@ public class AssignmentController {
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
+        validationUtils.validatePlanBelongsToGroup(planId, groupId);
+
         DetailPlanResponse detailPlanResponse = planService.getDetailPlan(groupId, planId, currentUserStudentNumber);
 
         return ResponseEntity.ok(
@@ -97,6 +105,9 @@ public class AssignmentController {
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        validationUtils.validatePlanBelongsToGroup(planId, groupId);
+        Plan plan = validationUtils.validatePlan(planId);
 
         //클라이언트 IP 뽑아내기
         String clientIpAddr = IpUtils.getClientIp(request);
@@ -171,6 +182,9 @@ public class AssignmentController {
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
+        validationUtils.validateSubmissionFullAccess(groupId, planId, submitId);
+        Plan plan = validationUtils.validatePlan(planId);
+
         DetailSubmissionResponse detailSubmissionResponse = assignmentSubmissionService.updateAssignmentSubmission(groupId, planId, submitId, currentUserStudentNumber, dto);
 
         return ResponseEntity.ok(
@@ -234,6 +248,9 @@ public class AssignmentController {
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
+        User user = validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
+        validationUtils.validateCommentManagementAccess(commentId, user.getUserId(), groupId);
+
         PlanCommentResponse planCommentResponse = planService.updatePlanComment(groupId, planId, commentId, currentUserStudentNumber,dto);
 
         return ResponseEntity.ok(
@@ -254,6 +271,9 @@ public class AssignmentController {
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        User user = validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
+        validationUtils.validateCommentManagementAccess(commentId, user.getUserId(), groupId);
 
         planService.deletePlanComment(groupId,planId,commentId,currentUserStudentNumber);
 

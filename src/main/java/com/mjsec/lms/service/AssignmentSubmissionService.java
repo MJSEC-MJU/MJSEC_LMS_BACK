@@ -48,6 +48,9 @@ public class AssignmentSubmissionService {
         // 과제 제출 내용 확인하기
         validationUtils.validateSubmissionContent(dto.getContent());
 
+        //과제 기한 검사
+       // validationUtils.validateAssignmentDeadline(plan);
+
         // 과제 제출 중복 여부 체크
         validationUtils.validateDuplicateSubmission(user.getUserId(), planId);
 
@@ -73,6 +76,7 @@ public class AssignmentSubmissionService {
         log.info("getSubmissionList called");
 
         validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
+        validationUtils.validatePlanBelongsToGroup(planId, groupId);
         Plan plan = validationUtils.validatePlan(planId);
         validationUtils.validateAssignmentSubmissionAllowed(planId);
 
@@ -93,9 +97,11 @@ public class AssignmentSubmissionService {
         log.info("getDetailedSubmission called");
 
         User user = validationUtils.validateUser(currentUserStudentNumber);
+
         validationUtils.validateStudyGroup(groupId);
         validationUtils.validatePlan(planId);
         validationUtils.validateAssignmentSubmissionAllowed(planId);
+
         AssignmentSubmission assignmentSubmission = validationUtils.validateSubmissionAccess(planId, submitId);
         GroupMemberRole role = validationUtils.validateUserRole(user.getUserId(), groupId);
 
@@ -116,13 +122,25 @@ public class AssignmentSubmissionService {
     // 과제 제출 수정하기
     @Transactional
     public DetailSubmissionResponse updateAssignmentSubmission(Long groupId, Long planId, Long submitId, Long currentUserStudentNumber, SubmissionDto dto) {
-
-        log.info("updateAssignmentSubmission called");
+        log.info("updateAssignmentSubmission called for user: {}, submission: {}", currentUserStudentNumber, submitId);
 
         User user = validationUtils.validateMenteeAccess(groupId, currentUserStudentNumber);
+
+        // 강화된 검증 로직
+        validationUtils.validatePlanBelongsToGroup(planId, groupId);
         validationUtils.validateAssignmentSubmissionAllowed(planId);
+
+        // 마감일 검증 추가 (수정도 마감일 이후 불가)
+        Plan plan = validationUtils.validatePlan(planId);
+        //validationUtils.validateAssignmentDeadline(plan);
+
         AssignmentSubmission assignmentSubmission = validationUtils.validateSubmissionAccess(planId, submitId);
         validationUtils.validateSubmissionOwnership(assignmentSubmission, user.getUserId());
+
+        // 내용 검증 강화
+        if (dto.getContent() != null && !dto.getContent().trim().isEmpty()) {
+            validationUtils.validateSubmissionContent(dto.getContent());
+        }
 
         return updateSubmitData(assignmentSubmission, dto);
     }
@@ -134,7 +152,11 @@ public class AssignmentSubmissionService {
         log.info("deleteAssignmentSubmission called");
 
         User user = validationUtils.validateMenteeAccess(groupId, currentUserStudentNumber);
+
+        // 검증 로직
+        validationUtils.validatePlanBelongsToGroup(planId, groupId);
         validationUtils.validateAssignmentSubmissionAllowed(planId);
+
         AssignmentSubmission assignmentSubmission = validationUtils.validateSubmissionAccess(planId, submitId);
         validationUtils.validateSubmissionOwnership(assignmentSubmission, user.getUserId());
 
@@ -146,10 +168,14 @@ public class AssignmentSubmissionService {
     @Transactional
     public void leaveFeedback(Long groupId, Long planId, Long submitId, Long currentUserStudentNumber, SubmissionFeedbackDto dto) {
 
-        log.info("leaveFeedback called");
+        log.info("leaveFeedback called for user: {}, submission: {}", currentUserStudentNumber, submitId);
 
+        // 강화된 검증 로직
         validationUtils.validateMentorAccess(groupId, currentUserStudentNumber);
+        validationUtils.validatePlanBelongsToGroup(planId, groupId);
         validationUtils.validateAssignmentSubmissionAllowed(planId);
+        validationUtils.validateFeedbackContent(dto.getFeedback()); // 피드백 내용 검증
+
         AssignmentSubmission assignmentSubmission = validationUtils.validateSubmissionAccess(planId, submitId);
         validationUtils.validateFeedbackNotExists(assignmentSubmission);
 
@@ -160,10 +186,14 @@ public class AssignmentSubmissionService {
     @Transactional
     public SubmissionFeedbackDto updateFeedback(Long groupId, Long planId, Long submitId, Long currentUserStudentNumber, SubmissionFeedbackDto dto) {
 
-        log.info("updateFeedback called");
+        log.info("updateFeedback called for user: {}, submission: {}", currentUserStudentNumber, submitId);
 
+        // 강화된 검증 로직
         validationUtils.validateMentorAccess(groupId, currentUserStudentNumber);
+        validationUtils.validatePlanBelongsToGroup(planId, groupId);
         validationUtils.validateAssignmentSubmissionAllowed(planId);
+        validationUtils.validateFeedbackContent(dto.getFeedback()); // 피드백 내용 검증 강화
+
         AssignmentSubmission assignmentSubmission = validationUtils.validateSubmissionAccess(planId, submitId);
         validationUtils.validateFeedbackExists(assignmentSubmission);
 
@@ -177,7 +207,9 @@ public class AssignmentSubmissionService {
         log.info("deleteFeedback called");
 
         validationUtils.validateMentorAccess(groupId, currentUserStudentNumber);
+        validationUtils.validatePlanBelongsToGroup(planId, groupId);
         validationUtils.validateAssignmentSubmissionAllowed(planId);
+
         AssignmentSubmission assignmentSubmission = validationUtils.validateSubmissionAccess(planId, submitId);
         validationUtils.validateFeedbackExists(assignmentSubmission);
 

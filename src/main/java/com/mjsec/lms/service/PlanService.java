@@ -32,11 +32,15 @@ public class PlanService {
     // 계획 등록하기 (멘토만 가능함.)
     @Transactional
     public DetailPlanResponse createPlan(Long groupId, PlanDto dto, Long currentUserStudentNumber) {
+        log.info("createPlan called with groupId: {}, dto: {}, currentUserStudentNumber: {}",
+                groupId, dto, currentUserStudentNumber);
 
-        log.info("createPlan called with groupId: {}, dto: {}, currentUserStudentNumber: {}", groupId, dto, currentUserStudentNumber);
-
+        //검증 로직
         User user = validationUtils.validateMentorAccess(groupId, currentUserStudentNumber);
         StudyGroup studyGroup = validationUtils.validateStudyGroup(groupId);
+
+        // 계획 날짜 검증
+        validationUtils.validatePlanDates(dto.getStartDate(), dto.getEndDate());
 
         log.info("User {} is confirmed as MENTOR of StudyGroup: {}", user.getUserId(), studyGroup.getName());
 
@@ -52,72 +56,85 @@ public class PlanService {
                 .build();
 
         planRepository.save(plan);
-        log.info("Plan created successfully: {}", plan);
+        log.info("Plan created successfully with ID: {}", plan.getPlanId());
 
         return createDetailPlanResponse(plan);
     }
 
     // 전체 계획 조회하기
+    @Transactional(readOnly = true)
     public List<PlanResponse> getPlan(Long groupId, Long currentUserStudentNumber) {
+        log.info("getPlan called for group: {} by user: {}", groupId, currentUserStudentNumber);
 
-        log.info("getPlan called");
-
+        //검증 로직
         validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
 
         List<Plan> planList = planRepository.findAllByStudyGroup_StudyId(groupId);
-        log.info("Found {} plans in StudyGroup", planList.size());
+        log.info("Found {} plans in StudyGroup: {}", planList.size(), groupId);
 
         List<PlanResponse> planResponses = planList.stream()
                 .map(this::createResponse)
                 .collect(Collectors.toList());
 
-        log.info("get Plan Successfully!");
+        log.info("Successfully retrieved {} plans", planResponses.size());
         return planResponses;
     }
 
-    //과제가 있는 계획만 조회하기
+    // 과제가 있는 계획만 조회하기
+    @Transactional(readOnly = true)
     public List<PlanResponse> getOnlyAssignmentPlan(Long groupId, Long currentUserStudentNumber){
+        log.info("getOnlyAssignmentPlan called for group: {} by user: {}", groupId, currentUserStudentNumber);
 
-        log.info("getOnlyAssignmentPlan called");
-
+        //검증 로직
         validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
 
         List<Plan> planList = planRepository.findAllByStudyGroup_StudyIdAndHasAssignmentTrue(groupId);
 
-        log.info("Found {} assignment-plans in StudyGroup", planList.size());
+        log.info("Found {} assignment-plans in StudyGroup: {}", planList.size(), groupId);
 
         List<PlanResponse> planResponses = planList.stream()
                 .map(this::createResponse)
                 .collect(Collectors.toList());
 
-        log.info("get Only Assignment Plans Successfully!");
-        
+        log.info("Successfully retrieved {} assignment plans", planResponses.size());
+
         return planResponses;
     }
 
     // 계획 상세 조회하기
     @Transactional(readOnly = true)
-    public DetailPlanResponse getDetailPlan(Long groupId, Long assignmentId, Long currentUserStudentNumber) {
+    public DetailPlanResponse getDetailPlan(Long groupId, Long planId, Long currentUserStudentNumber) {
+        log.info("getDetailPlan called for plan: {} in group: {} by user: {}",
+                planId, groupId, currentUserStudentNumber);
 
-        log.info("getDetailPlan called");
-
+        //검증 로직
         validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
-        Plan plan = validationUtils.validatePlan(assignmentId);
+        validationUtils.validatePlanBelongsToGroup(planId, groupId);
+        Plan plan = validationUtils.validatePlan(planId);
 
-        log.info("Found plan: {}", plan);
+        log.info("Found plan: {} with title: {}", plan.getPlanId(), plan.getTitle());
         return createDetailPlanResponse(plan);
     }
 
     // 계획 수정하기 (멘토만 가능함.)
     @Transactional
-    public DetailPlanResponse updatePlan(Long groupId, Long assignmentId, PlanDto dto, Long currentUserStudentNumber) {
+    public DetailPlanResponse updatePlan(Long groupId, Long planId, PlanDto dto, Long currentUserStudentNumber) {
+        log.info("updatePlan called for plan: {} in group: {} by user: {}",
+                planId, groupId, currentUserStudentNumber);
 
-        log.info("updateAssignment called");
-
+        //검증 로직
         validationUtils.validateMentorAccess(groupId, currentUserStudentNumber);
-        Plan plan = validationUtils.validatePlan(assignmentId);
+        validationUtils.validatePlanBelongsToGroup(planId, groupId);
+        Plan plan = validationUtils.validatePlan(planId);
 
-        log.info("Found assignment: {}", plan);
+        // 날짜 수정시 검증 추가
+        if (dto.getStartDate() != null || dto.getEndDate() != null) {
+            LocalDateTime newStartDate = dto.getStartDate() != null ? dto.getStartDate() : plan.getStartDate();
+            LocalDateTime newEndDate = dto.getEndDate() != null ? dto.getEndDate() : plan.getEndDate();
+            validationUtils.validatePlanDates(newStartDate, newEndDate);
+        }
+
+        log.info("Found plan: {} with title: {}", plan.getPlanId(), plan.getTitle());
 
         updatePlanData(plan, dto);
         return createDetailPlanResponse(plan);
@@ -125,28 +142,32 @@ public class PlanService {
 
     // 계획 삭제하기 (멘토만 가능함.)
     @Transactional
-    public void deletePlan(Long groupId, Long assignmentId, Long currentUserStudentNumber) {
+    public void deletePlan(Long groupId, Long planId, Long currentUserStudentNumber) {
+        log.info("deletePlan called for plan: {} in group: {} by user: {}",
+                planId, groupId, currentUserStudentNumber);
 
-        log.info("deletePlan called");
-
+        //검증 로직
         validationUtils.validateMentorAccess(groupId, currentUserStudentNumber);
-        Plan plan = validationUtils.validatePlan(assignmentId);
+        validationUtils.validatePlanBelongsToGroup(planId, groupId);
+        Plan plan = validationUtils.validatePlan(planId);
 
-        log.info("Found assignment: {}", plan);
+        log.info("Deleting plan: {} with title: {}", plan.getPlanId(), plan.getTitle());
 
         planRepository.delete(plan);
-        log.info("Assignment deleted successfully: {}", plan);
+        log.info("Plan deleted successfully: {}", planId);
     }
 
     // 계획 댓글 생성
     @Transactional
-    public PlanCommentResponse createPlanComment(Long groupId, Long assignmentId, Long currentUserStudentNumber, PlanCommentDto dto) {
+    public PlanCommentResponse createPlanComment(Long groupId, Long planId, Long currentUserStudentNumber, PlanCommentDto dto) {
+        log.info("createPlanComment called for plan: {} in group: {} by user: {}",
+                planId, groupId, currentUserStudentNumber);
 
-        log.info("createAssignmentComment called");
-
+        //검증 로직
         User user = validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
-        Plan plan = validationUtils.validatePlan(assignmentId);
-        validationUtils.validateComment(dto.getContent());
+        validationUtils.validatePlanBelongsToGroup(planId, groupId);
+        Plan plan = validationUtils.validatePlan(planId);
+        validationUtils.validateComment(dto.getContent()); // 댓글 내용 검증 강화
 
         PlanComment planComment = PlanComment.builder()
                 .plan(plan)
@@ -156,38 +177,46 @@ public class PlanService {
                 .build();
 
         planCommentRepository.save(planComment);
+        log.info("Plan comment created successfully with ID: {}", planComment.getCommentId());
 
         return createPlanCommentResponse(planComment);
     }
 
-    //댓글 수정 기능
+    // 댓글 수정 기능
     @Transactional
     public PlanCommentResponse updatePlanComment(Long groupId, Long planId, Long commentId, Long currentUserStudentNumber, PlanCommentDto dto){
+        log.info("updatePlanComment called for comment: {} in plan: {} group: {} by user: {}",
+                commentId, planId, groupId, currentUserStudentNumber);
 
-        log.info("update PlanComment called");
-
+        //검증 로직
         User user = validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
-        validationUtils.validatePlan(planId);
-        PlanComment planComment = validationUtils.validateCommentAccess(commentId,user.getUserId());
+        validationUtils.validatePlanBelongsToGroup(planId, groupId);
+        validationUtils.validateComment(dto.getContent()); // 댓글 내용 검증 강화
+
+        // 댓글 관리 권한 검증 (작성자 본인 + 멘토)
+        PlanComment planComment = validationUtils.validateCommentManagementAccess(commentId, user.getUserId(), groupId);
 
         updateCommentData(planComment, dto);
 
         return createPlanCommentResponse(planComment);
     }
 
-    //댓글 삭제 기능
+    // 댓글 삭제 기능
     @Transactional
     public void deletePlanComment(Long groupId, Long planId, Long commentId, Long currentUserStudentNumber){
+        log.info("deletePlanComment called for comment: {} in plan: {} group: {} by user: {}",
+                commentId, planId, groupId, currentUserStudentNumber);
 
-        log.info("delete PlanComment called");
-
+        //검증 로직
         User user = validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
-        validationUtils.validatePlan(planId);
-        PlanComment planComment = validationUtils.validateCommentAccess(commentId, user.getUserId());
+        validationUtils.validatePlanBelongsToGroup(planId, groupId);
+
+        // 댓글 관리 권한 검증 (작성자 본인 + 멘토)
+        PlanComment planComment = validationUtils.validateCommentManagementAccess(commentId, user.getUserId(), groupId);
 
         planCommentRepository.delete(planComment);
 
-        log.info("Successfully deleted PlanComment!");
+        log.info("Plan comment deleted successfully: {}", commentId);
     }
 
     /**
@@ -196,37 +225,51 @@ public class PlanService {
 
     // Plan 데이터를 업데이트
     private void updatePlanData(Plan plan, PlanDto dto) {
+        boolean isUpdated = false;
 
         if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty()) {
             plan.setTitle(dto.getTitle());
+            isUpdated = true;
         }
 
         if(dto.getContent() != null && !dto.getContent().trim().isEmpty()){
             plan.setContent(dto.getContent());
+            isUpdated = true;
         }
 
         if (dto.getStartDate() != null) {
             plan.setStartDate(dto.getStartDate());
+            isUpdated = true;
         }
 
         if (dto.getEndDate() != null) {
             plan.setEndDate(dto.getEndDate());
+            isUpdated = true;
         }
 
+        // hasAssignment는 boolean이므로 항상 업데이트
         plan.setHasAssignment(dto.isHasAssignment());
+        isUpdated = true;
 
-        planRepository.save(plan);
-        log.info("Plan updated successfully: {}", plan);
+        if (isUpdated) {
+            plan.setUpdatedAt(LocalDateTime.now());
+            planRepository.save(plan);
+            log.info("Plan updated successfully: {}", plan.getPlanId());
+        } else {
+            log.warn("No valid fields to update for plan: {}", plan.getPlanId());
+        }
     }
 
     private void updateCommentData(PlanComment planComment, PlanCommentDto dto){
-
         if(dto.getContent() != null && !dto.getContent().trim().isEmpty()){
             planComment.setContent(dto.getContent());
-        }
+            planComment.setUpdatedAt(LocalDateTime.now());
 
-        planCommentRepository.save(planComment);
-        log.info("Plan Comment updated successfully: {}",planComment);
+            planCommentRepository.save(planComment);
+            log.info("Plan comment updated successfully: {}", planComment.getCommentId());
+        } else {
+            log.warn("No valid content to update for comment: {}", planComment.getCommentId());
+        }
     }
 
     /**
@@ -235,7 +278,6 @@ public class PlanService {
 
     // Plan를 DetailPlanResponse로 변환
     private DetailPlanResponse createDetailPlanResponse(Plan plan) {
-
         List<PlanComment> assignmentCommentList = planCommentRepository.findAllByPlanPlanId(plan.getPlanId());
         List<PlanCommentResponse> commentList = assignmentCommentList.stream()
                 .map(this::createPlanCommentResponse)
@@ -258,7 +300,6 @@ public class PlanService {
 
     // Plan를 PlanResponse로 변환
     private PlanResponse createResponse(Plan plan) {
-
         return PlanResponse.builder()
                 .planId(plan.getPlanId())
                 .title(plan.getTitle())
@@ -270,10 +311,8 @@ public class PlanService {
                 .build();
     }
 
-
     // 계획 댓글 Response 생성해서 반환하기
     private PlanCommentResponse createPlanCommentResponse(PlanComment planComment) {
-
         return PlanCommentResponse.builder()
                 .commentId(planComment.getCommentId())
                 .content(planComment.getContent())
