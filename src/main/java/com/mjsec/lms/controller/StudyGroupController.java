@@ -1,10 +1,11 @@
 package com.mjsec.lms.controller;
 
-import com.mjsec.lms.domain.GroupMember;
 import com.mjsec.lms.dto.*;
 import com.mjsec.lms.service.StudyGroupService;
 import com.mjsec.lms.type.ResponseMessage;
+import com.mjsec.lms.util.ValidationUtils;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -14,13 +15,15 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/group")
+@Slf4j
 public class StudyGroupController {
 
     private final StudyGroupService studyGroupService;
+    private final ValidationUtils validationUtils;
 
-    StudyGroupController(StudyGroupService studyGroupService){
-
+    StudyGroupController(StudyGroupService studyGroupService, ValidationUtils validationUtils){
         this.studyGroupService = studyGroupService;
+        this.validationUtils = validationUtils;
     }
 
     //스터디 멤버 전체 반환
@@ -29,6 +32,7 @@ public class StudyGroupController {
             @PathVariable Long groupId,
             Authentication authentication
     ){
+        log.info("Getting study group member list for group: {}", groupId);
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
@@ -49,6 +53,7 @@ public class StudyGroupController {
             @PathVariable Long groupId,
             Authentication authentication
     ){
+        log.info("Getting study group mentee list for group: {}", groupId);
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
@@ -71,9 +76,12 @@ public class StudyGroupController {
             @RequestPart(value = "image", required = false) MultipartFile image,
             Authentication authentication
     ){
+        log.info("Creating study activity for group: {}", groupId);
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        validationUtils.validateActivityContent(studyActivityDto.getTitle(), studyActivityDto.getContent());
 
         StudyActivityResponse studyActivityResponse = studyGroupService.createStudyActivity(groupId, currentUserStudentNumber, studyActivityDto, image);
 
@@ -94,7 +102,12 @@ public class StudyGroupController {
             @RequestPart(value = "image", required = false) MultipartFile image,
             Authentication authentication) {
 
+        log.info("Updating study activity: {} for group: {}", activityId, groupId);
+
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        validationUtils.validateActivityBelongsToGroup(activityId, groupId); // 연관관계 검증
+        validationUtils.validateActivityContent(studyActivityDto.getTitle(), studyActivityDto.getContent()); // 내용 검증
 
         StudyActivityResponse studyActivityResponse = studyGroupService.updateStudyActivity(
                 groupId, activityId, currentUserStudentNumber, studyActivityDto, image);
@@ -112,6 +125,8 @@ public class StudyGroupController {
     public ResponseEntity<SuccessResponse<List<SimpleStudyActivityResponse>>> getStudyActivityList(
             @PathVariable Long groupId,
             Authentication authentication){
+
+        log.info("Getting study activity list for group: {}", groupId);
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
@@ -133,9 +148,13 @@ public class StudyGroupController {
             @PathVariable Long activityId,
             Authentication authentication
     ){
+        log.info("Getting study activity: {} for group: {}", activityId, groupId);
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        // 연관관계 검증 추가
+        validationUtils.validateActivityBelongsToGroup(activityId, groupId);
 
         StudyActivityResponse studyActivityResponse = studyGroupService.getStudyActivity(groupId, activityId, currentUserStudentNumber);
 
@@ -154,8 +173,13 @@ public class StudyGroupController {
             @PathVariable Long activityId,
             Authentication authentication){
 
+        log.info("Deleting study activity: {} from group: {}", activityId, groupId);
+
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        //연관관계 검증 추가
+        validationUtils.validateActivityBelongsToGroup(activityId, groupId);
 
         studyGroupService.deleteStudyActivity(groupId, activityId, currentUserStudentNumber);
 

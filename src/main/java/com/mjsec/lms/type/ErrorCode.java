@@ -51,20 +51,25 @@ public enum ErrorCode {
 
     //계획
     PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, "계획을 찾을 수 없습니다."),
+    PLAN_GROUP_MISMATCH(HttpStatus.NOT_FOUND, "해당 스터디 그룹의 계획이 아닙니다."),
 
     //과제
     ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "과제가 없습니다."),
+    ASSIGNMENT_DEADLINE_EXPIRED(HttpStatus.BAD_REQUEST, "과제 제출 기한이 지났습니다."),
     UNAUTHORIZED_DOMAIN(HttpStatus.UNAUTHORIZED, "허용되지 않은 도메인입니다."),
     INVALID_URL_FORMAT(HttpStatus.BAD_REQUEST, "유효하지 않은 URL입니다."),
     WARNING_CONTENT(HttpStatus.BAD_REQUEST, "허용되지 않은 내용입니다."),
     DUPLICATE_SUBMISSION(HttpStatus.BAD_REQUEST, "중복된 과제 제출입니다."),
     PLAN_COMMENT_REQUIRED(HttpStatus.BAD_REQUEST, "계획 댓글 내용이 없습니다."),
     PLAN_COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."),
+    COMMENT_TOO_LONG(HttpStatus.BAD_REQUEST, "댓글은 1000자 이하로 작성해주세요."),
+    UNAUTHORIZED_COMMENT_ACCESS(HttpStatus.UNAUTHORIZED, "댓글을 수정/삭제할 권한이 없습니다."),
 
     //과제 피드백
     FEEDBACK_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 피드백을 남겼습니다."),
     FEEDBACK_NOT_FOUND(HttpStatus.NOT_FOUND,"피드백이 존재하지 않습니다."),
     FEEDBACK_CONTENT_REQUIRED(HttpStatus.NOT_FOUND, "과제 피드백 내용이 없습니다."),
+    FEEDBACK_TOO_LONG(HttpStatus.BAD_REQUEST, "피드백은 2000자 이하로 작성해주세요."),
 
     //과제 제출
     SUBMISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "과제 제출 내역을 찾을 수 없습니다."),
@@ -92,6 +97,10 @@ public enum ErrorCode {
     //활동 글
     STUDY_ACTIVITY_NOT_FOUND(HttpStatus.NOT_FOUND, "활동 글을 찾을 수 없습니다."),
     DUPLICATE_WEEK(HttpStatus.BAD_REQUEST, "해당 주차의 활동 글이 이미 존재합니다."),
+    ACTIVITY_GROUP_MISMATCH(HttpStatus.NOT_FOUND, "해당 스터디 그룹의 활동 글이 아닙니다."),
+    UNAUTHORIZED_ACTIVITY_ACCESS(HttpStatus.UNAUTHORIZED, "활동 글을 수정/삭제할 권한이 없습니다."),
+    ACTIVITY_TITLE_TOO_LONG(HttpStatus.BAD_REQUEST, "활동 글 제목은 200자 이하로 작성해주세요."),
+    ACTIVITY_CONTENT_TOO_LONG(HttpStatus.BAD_REQUEST, "활동 글 내용은 5000자 이하로 작성해주세요."),
 
     //이미지
     FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다."),
@@ -99,7 +108,7 @@ public enum ErrorCode {
     FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "파일 크기가 너무 큽니다."),
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "허용되지 않는 파일 형식입니다."),
     ;
-  
+
     private final HttpStatus status;
     private final String message;
     public HttpStatus getHttpStatus() {

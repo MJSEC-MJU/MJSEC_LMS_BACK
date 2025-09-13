@@ -1,11 +1,13 @@
 package com.mjsec.lms.controller;
 
+import com.mjsec.lms.domain.Plan;
 import com.mjsec.lms.dto.DetailPlanResponse;
 import com.mjsec.lms.dto.PlanDto;
 import com.mjsec.lms.dto.SuccessResponse;
 import com.mjsec.lms.service.MentorService;
 import com.mjsec.lms.service.PlanService;
 import com.mjsec.lms.type.ResponseMessage;
+import com.mjsec.lms.util.ValidationUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,11 +15,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/mentor")
 public class MentorController {
 
+    private final ValidationUtils validationUtils;
     private final MentorService mentorService;
     private final PlanService planService;
 
@@ -60,6 +65,8 @@ public class MentorController {
             @Valid @RequestBody PlanDto dto,
             Authentication authentication) {
 
+        validationUtils.validatePlanDates(dto.getStartDate(), dto.getEndDate());
+
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
         DetailPlanResponse response = planService.createPlan(groupId, dto, currentUserStudentNumber);
 
@@ -79,6 +86,15 @@ public class MentorController {
             @RequestBody PlanDto dto,
             Authentication authentication) {
 
+        validationUtils.validatePlanBelongsToGroup(planId, groupId);
+        if (dto.getStartDate() != null || dto.getEndDate() != null) {
+            // 날짜 수정 시에만 검증
+            Plan existingPlan = validationUtils.validatePlan(planId);
+            LocalDateTime newStart = dto.getStartDate() != null ? dto.getStartDate() : existingPlan.getStartDate();
+            LocalDateTime newEnd = dto.getEndDate() != null ? dto.getEndDate() : existingPlan.getEndDate();
+            validationUtils.validatePlanDates(newStart, newEnd);
+        }
+
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
         DetailPlanResponse detailPlanResponse = planService.updatePlan(groupId, planId, dto, currentUserStudentNumber);
 
@@ -96,6 +112,8 @@ public class MentorController {
             @PathVariable Long groupId,
             @PathVariable Long planId,
             Authentication authentication) {
+
+        validationUtils.validatePlanBelongsToGroup(planId, groupId);
 
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
         planService.deletePlan(groupId, planId, currentUserStudentNumber);
