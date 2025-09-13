@@ -20,6 +20,7 @@ public enum ResponseMessage {
     GET_ALL_PENDING_USER_SUCCESS("회원가입 승인 대기자 목록 반환 성공"),
     APPROVE_REGISTER_SUCCESS("회원가입 승인 완료"),
     CREATE_GROUP_SUCCESS("스터디 그룹 생성 성공"),
+    UPDATE_GROUP_SUCCESS("스터디 그룹 수정 성공"),
     GET_ALL_USER_INFO_SUCCESS("전체 사용자 정보 조회 성공"),
     DELETE_USER_SUCCESS("유저 삭제 성공"),
     REFUSE_REGISTER_SUCCESS("회원가입 반려 완료"),

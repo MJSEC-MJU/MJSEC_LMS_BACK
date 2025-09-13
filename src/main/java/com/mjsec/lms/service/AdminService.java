@@ -5,6 +5,7 @@ import com.mjsec.lms.domain.StudyGroup;
 import com.mjsec.lms.domain.User;
 import com.mjsec.lms.dto.PendingUserDto;
 import com.mjsec.lms.dto.StudyGroupDto.StudyGroupRequestDto;
+import com.mjsec.lms.dto.StudyGroupDto.StudyGroupUpdateDto;
 import com.mjsec.lms.dto.UserAdminResponseDto;
 import com.mjsec.lms.exception.RestApiException;
 import com.mjsec.lms.repository.AnnouncementRepository;
@@ -23,6 +24,7 @@ import jakarta.transaction.Transactional;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
@@ -39,6 +41,7 @@ public class AdminService {
     private final SubmissionRepository submissionRepository;
     private final PlanCommentRepository planCommentRepository;
     private final AnnouncementRepository announcementRepository;
+    private final FileService fileService;
 
 
     public AdminService(PendingUserRepository pendingUserRepository, UserRepository userRepository,
@@ -46,7 +49,7 @@ public class AdminService {
                         StudyActivityRepository studyActivityRepository, AttendanceRepository attendanceRepository,
                         GroupMemberRepository groupMemberRepository, SubmissionRepository submissionRepository,
                         PlanCommentRepository planCommentRepository, AnnouncementRepository announcementRepository,
-                       WikiService wikiService) {
+                        WikiService wikiService, FileService fileService) {
 
         this.pendingUserRepository = pendingUserRepository;
         this.userRepository = userRepository;
@@ -59,6 +62,7 @@ public class AdminService {
         this.submissionRepository = submissionRepository;
         this.planCommentRepository = planCommentRepository;
         this.announcementRepository = announcementRepository;
+        this.fileService = fileService;
     }
 
     /**
@@ -169,6 +173,49 @@ public class AdminService {
                 .content(requestDto.getContent())
                 .creator(mentor)
                 .build();
+
+        studyGroupRepository.save(studyGroup);
+    }
+
+    /**
+     * 기존에 존재하는 스터디 그룹의 정보를 업데이트하는 메소드
+     * @param name 스터디 그룹의 이름
+     * @param studyImage 이미지 파일 (null 허용)
+     * @param studyGroupUpdateDto name, content, category, mentorStudentNumber (null 허용)
+     */
+    public void updateGroup(String name, MultipartFile studyImage, StudyGroupUpdateDto studyGroupUpdateDto) {
+
+        StudyGroup studyGroup = studyGroupRepository.findByName(name)
+                .orElseThrow(() -> new RestApiException(ErrorCode.STUDY_NOT_FOUND));
+
+        if (studyImage != null && !studyImage.isEmpty()) {
+            String imageUrl = fileService.uploadImage(studyImage);
+            studyGroup.setStudyImage(imageUrl);
+        }
+
+        if (studyGroupUpdateDto.getName() != null && !studyGroupUpdateDto.getName().trim().isEmpty()) {
+            if(studyGroupRepository.existsByName(studyGroupUpdateDto.getName())){
+                throw new RestApiException(ErrorCode.STUDY_GROUP_ALREADY_EXIST);
+            }
+            else {
+                studyGroup.setName(studyGroupUpdateDto.getName());
+            }
+        }
+
+        if (studyGroupUpdateDto.getCategory() != null && !studyGroupUpdateDto.getCategory().name().trim().isEmpty()) {
+            studyGroup.setCategory(studyGroupUpdateDto.getCategory().name());
+        }
+
+        if (studyGroupUpdateDto.getContent() != null && !studyGroupUpdateDto.getContent().trim().isEmpty()) {
+            studyGroup.setContent(studyGroupUpdateDto.getContent());
+        }
+
+        if (studyGroupUpdateDto.getMentorStudentNumber() != null) {
+            User mentor = userRepository.findByStudentNumber(studyGroupUpdateDto.getMentorStudentNumber())
+                    .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
+
+            studyGroup.setCreator(mentor);
+        }
 
         studyGroupRepository.save(studyGroup);
     }
