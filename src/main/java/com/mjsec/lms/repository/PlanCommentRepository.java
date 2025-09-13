@@ -30,4 +30,9 @@ public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> 
     @Modifying
     @Query("DELETE FROM PlanComment p WHERE p.plan.studyGroup.creator = :user")
     void deleteByStudyGroupCreator(@Param("user") User user);
+
+    @Query("SELECT p.commentId FROM PlanComment p " +
+            "WHERE p.author.userId = :userId " +
+            "AND p.plan.studyGroup.studyId = :studyId")
+    List<Long> findIdsByUserIdAndStudyGroupId(@Param("userId") Long userId, @Param("studyId") Long studyId);
 }
