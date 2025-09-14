@@ -193,28 +193,30 @@ public class AdminService {
             studyGroup.setStudyImage(imageUrl);
         }
 
-        if (studyGroupUpdateDto.getName() != null && !studyGroupUpdateDto.getName().trim().isEmpty()) {
-            if(studyGroupRepository.existsByName(studyGroupUpdateDto.getName())){
-                throw new RestApiException(ErrorCode.STUDY_GROUP_ALREADY_EXIST);
+        if(studyGroupUpdateDto != null) {
+            if (studyGroupUpdateDto.getName() != null && !studyGroupUpdateDto.getName().trim().isEmpty()) {
+                if (studyGroupRepository.existsByName(studyGroupUpdateDto.getName())) {
+                    throw new RestApiException(ErrorCode.STUDY_GROUP_ALREADY_EXIST);
+                } else {
+                    studyGroup.setName(studyGroupUpdateDto.getName());
+                }
             }
-            else {
-                studyGroup.setName(studyGroupUpdateDto.getName());
+
+            if (studyGroupUpdateDto.getCategory() != null && !studyGroupUpdateDto.getCategory().name().trim()
+                    .isEmpty()) {
+                studyGroup.setCategory(studyGroupUpdateDto.getCategory().name());
             }
-        }
 
-        if (studyGroupUpdateDto.getCategory() != null && !studyGroupUpdateDto.getCategory().name().trim().isEmpty()) {
-            studyGroup.setCategory(studyGroupUpdateDto.getCategory().name());
-        }
+            if (studyGroupUpdateDto.getContent() != null && !studyGroupUpdateDto.getContent().trim().isEmpty()) {
+                studyGroup.setContent(studyGroupUpdateDto.getContent());
+            }
 
-        if (studyGroupUpdateDto.getContent() != null && !studyGroupUpdateDto.getContent().trim().isEmpty()) {
-            studyGroup.setContent(studyGroupUpdateDto.getContent());
-        }
+            if (studyGroupUpdateDto.getMentorStudentNumber() != null) {
+                User mentor = userRepository.findByStudentNumber(studyGroupUpdateDto.getMentorStudentNumber())
+                        .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
 
-        if (studyGroupUpdateDto.getMentorStudentNumber() != null) {
-            User mentor = userRepository.findByStudentNumber(studyGroupUpdateDto.getMentorStudentNumber())
-                    .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
-
-            studyGroup.setCreator(mentor);
+                studyGroup.setCreator(mentor);
+            }
         }
 
         studyGroupRepository.save(studyGroup);
