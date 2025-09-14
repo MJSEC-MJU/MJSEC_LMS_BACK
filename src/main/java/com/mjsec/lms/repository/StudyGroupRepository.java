@@ -15,6 +15,8 @@ public interface StudyGroupRepository extends JpaRepository<StudyGroup, Long> {
 
     boolean existsByName(String name);
 
+    Optional<StudyGroup> findByName(String name);
+
     Optional<StudyGroup> findByStudyId(Long studyId);
 
     @Modifying

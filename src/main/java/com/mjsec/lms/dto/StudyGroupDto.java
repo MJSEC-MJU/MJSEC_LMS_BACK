@@ -57,4 +57,19 @@ public class StudyGroupDto {
 
         private LocalDateTime createdAt;
     }
+
+    @Data
+    @Builder
+    public static class StudyGroupUpdateDto {
+
+        private String name;
+
+        private String content;
+
+        private Category category;
+
+        @Min(value = 10000000, message = "멘토 학번은 8자리 숫자여야 합니다.")
+        @Max(value = 99999999, message = "멘토 학번은 8자리 숫자여야 합니다.")
+        private Long mentorStudentNumber;
+    }
 }

@@ -2,6 +2,7 @@ package com.mjsec.lms.controller;
 
 import com.mjsec.lms.dto.PendingUserDto;
 import com.mjsec.lms.dto.StudyGroupDto.StudyGroupRequestDto;
+import com.mjsec.lms.dto.StudyGroupDto.StudyGroupUpdateDto;
 import com.mjsec.lms.dto.SuccessResponse;
 import com.mjsec.lms.dto.UserAdminResponseDto;
 import com.mjsec.lms.service.AdminService;
@@ -15,9 +16,12 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -71,6 +75,22 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.OK).body(
                 SuccessResponse.of(
                         ResponseMessage.CREATE_GROUP_SUCCESS
+                )
+        );
+    }
+
+    @PutMapping("/group/{name}")
+    public ResponseEntity<SuccessResponse<Void>> updateGroup(
+            @PathVariable String name,
+            @RequestPart(required = false) MultipartFile studyImage,
+            @Valid @RequestPart(required = false) StudyGroupUpdateDto studyGroupUpdateDto
+    ) {
+
+        adminService.updateGroup(name, studyImage, studyGroupUpdateDto);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                SuccessResponse.of(
+                        ResponseMessage.UPDATE_GROUP_SUCCESS
                 )
         );
     }
