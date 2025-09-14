@@ -107,6 +107,13 @@ public enum ErrorCode {
     EMPTY_FILE(HttpStatus.BAD_REQUEST, "빈 파일입니다."),
     FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "파일 크기가 너무 큽니다."),
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "허용되지 않는 파일 형식입니다."),
+    UNAUTHORIZED_IMAGE_ACCESS(HttpStatus.FORBIDDEN, "해당 이미지에 접근할 권한이 없습니다."),
+    INVALID_FILE_NAME(HttpStatus.BAD_REQUEST,  "유효하지 않은 파일명입니다."),
+    INVALID_FILE_PATH(HttpStatus.BAD_REQUEST,  "유효하지 않은 파일 경로입니다."),
+    IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지 파일을 찾을 수 없습니다."),
+    UNSUPPORTED_IMAGE_TYPE(HttpStatus.BAD_REQUEST,  "지원하지 않는 이미지 파일 형식입니다."),
+    IMAGE_NOT_READABLE(HttpStatus.INTERNAL_SERVER_ERROR,  "이미지 파일을 읽을 수 없습니다."),
+    IMAGE_LOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 로딩 중 오류가 발생했습니다.")
     ;
 
     private final HttpStatus status;
