@@ -3,12 +3,14 @@ package com.mjsec.lms.controller;
 import com.mjsec.lms.dto.PasswordUpdateDto;
 import com.mjsec.lms.dto.SuccessResponse;
 import com.mjsec.lms.dto.UserResponse;
+import com.mjsec.lms.dto.UserUpdateDto;
 import com.mjsec.lms.exception.RestApiException;
 import com.mjsec.lms.service.AuthCodeService;
 import com.mjsec.lms.service.EmailService;
 import com.mjsec.lms.service.UserService;
 import com.mjsec.lms.type.ErrorCode;
 import com.mjsec.lms.type.ResponseMessage;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +21,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1/user")
 public class UserController {
@@ -29,17 +34,9 @@ public class UserController {
     private final AuthCodeService authCodeService;
     private final EmailService emailService;
 
-    UserController(UserService userService, AuthCodeService authCodeService, EmailService emailService) {
-
-        this.userService = userService;
-        this.authCodeService = authCodeService;
-        this.emailService = emailService;
-    }
-
     @GetMapping("/user-page")
     public ResponseEntity<SuccessResponse<UserResponse>> getUserPage(Authentication authentication){
 
-        // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
         UserResponse userResponse = userService.getUserPage(currentUserStudentNumber);
@@ -48,6 +45,23 @@ public class UserController {
                 SuccessResponse.of(
                         ResponseMessage.USER_GET_PAGE_SUCCESS,
                         userResponse
+                )
+        );
+    }
+
+    @PutMapping("/user-page")
+    public ResponseEntity<SuccessResponse<Void>> updateUser(
+            Authentication authentication,
+            @RequestPart(required = false) MultipartFile profileImage,
+            @Valid @RequestPart UserUpdateDto userUpdateDto
+    ) {
+
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+        userService.updateUser(currentUserStudentNumber, profileImage, userUpdateDto);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.UPDATE_USER_SUCCESS
                 )
         );
     }

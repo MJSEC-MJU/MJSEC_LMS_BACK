@@ -4,17 +4,20 @@ import com.mjsec.lms.domain.GroupMember;
 import com.mjsec.lms.domain.User;
 import com.mjsec.lms.dto.StudyGroupSummaryDto;
 import com.mjsec.lms.dto.UserResponse;
+import com.mjsec.lms.dto.UserUpdateDto;
 import com.mjsec.lms.exception.RestApiException;
 import com.mjsec.lms.repository.GroupMemberRepository;
 import com.mjsec.lms.repository.UserRepository;
 import com.mjsec.lms.type.ErrorCode;
 import com.mjsec.lms.util.ValidationUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Slf4j
@@ -24,15 +27,17 @@ public class UserService {
     private final GroupMemberRepository groupMemberRepository;
     private final ValidationUtils validationUtils;
     private final PasswordEncoder passwordEncoder;
+    private final FileService fileService;
 
     public UserService(UserRepository userRepository,
                        GroupMemberRepository groupMemberRepository,
-                       ValidationUtils validationUtils, PasswordEncoder passwordEncoder) {
+                       ValidationUtils validationUtils, PasswordEncoder passwordEncoder, FileService fileService) {
 
         this.userRepository = userRepository;
         this.groupMemberRepository = groupMemberRepository;
         this.validationUtils = validationUtils;
         this.passwordEncoder = passwordEncoder;
+        this.fileService = fileService;
     }
 
     // 유저 페이지 조회
@@ -111,6 +116,39 @@ public class UserService {
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_REGISTERED_EMAIL));
 
         user.setPassword(passwordEncoder.encode(password));
+        userRepository.save(user);
+    }
+
+    /**
+     * 유저 정보를 수정하는 메소드 (프로필 이미지, 이름, 이메일, 전화번호)
+     * @param currentStudentNumber 유저의 학번
+     * @param profileImage 프로필 이미지
+     * @param userUpdateDto 이름, 이메일, 전화번호 정보를 담는 Dto
+     */
+    public void updateUser(Long currentStudentNumber, MultipartFile profileImage, UserUpdateDto userUpdateDto) {
+
+        User user = userRepository.findByStudentNumber(currentStudentNumber)
+                .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
+
+        if(profileImage != null && !profileImage.isEmpty()) {
+            String imgUrl = fileService.uploadImage(profileImage);
+            user.setProfileImage(imgUrl);
+        }
+
+        if(userUpdateDto != null) {
+            if(userUpdateDto.getName() != null && !userUpdateDto.getName().trim().isEmpty()) {
+                user.setName(userUpdateDto.getName());
+            }
+
+            if(userUpdateDto.getEmail() != null && !userUpdateDto.getEmail().trim().isEmpty()) {
+                user.setEmail(userUpdateDto.getEmail());
+            }
+
+            if(userUpdateDto.getPhoneNumber() != null && !userUpdateDto.getPhoneNumber().trim().isEmpty()) {
+                user.setPhoneNumber(userUpdateDto.getPhoneNumber());
+            }
+        }
+
         userRepository.save(user);
     }
 }

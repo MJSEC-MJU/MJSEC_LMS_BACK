@@ -29,6 +29,7 @@ public enum ResponseMessage {
     SEND_CODE_SUCCESS("인증 코드 전송 성공"),
     EMAIL_VERIFICATION_SUCCESS("이메일 인증 성공"),
     UPDATE_PASSWORD_SUCCESS("비밀번호 변경 성공"),
+    UPDATE_USER_SUCCESS("유저 정보 수정 성공"),
 
     // 과제
     ASSIGNMENT_SUBMIT_SUCCESS("과제 제출 성공"),
