@@ -101,6 +101,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/group/**").permitAll()
                         .requestMatchers("/api/v1/image/**").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/user/create-announcement").hasAnyRole("ADMIN", "USER")
                         .requestMatchers("/api/v1/user/announcements/**").hasAnyRole("ADMIN", "USER")
                         .requestMatchers("/api/v1/user/password/**").permitAll()
                         .requestMatchers("/api/v1/user/user-page").hasAnyRole("ADMIN", "USER")
