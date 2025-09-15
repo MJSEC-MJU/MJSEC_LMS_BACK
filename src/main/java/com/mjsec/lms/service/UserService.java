@@ -11,7 +11,6 @@ import com.mjsec.lms.repository.UserRepository;
 import com.mjsec.lms.type.ErrorCode;
 import com.mjsec.lms.util.ValidationUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 

@@ -53,7 +53,7 @@ public class UserController {
     public ResponseEntity<SuccessResponse<Void>> updateUser(
             Authentication authentication,
             @RequestPart(required = false) MultipartFile profileImage,
-            @Valid @RequestPart UserUpdateDto userUpdateDto
+            @Valid @RequestPart(required = false) UserUpdateDto userUpdateDto
     ) {
 
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
