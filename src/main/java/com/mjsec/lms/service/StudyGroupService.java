@@ -369,7 +369,7 @@ public class StudyGroupService {
                 .toList();
 
         return StudyActivityResponse.builder()
-                .StudyActivityId(studyActivity.getActivityId())
+                .activityId(studyActivity.getActivityId())
                 .title(studyActivity.getTitle())
                 .content(studyActivity.getContent())
                 .week(studyActivity.getWeek())
