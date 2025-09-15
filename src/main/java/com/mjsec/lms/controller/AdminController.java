@@ -2,7 +2,9 @@ package com.mjsec.lms.controller;
 
 import com.mjsec.lms.dto.PendingUserDto;
 import com.mjsec.lms.dto.StudyGroupDto.StudyGroupRequestDto;
+import com.mjsec.lms.dto.StudyGroupDto.StudyGroupResponseDto;
 import com.mjsec.lms.dto.StudyGroupDto.StudyGroupUpdateDto;
+import com.mjsec.lms.dto.StudyGroupSummaryDto;
 import com.mjsec.lms.dto.SuccessResponse;
 import com.mjsec.lms.dto.UserAdminResponseDto;
 import com.mjsec.lms.service.AdminService;
@@ -63,6 +65,19 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.OK).body(
                 SuccessResponse.of(
                         ResponseMessage.REFUSE_REGISTER_SUCCESS
+                )
+        );
+    }
+
+    @GetMapping("/group/all")
+    public ResponseEntity<SuccessResponse<List<StudyGroupSummaryDto>>> getAllGroups() {
+
+        List<StudyGroupSummaryDto> groups = adminService.getAllGroups();
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                SuccessResponse.of(
+                        ResponseMessage.GET_ALL_GROUPS_SUCCESS,
+                        groups
                 )
         );
     }

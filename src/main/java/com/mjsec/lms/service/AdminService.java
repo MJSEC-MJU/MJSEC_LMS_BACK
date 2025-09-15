@@ -5,7 +5,9 @@ import com.mjsec.lms.domain.StudyGroup;
 import com.mjsec.lms.domain.User;
 import com.mjsec.lms.dto.PendingUserDto;
 import com.mjsec.lms.dto.StudyGroupDto.StudyGroupRequestDto;
+import com.mjsec.lms.dto.StudyGroupDto.StudyGroupResponseDto;
 import com.mjsec.lms.dto.StudyGroupDto.StudyGroupUpdateDto;
+import com.mjsec.lms.dto.StudyGroupSummaryDto;
 import com.mjsec.lms.dto.UserAdminResponseDto;
 import com.mjsec.lms.exception.RestApiException;
 import com.mjsec.lms.repository.AnnouncementRepository;
@@ -18,10 +20,12 @@ import com.mjsec.lms.repository.StudyActivityRepository;
 import com.mjsec.lms.repository.StudyGroupRepository;
 import com.mjsec.lms.repository.SubmissionRepository;
 import com.mjsec.lms.repository.UserRepository;
+import com.mjsec.lms.type.Category;
 import com.mjsec.lms.type.ErrorCode;
 import com.mjsec.lms.type.UserRole;
 import jakarta.transaction.Transactional;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -152,6 +156,30 @@ public class AdminService {
 
         pendingUserRepository.delete(pendingUser);
         log.info("Deleted pending user for registration refusal: {}", studentNumber);
+    }
+
+    /**
+     * 모든 스터디 그룹의 정보를 반환하는 메소드 (study group Id, 이름, 카테고리, 스터디 그룹 대표 이미지만 반환)
+     * @return List<StudyGroupSummaryDto>
+     */
+    public List<StudyGroupSummaryDto> getAllGroups() {
+
+        log.info("Getting All Groups Info");
+
+        List<StudyGroupSummaryDto> groups = studyGroupRepository.findAll().stream()
+                .map(studyGroup -> {
+                    return StudyGroupSummaryDto.builder()
+                            .studyGroupId(studyGroup.getStudyId())
+                            .name(studyGroup.getName())
+                            .category(studyGroup.getCategory())
+                            .studyImage(studyGroup.getStudyImage())
+                            .build();
+                })
+                .toList();
+
+        log.info("{} Groups returned", groups.size());
+
+        return groups;
     }
 
     /**
