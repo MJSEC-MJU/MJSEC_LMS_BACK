@@ -11,7 +11,7 @@ import java.util.List;
 @Builder
 public class StudyActivityResponse {
 
-    private Long StudyActivityId;
+    private Long activityId;
 
     private String title;
 
