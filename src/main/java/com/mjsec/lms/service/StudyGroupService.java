@@ -95,7 +95,7 @@ public class StudyGroupService {
             studyActivityDto.setImageUrl(imageUrl);
         }
 
-        StudyActivity savedStudyActivity = createStudyActivityData(groupId, studyActivityDto);
+        StudyActivity savedStudyActivity = createStudyActivityData(groupId, studyActivityDto,user);
         List<Attendance> attendanceList = createAttendanceListData(savedStudyActivity, studyActivityDto);
 
         log.info("StudyActivity created successfully with ID: {}", savedStudyActivity.getActivityId());
@@ -291,13 +291,14 @@ public class StudyGroupService {
      */
 
     //Dto를 받아서 StudyActivity 저장하기
-    public StudyActivity createStudyActivityData(Long groupId, StudyActivityDto studyActivityDto){
+    public StudyActivity createStudyActivityData(Long groupId, StudyActivityDto studyActivityDto, User user){
 
         StudyActivity studyActivity = StudyActivity.builder()
                 .title(studyActivityDto.getTitle())
                 .content(studyActivityDto.getContent())
                 .studyGroup(studyGroupRepository.findById(groupId).orElseThrow())
                 .week(studyActivityDto.getWeek())
+                .creator(user)
                 .imageUrl(studyActivityDto.getImageUrl())
                 .build();
 
