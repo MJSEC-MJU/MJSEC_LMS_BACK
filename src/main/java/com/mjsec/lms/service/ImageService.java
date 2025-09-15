@@ -8,10 +8,9 @@ import com.mjsec.lms.dto.ImageResponse;
 import com.mjsec.lms.exception.RestApiException;
 import com.mjsec.lms.repository.GroupMemberRepository;
 import com.mjsec.lms.repository.StudyActivityRepository;
+import com.mjsec.lms.repository.UserRepository;
 import com.mjsec.lms.type.ErrorCode;
 import com.mjsec.lms.util.ValidationUtils;
-import lombok.Builder;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -37,6 +36,7 @@ public class ImageService {
 
     private final StudyActivityRepository studyActivityRepository;
     private final GroupMemberRepository groupMemberRepository;
+    private final UserRepository userRepository;
     private final ValidationUtils validationUtils;
 
     // 지원하는 이미지 파일 확장자와 MIME 타입 매핑
@@ -52,19 +52,19 @@ public class ImageService {
 
     public ImageService(StudyActivityRepository studyActivityRepository,
                         GroupMemberRepository groupMemberRepository,
+                        UserRepository userRepository,
                         ValidationUtils validationUtils) {
         this.studyActivityRepository = studyActivityRepository;
         this.groupMemberRepository = groupMemberRepository;
+        this.userRepository = userRepository;
         this.validationUtils = validationUtils;
     }
 
-    /**
-     * 스터디 활동 이미지 조회 (권한 검증 포함)
-     * 해당 스터디 그룹의 멤버만 이미지 접근 가능
-     *
-     * @param filename 이미지 파일명
-     * @param currentUserStudentNumber 현재 사용자 학번
-     * @return 이미지 응답 객체
+    /*
+     * 통합 이미지 조회
+     * - 스터디 활동 이미지: 해당 그룹 멤버만 접근 가능
+     * - 스터디 그룹 이미지: 해당 그룹 멤버만 접근 가능
+     * - 사용자 프로필 이미지: 인증된 사용자 누구나 접근 가능
      */
     @Transactional(readOnly = true)
     public ImageResponse getImage(String filename, Long currentUserStudentNumber) {
@@ -73,38 +73,37 @@ public class ImageService {
         // 사용자 검증
         User currentUser = validationUtils.validateUser(currentUserStudentNumber);
 
-        // 파일명으로 스터디 활동 찾기
+        // 스터디 활동 이미지인지 확인
         StudyActivity studyActivity = findStudyActivityByImageUrl(filename);
-
         if (studyActivity != null) {
-            // 스터디 활동 이미지인 경우 - 해당 그룹 멤버만 접근 가능
             StudyGroup studyGroup = studyActivity.getStudyGroup();
             validationUtils.validateGroupMembership(currentUser, studyGroup);
-
             log.info("Access granted to study activity image for group: {} by user: {}",
                     studyGroup.getStudyId(), currentUserStudentNumber);
-        } else {
-            // 스터디 그룹 이미지인지 확인 (StudyGroup의 studyImage)
-            if (!isStudyGroupImageAccessible(filename, currentUser)) {
-                log.warn("Unauthorized image access attempt: {} by user: {}", filename, currentUserStudentNumber);
-                throw new RestApiException(ErrorCode.UNAUTHORIZED_IMAGE_ACCESS);
-            }
+            return loadImageFromFileSystem(filename);
         }
 
-        // 파일 시스템에서 이미지 로드
-        return loadImageFromFileSystem(filename);
+        // 스터디 그룹 이미지인지 확인
+        if (isStudyGroupImageAccessible(filename, currentUser)) {
+            log.info("Access granted to study group image by user: {}", currentUserStudentNumber);
+            return loadImageFromFileSystem(filename);
+        }
+
+        // 사용자 프로필 이미지인지 확인
+        if (isProfileImageAccessible(filename)) {
+            log.info("Access granted to profile image by user: {}", currentUserStudentNumber);
+            return loadImageFromFileSystem(filename);
+        }
+
+        // 어떤 카테고리에도 해당하지 않으면 접근 거부
+        log.warn("Unauthorized image access attempt: {} by user: {}", filename, currentUserStudentNumber);
+        throw new RestApiException(ErrorCode.UNAUTHORIZED_IMAGE_ACCESS);
     }
 
-    /**
-     * 프로필 이미지 조회 (더 관대한 권한)
-     * 인증된 사용자는 모든 프로필 이미지 접근 가능
-     *
-     * @param filename 프로필 이미지 파일명
-     * @param currentUserStudentNumber 현재 사용자 학번
-     * @return 이미지 응답 객체
-     */
+    //프로필 이미지 가져오기 (검증)
     @Transactional(readOnly = true)
     public ImageResponse getProfileImage(String filename, Long currentUserStudentNumber) {
+
         log.info("Getting profile image: {} for user: {}", filename, currentUserStudentNumber);
 
         // 기본 사용자 검증만 수행 (인증된 사용자면 모든 프로필 이미지 접근 가능)
@@ -113,10 +112,9 @@ public class ImageService {
         return loadImageFromFileSystem(filename);
     }
 
-    /**
-     * 파일명으로 스터디 활동 찾기
-     */
+    //파일명으로 스터디 활동 찾기
     private StudyActivity findStudyActivityByImageUrl(String filename) {
+
         String imageUrl = "/uploads/" + filename;
         return studyActivityRepository.findAll()
                 .stream()
@@ -125,11 +123,9 @@ public class ImageService {
                 .orElse(null);
     }
 
-    /**
-     * 스터디 그룹 이미지에 대한 접근 권한 확인
-     * 해당 그룹의 멤버인지 확인
-     */
+    //스터디 그룹 이미지에 대한 접근 권한 확인 + 해당 그룹의 멤버인지 확인
     private boolean isStudyGroupImageAccessible(String filename, User currentUser) {
+
         String imageUrl = "/uploads/" + filename;
 
         // GroupMember 테이블에서 해당 사용자가 속한 그룹들 조회
@@ -140,10 +136,21 @@ public class ImageService {
                 .anyMatch(groupMember ->
                         imageUrl.equals(groupMember.getStudyGroup().getStudyImage()));
     }
-    /**
-     * 파일 시스템에서 실제 이미지 파일을 로드
-     */
+
+    //프로필 이미지인지 확인 (User 테이블에서 해당 이미지 URL을 프로필 이미지로 사용하는 사용자가 있는지 확인)
+    private boolean isProfileImageAccessible(String filename) {
+
+        String imageUrl = "/uploads/" + filename;
+
+        // User 테이블에서 해당 이미지 URL을 프로필 이미지로 사용하는 사용자가 있는지 확인
+        List<User> users = userRepository.findAll();
+        return users.stream()
+                .anyMatch(user -> imageUrl.equals(user.getProfileImage()));
+    }
+
+    //파일 시스템에서 실제 이미지 파일을 로드
     private ImageResponse loadImageFromFileSystem(String filename) {
+
         try {
             // 보안: 경로 순회 공격 방지
             if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
@@ -201,15 +208,13 @@ public class ImageService {
         }
     }
 
-    /**
-     * 파일명에서 확장자 추출
-     */
+    // 파일명에서 확장자 추출
     private String getFileExtension(String filename) {
+
         int lastDotIndex = filename.lastIndexOf('.');
         if (lastDotIndex == -1) {
             return "";
         }
         return filename.substring(lastDotIndex + 1);
     }
-
 }

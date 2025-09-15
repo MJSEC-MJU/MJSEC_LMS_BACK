@@ -20,13 +20,9 @@ public class ImageController {
         this.imageService = imageService;
     }
 
-    /**
-     * 이미지 파일 서빙 API
+    /*
+    이미지 파일 서빙 API
      * 인증된 사용자만 접근 가능하며, 스터디 그룹 멤버십 확인 후 이미지 반환
-     *
-     * @param filename 이미지 파일명 (UUID + 확장자 형태)
-     * @param authentication 인증 정보
-     * @return 이미지 파일 리소스
      */
     @GetMapping("/{filename}")
     public ResponseEntity<Resource> getImage(
@@ -63,41 +59,5 @@ public class ImageController {
                 .headers(headers)
                 .body(imageResponse.getResource());
     }
-
-    /**
-     * 프로필 이미지 서빙 API (별도 처리)
-     * 사용자 프로필 이미지는 더 관대한 접근 권한 적용
-     *
-     * @param filename 프로필 이미지 파일명
-     * @param authentication 인증 정보
-     * @return 프로필 이미지 파일 리소스
-     */
-    @GetMapping("/profile/{filename}")
-    public ResponseEntity<Resource> getProfileImage(
-            @PathVariable String filename,
-            Authentication authentication) {
-
-        log.info("Profile image request received for filename: {}", filename);
-
-        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
-
-        // 프로필 이미지는 더 관대한 권한으로 처리
-        ImageResponse imageResponse = imageService.getProfileImage(filename, currentUserStudentNumber);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(imageResponse.getMediaType());
-        headers.setContentLength(imageResponse.getContentLength());
-        headers.setCacheControl("public, max-age=7200"); // 프로필 이미지는 2시간 캐싱
-        headers.setContentDisposition(
-                org.springframework.http.ContentDisposition.inline()
-                        .filename(imageResponse.getOriginalFilename())
-                        .build()
-        );
-
-        log.info("Profile image served successfully: {}", filename);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(imageResponse.getResource());
-    }
+    
 }
