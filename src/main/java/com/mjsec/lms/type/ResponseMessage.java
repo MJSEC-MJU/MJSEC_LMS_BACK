@@ -80,6 +80,7 @@ public enum ResponseMessage {
     // 스터디그룹 관련
     STUDY_MEMBER_GET_SUCCESS("스터디 전체 멤버 반환 성공"),
     STUDY_MENTEE_GET_SUCCESS("스터디 멘티 멤버 반환 성공"),
+    GET_ALL_GROUPS_SUCCESS("전체 스터디 그룹 정보 조회 성공")
     ;
     private final String message;
 }
