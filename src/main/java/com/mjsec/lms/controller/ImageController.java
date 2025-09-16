@@ -59,5 +59,4 @@ public class ImageController {
                 .headers(headers)
                 .body(imageResponse.getResource());
     }
-    
 }

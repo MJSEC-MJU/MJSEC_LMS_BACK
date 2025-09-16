@@ -43,8 +43,8 @@ public class ScheduledTaskService {
     }
 
     /*
-    테스트용 - 30초마다 실행 (개발/테스트시에만 사용) - 출석체크 알람
-    */
+    //테스트용 - 30초마다 실행 (개발/테스트시에만 사용) - 출석체크 알람
+
     //@Scheduled(fixedRate = 30000)
     public void testAbsenceScheduler() {
         log.info("Test absence scheduler executed at: {}", java.time.LocalDateTime.now());
@@ -53,10 +53,11 @@ public class ScheduledTaskService {
     }
     
     // 테스트용 - 30초마다 실행 (개발/테스트시에만 사용) - 과제 알람
-    @Scheduled(fixedRate = 30000)
+    //@Scheduled(fixedRate = 30000)
     public void testScheduler() {
         log.info("Test scheduler executed at: {}", java.time.LocalDateTime.now());
         // 테스트 시에는 아래 주석을 해제해서 사용
         weeklyAlertService.checkAndSendWeeklyAssignmentReport();
     }
+     */
 }

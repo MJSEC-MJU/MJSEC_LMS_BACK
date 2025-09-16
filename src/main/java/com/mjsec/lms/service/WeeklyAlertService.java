@@ -38,7 +38,7 @@ public class WeeklyAlertService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime oneWeekAgo = now.minusWeeks(1);
 
-        // 🔥 핵심 수정: hasAssignment=true이고 최근 1주일간 마감된 과제만 조회
+        // hasAssignment=true이고 최근 1주일간 마감된 과제만 조회
         List<Plan> recentlyExpiredAssignments = planRepository.findAssignmentsExpiredBetween(oneWeekAgo, now);
 
         if (recentlyExpiredAssignments.isEmpty()) {
