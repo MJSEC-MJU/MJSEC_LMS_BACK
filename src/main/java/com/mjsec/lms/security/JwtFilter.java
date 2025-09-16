@@ -22,17 +22,10 @@ public class JwtFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
-    /**
-     * 토큰 없이 통과시킬 공개 엔드포인트들.
-     * - /api/v1/auth/**, /api/v1/user/password/** : 인증 관련 공개
-     * - /api/v1/image/** : 이미지 다운로드는 공개
-     * - /lms/api/v1/image/** : 리버스 프록시가 컨텍스트 경로(/lms)를 붙여 넘기는 경우 대비
-     */
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
             "/api/v1/auth/**",
             "/api/v1/user/password/**",
             "/api/v1/image/**",
-            "/lms/api/v1/image/**"
     );
 
     public JwtFilter(JwtService jwtService) {
