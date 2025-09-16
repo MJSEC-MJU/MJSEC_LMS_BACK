@@ -38,7 +38,6 @@ public class StudyGroup extends BaseEntity {
     @Column(name = "study_image", columnDefinition = "TEXT")
     private String studyImage;
 
-    //스터디 그룹 진행중, 종료 여부 <민수햄 보면 삭제좀>
     private studyStatus status = studyStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)

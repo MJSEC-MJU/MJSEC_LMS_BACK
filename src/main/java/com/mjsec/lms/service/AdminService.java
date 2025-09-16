@@ -1,5 +1,6 @@
 package com.mjsec.lms.service;
 
+import com.mjsec.lms.domain.GroupMember;
 import com.mjsec.lms.domain.PendingUser;
 import com.mjsec.lms.domain.StudyGroup;
 import com.mjsec.lms.domain.User;
@@ -22,6 +23,7 @@ import com.mjsec.lms.repository.SubmissionRepository;
 import com.mjsec.lms.repository.UserRepository;
 import com.mjsec.lms.type.Category;
 import com.mjsec.lms.type.ErrorCode;
+import com.mjsec.lms.type.GroupMemberRole;
 import com.mjsec.lms.type.UserRole;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -186,6 +188,7 @@ public class AdminService {
      * 스터디 그룹을 생성하는 메소드
      * @param requestDto 스터디 그룹명, 스터디 소개, 스터디 타입, 멘토 학번
      */
+    @Transactional
     public void createGroup(StudyGroupRequestDto requestDto) {
 
         User mentor = userRepository.findByStudentNumber(requestDto.getMentorStudentNumber())
@@ -203,6 +206,14 @@ public class AdminService {
                 .build();
 
         studyGroupRepository.save(studyGroup);
+
+        GroupMember groupMentor = GroupMember.builder()
+                .role(GroupMemberRole.MENTOR)
+                .user(mentor)
+                .studyGroup(studyGroup)
+                .build();
+
+        groupMemberRepository.save(groupMentor);
     }
 
     /**
