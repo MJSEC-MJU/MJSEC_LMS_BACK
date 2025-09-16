@@ -1,12 +1,12 @@
 package com.mjsec.lms.dto;
 
-import com.mjsec.lms.type.GroupMemberRole;
+import com.mjsec.lms.type.studyStatus;
 import lombok.Builder;
 import lombok.Data;
 
 @Data
 @Builder
-public class StudyMemberResponse {
+public class StudyMemberWarnResponse {
 
     private Long userId;
 
@@ -16,7 +16,7 @@ public class StudyMemberResponse {
 
     private String email;
 
-    private GroupMemberRole role;
-
     private String ProfileImage;
+
+    private Integer warn;
 }

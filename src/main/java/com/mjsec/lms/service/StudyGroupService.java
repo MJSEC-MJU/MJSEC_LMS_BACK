@@ -72,6 +72,25 @@ public class StudyGroupService {
                 .collect(Collectors.toList());
     }
 
+    //스터디 그룹 멘티 멤버 경고 반환
+    @Transactional(readOnly = true)
+    public List<StudyMemberWarnResponse> getStudyMemberWarnList(Long groupId, Long currentUserStudentNumber){
+
+        log.info("getStudyMemberWarnList called!");
+
+        User user = validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
+        validationUtils.validateMentorRole(user.getUserId(), groupId);
+         validationUtils.validateStudyGroup(groupId);
+
+        List<GroupMember> groupMenteeList = groupMemberRepository.findByStudyGroup_StudyIdAndRole(groupId, GroupMemberRole.MENTEE);
+
+        log.info("Found {} mentees in study group: {}", groupMenteeList.size(), groupId);
+
+        return groupMenteeList.stream()
+                .map(this::createStudyMemberWarnResponse)
+                .collect(Collectors.toList());
+    }
+
     //스터디 활동 글 + 출석체크 설정하기
     @Transactional
     public StudyActivityResponse createStudyActivity(Long groupId, Long currentUserStudentNumber,
@@ -341,7 +360,7 @@ public class StudyGroupService {
     }
 
     //Dto와 StudyActivity 객체를 받아 출석체크 리스트를 저장하기
-    public List<Attendance> createAttendanceListData(StudyActivity savedStudyActivity, StudyActivityDto dto){
+    private List<Attendance> createAttendanceListData(StudyActivity savedStudyActivity, StudyActivityDto dto){
 
         List<Attendance> attendances = dto.getStudyAttendanceDtoList().stream()
                 .map(attendanceDto -> Attendance.builder()
@@ -358,7 +377,7 @@ public class StudyGroupService {
     }
 
     // 스터디 활동 글 Response 반환
-    public StudyActivityResponse createStudyActivityResponse(StudyActivity studyActivity, List<Attendance> attendanceList){
+    private StudyActivityResponse createStudyActivityResponse(StudyActivity studyActivity, List<Attendance> attendanceList){
 
         List<StudyAttendanceDto> studyAttendanceDtoList = attendanceList.stream()
                 .map(attendance -> StudyAttendanceDto.builder()
@@ -381,7 +400,7 @@ public class StudyGroupService {
     }
 
     //SimpleStudyActivity 리스트로 반환
-    public List<SimpleStudyActivityResponse> createSimpleStudyActivityList(List<StudyActivity> studyActivityList){
+    private List<SimpleStudyActivityResponse> createSimpleStudyActivityList(List<StudyActivity> studyActivityList){
 
         return studyActivityList.stream()
                 .map(activity -> SimpleStudyActivityResponse.builder()
@@ -392,5 +411,18 @@ public class StudyGroupService {
                         .createdAt(activity.getCreatedAt())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    //StudyMemberWarnResponse 반환
+    private StudyMemberWarnResponse createStudyMemberWarnResponse(GroupMember groupMember){
+
+        return StudyMemberWarnResponse.builder()
+                .userId(groupMember.getUser().getUserId())
+                .studentNumber(groupMember.getUser().getStudentNumber())
+                .name(groupMember.getUser().getName())
+                .email(groupMember.getUser().getEmail())
+                .ProfileImage(groupMember.getUser().getProfileImage())
+                .warn(groupMember.getWarn())
+                .build();
     }
 }
