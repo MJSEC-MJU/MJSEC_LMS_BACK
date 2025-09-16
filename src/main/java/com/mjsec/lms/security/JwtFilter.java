@@ -22,49 +22,46 @@ public class JwtFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
-    private static final List<String> PUBLIC_ENDPOINTS = List.of(
-            "/api/v1/auth/**",
-            "/api/v1/user/password/**"
+    // ✅ "API만" 공개: 로그인/비번/이미지
+    private static final List<String> PUBLIC_API = List.of(
+        "/api/v1/auth/**",
+        "/api/v1/user/password/**",
+        "/api/v1/image/**"
     );
 
     public JwtFilter(JwtService jwtService) {
         this.jwtService = jwtService;
     }
 
+    // ✅ 공개 API(+ OPTIONS)는 필터 자체를 스킵
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) return true;
+
+        String requestURI = request.getRequestURI(); // 예: /lms/api/v1/image/abc.png
+        String ctx = request.getContextPath();       // 보통 "/lms" 또는 ""
+        String matchURI = (ctx != null && !ctx.isEmpty() && requestURI.startsWith(ctx))
+                ? requestURI.substring(ctx.length()) // 예: /api/v1/image/abc.png
+                : requestURI;
+
+        for (String pattern : PUBLIC_API) {
+            if (pathMatcher.match(pattern, matchURI)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
             throws ServletException, IOException {
 
         String requestURI = request.getRequestURI();
         log.info("Starting JWTFilter for request: {}", requestURI);
 
-        // 컨텍스트패스 제거한 URI로 매칭 (로그용 requestURI는 그대로 유지)
-        final String matchURI;
-        String ctx = request.getContextPath();
-        if (ctx != null && !ctx.isEmpty() && requestURI.startsWith(ctx)) {
-            matchURI = requestURI.substring(ctx.length()); // "/api/..." 형태
-        } else {
-            matchURI = requestURI;
-        }
-
-        // CORS 프리플라이트는 바로 통과
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // Public Endpoint 인지 확인 (컨텍스트패스 제거된 URI 사용)
-        boolean isPublic = PUBLIC_ENDPOINTS.stream()
-                .anyMatch(pattern -> pathMatcher.match(pattern, matchURI));
-
-        if (isPublic) {
-            log.info("Skipping JWT filter for public endpoint: {}", requestURI);
-            filterChain.doFilter(request, response);
-            return;
-        }
-
         String authorizationHeader = request.getHeader("Authorization");
 
+        // 🔒 공개 API가 아닌데 토큰이 없으면 401
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             log.warn("Authorization header missing or malformed");
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization header missing or malformed");
@@ -72,32 +69,35 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         String accessToken = authorizationHeader.substring(7);
+        try {
+            if (jwtService.isExpired(accessToken)) {
+                log.warn("Access token expired");
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Access token expired");
+                return;
+            }
 
-        if (jwtService.isExpired(accessToken)) {
-            log.warn("Access token expired");
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access token expired");
-            return;
+            String tokenType = jwtService.getTokenType(accessToken);
+            if (!"accessToken".equals(tokenType)) {
+                log.warn("Invalid token type: {}", tokenType);
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid access token");
+                return;
+            }
+
+            Long studentNumber = jwtService.getStudentNumber(accessToken);
+            String role = jwtService.getRole(accessToken);
+
+            log.info("Authenticated user: {}, Role: {}", studentNumber, role);
+
+            Authentication authToken = new UsernamePasswordAuthenticationToken(
+                studentNumber, null, Collections.singletonList(new SimpleGrantedAuthority(role))
+            );
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+
+            filterChain.doFilter(request, response);
+            log.info("Completed JWTFilter for request: {}", requestURI);
+        } catch (Exception ex) {
+            log.warn("JWT validation failed: {}", ex.getMessage());
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token");
         }
-
-        String tokenType = jwtService.getTokenType(accessToken);
-        if (!"accessToken".equals(tokenType)) {
-            log.warn("Invalid token type: {}", tokenType);
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid access token");
-            return;
-        }
-
-        Long studentNumber = jwtService.getStudentNumber(accessToken);
-        String role = jwtService.getRole(accessToken);
-
-        log.info("Authenticated user: {}, Role: {}", studentNumber, role);
-
-        List<SimpleGrantedAuthority> authorities =
-                Collections.singletonList(new SimpleGrantedAuthority(role));
-
-        Authentication authToken = new UsernamePasswordAuthenticationToken(studentNumber, null, authorities);
-        SecurityContextHolder.getContext().setAuthentication(authToken);
-
-        filterChain.doFilter(request, response);
-        log.info("Completed JWTFilter for request: {}", requestURI);
     }
 }
