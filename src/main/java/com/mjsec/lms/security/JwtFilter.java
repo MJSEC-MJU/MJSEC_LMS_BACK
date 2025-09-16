@@ -22,7 +22,6 @@ public class JwtFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
-    // ✅ "API만" 공개: 로그인/비번/이미지
     private static final List<String> PUBLIC_API = List.of(
         "/api/v1/auth/**",
         "/api/v1/user/password/**",
@@ -33,7 +32,6 @@ public class JwtFilter extends OncePerRequestFilter {
         this.jwtService = jwtService;
     }
 
-    // ✅ 공개 API(+ OPTIONS)는 필터 자체를 스킵
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) return true;
@@ -61,7 +59,6 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String authorizationHeader = request.getHeader("Authorization");
 
-        // 🔒 공개 API가 아닌데 토큰이 없으면 401
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             log.warn("Authorization header missing or malformed");
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization header missing or malformed");
