@@ -68,6 +68,27 @@ public class StudyGroupController {
         );
     }
 
+    //스터디 멘티들 경고 횟수 조회하기
+    @GetMapping("/{groupId}/mentee/warn")
+    public ResponseEntity<SuccessResponse<List<StudyMemberWarnResponse>>> getStudyMenteeWarnList(
+            @PathVariable Long groupId,
+            Authentication authentication
+    ){
+
+        log.info("Getting study group mentee warn list for group: {}", groupId);
+
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        List<StudyMemberWarnResponse> studyMemberWarnResponseList = studyGroupService.getStudyMemberWarnList(groupId, currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.GET_ALL_WARN_SUCCESS,
+                        studyMemberWarnResponseList
+                )
+        );
+    }
+
     //활동 글 생성
     @PostMapping("/{groupId}/create-activity")
     public ResponseEntity<SuccessResponse<StudyActivityResponse>> createStudyActivity(
