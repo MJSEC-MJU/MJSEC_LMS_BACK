@@ -1,6 +1,6 @@
 package com.mjsec.lms.domain;
 
-import com.mjsec.lms.type.studyStatus;
+import com.mjsec.lms.type.StudyStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -38,7 +38,7 @@ public class StudyGroup extends BaseEntity {
     @Column(name = "study_image", columnDefinition = "TEXT")
     private String studyImage;
 
-    private studyStatus status = studyStatus.ACTIVE;
+    private StudyStatus status = StudyStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_id")
