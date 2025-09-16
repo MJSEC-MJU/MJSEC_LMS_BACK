@@ -6,7 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,32 +23,28 @@ public class ImageController {
         this.imageService = imageService;
     }
 
-    /*
-    이미지 파일 서빙 API
-     * 인증된 사용자만 접근 가능하며, 스터디 그룹 멤버십 확인 후 이미지 반환
+    /**
+     * 이미지 파일 서빙 API
+     * - JwtFilter가 공개로 스킵되어 Authentication이 null일 수 있으므로 널-세이프 처리
+     * - 파일명에 '.' 포함되도록 패턴 사용
      */
-    @GetMapping("/{filename}")
+    @GetMapping(value = "/{filename:.+}", produces = MediaType.ALL_VALUE)
     public ResponseEntity<Resource> getImage(
             @PathVariable String filename,
-            Authentication authentication) {
+            Authentication authentication
+    ) {
+        Long currentUserStudentNumber = extractStudentNumber(authentication);
 
-        log.info("Image request received for filename: {}", filename);
+        log.info("Image request received for filename: {} by {}",
+                filename, currentUserStudentNumber != null ? currentUserStudentNumber : "anonymous");
 
-        // JwtFilter에서 설정한 studentNumber를 가져옴
-        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
-
-        // 이미지 파일과 메타데이터 조회
+        // 서비스에 권한/멤버십 검증은 그대로 위임
         ImageResponse imageResponse = imageService.getImage(filename, currentUserStudentNumber);
 
-        // HTTP 헤더 설정
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(imageResponse.getMediaType());
         headers.setContentLength(imageResponse.getContentLength());
-
-        // 브라우저 캐싱 설정 (1시간)
-        headers.setCacheControl("public, max-age=3600");
-
-        // 파일명 설정 (다운로드 시 사용될 이름)
+        headers.setCacheControl("public, max-age=3600"); // 1시간 캐시
         headers.setContentDisposition(
                 org.springframework.http.ContentDisposition.inline()
                         .filename(imageResponse.getOriginalFilename())
@@ -58,5 +57,30 @@ public class ImageController {
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(imageResponse.getResource());
+    }
+
+    /**
+     * Authentication이 null/anonymous일 수 있으므로 안전하게 학번(Long) 추출
+     */
+    private Long extractStudentNumber(Authentication auth) {
+        if (auth == null) return null;
+        if (!auth.isAuthenticated()) return null;
+        if (auth instanceof AnonymousAuthenticationToken) return null;
+
+        Object principal = auth.getPrincipal();
+        if (principal == null) return null;
+
+        if (principal instanceof Long) {
+            return (Long) principal;
+        }
+        if (principal instanceof String) {
+            try { return Long.valueOf((String) principal); }
+            catch (NumberFormatException ignored) {}
+        }
+        if (principal instanceof UserDetails) {
+            try { return Long.valueOf(((UserDetails) principal).getUsername()); }
+            catch (NumberFormatException ignored) {}
+        }
+        return null;
     }
 }

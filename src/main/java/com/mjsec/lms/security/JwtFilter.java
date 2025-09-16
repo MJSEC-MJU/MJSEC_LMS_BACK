@@ -22,17 +22,12 @@ public class JwtFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
-    /**
-     * 토큰 없이 통과시킬 공개 엔드포인트들.
-     * - /api/v1/auth/**, /api/v1/user/password/** : 인증 관련 공개
-     * - /api/v1/image/** : 이미지 다운로드는 공개
-     * - /lms/api/v1/image/** : 리버스 프록시가 컨텍스트 경로(/lms)를 붙여 넘기는 경우 대비
-     */
+
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
             "/api/v1/auth/**",
             "/api/v1/user/password/**",
             "/api/v1/image/**",
-            "/lms/api/v1/image/**"
+            "/uploads/**"
     );
 
     public JwtFilter(JwtService jwtService) {
@@ -46,11 +41,11 @@ public class JwtFilter extends OncePerRequestFilter {
         String requestURI = request.getRequestURI();
         log.info("Starting JWTFilter for request: {}", requestURI);
 
-        // 컨텍스트패스 제거한 URI로 매칭 (로그용 requestURI는 그대로 유지)
+        // 컨텍스트패스 제거한 URI로 매칭 (예: /lms/api/... -> /api/...)
         final String matchURI;
         String ctx = request.getContextPath();
         if (ctx != null && !ctx.isEmpty() && requestURI.startsWith(ctx)) {
-            matchURI = requestURI.substring(ctx.length()); // "/api/..." 형태
+            matchURI = requestURI.substring(ctx.length());
         } else {
             matchURI = requestURI;
         }
@@ -61,18 +56,15 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Public Endpoint 인지 확인 (컨텍스트패스 제거된 URI 사용)
-        boolean isPublic = PUBLIC_ENDPOINTS.stream()
-                .anyMatch(pattern -> pathMatcher.match(pattern, matchURI));
-
+        // 공개 엔드포인트는 필터 스킵
+        boolean isPublic = PUBLIC_ENDPOINTS.stream().anyMatch(pattern -> pathMatcher.match(pattern, matchURI));
         if (isPublic) {
-            log.info("Skipping JWT filter for public endpoint: {}", requestURI);
+            log.info("Skipping JWT filter for public endpoint: {}", matchURI);
             filterChain.doFilter(request, response);
             return;
         }
 
         String authorizationHeader = request.getHeader("Authorization");
-
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             log.warn("Authorization header missing or malformed");
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization header missing or malformed");
@@ -99,10 +91,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
         log.info("Authenticated user: {}, Role: {}", studentNumber, role);
 
-        List<SimpleGrantedAuthority> authorities =
-                Collections.singletonList(new SimpleGrantedAuthority(role));
-
-        Authentication authToken = new UsernamePasswordAuthenticationToken(studentNumber, null, authorities);
+        Authentication authToken = new UsernamePasswordAuthenticationToken(
+                studentNumber,
+                null,
+                Collections.singletonList(new SimpleGrantedAuthority(role))
+        );
         SecurityContextHolder.getContext().setAuthentication(authToken);
 
         filterChain.doFilter(request, response);
