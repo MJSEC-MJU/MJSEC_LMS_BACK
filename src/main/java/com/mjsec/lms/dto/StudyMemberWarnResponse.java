@@ -1,6 +1,5 @@
 package com.mjsec.lms.dto;
 
-import com.mjsec.lms.type.studyStatus;
 import lombok.Builder;
 import lombok.Data;
 
