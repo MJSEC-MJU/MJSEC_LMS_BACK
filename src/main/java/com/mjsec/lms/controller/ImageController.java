@@ -30,16 +30,11 @@ public class ImageController {
      */
     @GetMapping(value = "/{filename:.+}", produces = MediaType.ALL_VALUE)
     public ResponseEntity<Resource> getImage(
-            @PathVariable String filename,
-            Authentication authentication
+            @PathVariable String filename
     ) {
-        Long currentUserStudentNumber = extractStudentNumber(authentication);
-
-        log.info("Image request received for filename: {} by {}",
-                filename, currentUserStudentNumber != null ? currentUserStudentNumber : "anonymous");
 
         // 서비스에 권한/멤버십 검증은 그대로 위임
-        ImageResponse imageResponse = imageService.getImage(filename, currentUserStudentNumber);
+        ImageResponse imageResponse = imageService.getImage(filename);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(imageResponse.getMediaType());
@@ -57,30 +52,5 @@ public class ImageController {
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(imageResponse.getResource());
-    }
-
-    /**
-     * Authentication이 null/anonymous일 수 있으므로 안전하게 학번(Long) 추출
-     */
-    private Long extractStudentNumber(Authentication auth) {
-        if (auth == null) return null;
-        if (!auth.isAuthenticated()) return null;
-        if (auth instanceof AnonymousAuthenticationToken) return null;
-
-        Object principal = auth.getPrincipal();
-        if (principal == null) return null;
-
-        if (principal instanceof Long) {
-            return (Long) principal;
-        }
-        if (principal instanceof String) {
-            try { return Long.valueOf((String) principal); }
-            catch (NumberFormatException ignored) {}
-        }
-        if (principal instanceof UserDetails) {
-            try { return Long.valueOf(((UserDetails) principal).getUsername()); }
-            catch (NumberFormatException ignored) {}
-        }
-        return null;
     }
 }
