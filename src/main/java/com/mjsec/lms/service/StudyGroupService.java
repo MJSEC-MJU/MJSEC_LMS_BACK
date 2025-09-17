@@ -254,6 +254,7 @@ public class StudyGroupService {
             try {
                 String newImageUrl = fileService.uploadImage(newImage);
                 studyActivity.setImageUrl(newImageUrl);
+                studyActivityRepository.save(studyActivity);
                 log.info("New image uploaded successfully: {}", newImageUrl);
             } catch (Exception e) {
                 log.error("Failed to upload new image for activity: {}", studyActivity.getActivityId(), e);

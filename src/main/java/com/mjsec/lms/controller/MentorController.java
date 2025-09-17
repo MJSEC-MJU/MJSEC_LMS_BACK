@@ -1,19 +1,20 @@
 package com.mjsec.lms.controller;
 
 import com.mjsec.lms.domain.Plan;
-import com.mjsec.lms.dto.DetailPlanResponse;
-import com.mjsec.lms.dto.PlanDto;
-import com.mjsec.lms.dto.SuccessResponse;
+import com.mjsec.lms.dto.*;
 import com.mjsec.lms.service.MentorService;
 import com.mjsec.lms.service.PlanService;
+import com.mjsec.lms.service.StudyGroupService;
 import com.mjsec.lms.type.ResponseMessage;
 import com.mjsec.lms.util.ValidationUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 
@@ -25,6 +26,7 @@ public class MentorController {
     private final ValidationUtils validationUtils;
     private final MentorService mentorService;
     private final PlanService planService;
+    private final StudyGroupService studyGroupService;
 
     @PostMapping("/group/{groupId}/add-member/{studentNumber}")
     public ResponseEntity<SuccessResponse<Void>> addMember(
@@ -54,6 +56,28 @@ public class MentorController {
         return ResponseEntity.status(HttpStatus.OK).body(
                 SuccessResponse.of(
                         ResponseMessage.DELETE_MEMBER_SUCCESS
+                )
+        );
+    }
+
+    //스터디 그룹 수정하기
+    @PutMapping("/group/{groupId}")
+    public ResponseEntity<SuccessResponse<StudyGroupPutResponse>> updateStudyGroup(
+            @PathVariable("groupId") Long groupId,
+            @Valid @RequestPart(value = "StudyGroupPutDto", required = false) StudyGroupPutDto dto,
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            Authentication authentication){
+
+        validationUtils.validateStudyGroup(groupId);
+
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        StudyGroupPutResponse response = mentorService.updateStudyGroup(groupId,currentUserStudentNumber,image, dto);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.UPDATE_GROUP_SUCCESS,
+                        response
                 )
         );
     }
@@ -106,7 +130,7 @@ public class MentorController {
         );
     }
 
-    // 등록한 과제 삭제하기
+    // 등록한 계획 삭제하기
     @DeleteMapping("/group/{groupId}/plan/{planId}")
     public ResponseEntity<SuccessResponse<Void>> deletePlan(
             @PathVariable Long groupId,
