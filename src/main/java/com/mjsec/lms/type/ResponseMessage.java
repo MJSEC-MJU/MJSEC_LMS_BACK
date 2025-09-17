@@ -82,6 +82,7 @@ public enum ResponseMessage {
     STUDY_MENTEE_GET_SUCCESS("스터디 멘티 멤버 반환 성공"),
     GET_ALL_GROUPS_SUCCESS("전체 스터디 그룹 정보 조회 성공"),
     GET_ALL_WARN_SUCCESS("스터디 멘티 멤버들 경고 조회 성공"),
+    UPDATE_GROUP_STATUS_SUCCESS("스터디 그룹 상태 변경 성공")
     ;
     private final String message;
 }
