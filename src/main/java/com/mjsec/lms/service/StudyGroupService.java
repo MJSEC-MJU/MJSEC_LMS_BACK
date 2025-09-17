@@ -2,9 +2,12 @@ package com.mjsec.lms.service;
 
 import com.mjsec.lms.domain.*;
 import com.mjsec.lms.dto.*;
+import com.mjsec.lms.exception.RestApiException;
 import com.mjsec.lms.repository.*;
+import com.mjsec.lms.type.ErrorCode;
 import com.mjsec.lms.type.GroupMemberRole;
 import com.mjsec.lms.util.ValidationUtils;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -424,5 +427,25 @@ public class StudyGroupService {
                 .ProfileImage(groupMember.getUser().getProfileImage())
                 .warn(groupMember.getWarn())
                 .build();
+    }
+
+    public List<MenteeStudyGroupDto> getAllGroups(Long studentNumber) {
+
+        User mentee = userRepository.findByStudentNumber(studentNumber)
+                .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
+
+        List<GroupMember> groupMembers = groupMemberRepository.findByUserAndRoleWithStudyGroup(mentee, GroupMemberRole.MENTEE);
+
+        return groupMembers.stream()
+                .map(GroupMember::getStudyGroup)
+                .filter(Objects::nonNull) // null 체크
+                .map(studyGroup -> MenteeStudyGroupDto.builder()
+                        .studyGroupId(studyGroup.getStudyId())
+                        .name(studyGroup.getName())
+                        .category(studyGroup.getCategory())
+                        .studyImage(studyGroup.getStudyImage())
+                        .status(studyGroup.getStatus())
+                        .build())
+                .collect(Collectors.toList());
     }
 }

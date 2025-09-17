@@ -210,4 +210,18 @@ public class StudyGroupController {
                 )
         );
     }
+
+    @GetMapping("/all")
+    public ResponseEntity<SuccessResponse<List<MenteeStudyGroupDto>>> getAllGroups(Authentication authentication) {
+
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+        List<MenteeStudyGroupDto> groups = studyGroupService.getAllGroups(currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.GET_ALL_MENTEE_GROUPS_SUCCESS,
+                        groups
+                )
+        );
+    }
 }
