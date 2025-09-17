@@ -40,6 +40,6 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> 
     @Query("DELETE FROM GroupMember g WHERE g.studyGroup.creator = :user")
     void deleteByStudyGroupCreator(@Param("user") User user);
 
-    @Query("SELECT gm FROM GroupMember gm JOIN FETCH gm.studyGroup WHERE gm.user = :user AND gm.role = :role")
-    List<GroupMember> findByUserAndRoleWithStudyGroup(@Param("user") User user, @Param("role") GroupMemberRole role);
+    @Query("SELECT gm FROM GroupMember gm JOIN FETCH gm.studyGroup WHERE gm.user = :user")
+    List<GroupMember> findByUserWithStudyGroup(@Param("user") User user);
 }

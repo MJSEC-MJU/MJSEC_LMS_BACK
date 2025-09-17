@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class MenteeStudyGroupDto {
+public class AllStudyGroupDto {
 
     private Long studyGroupId;
 
