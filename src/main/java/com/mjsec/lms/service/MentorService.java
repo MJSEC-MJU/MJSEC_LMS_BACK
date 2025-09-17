@@ -1,8 +1,12 @@
 package com.mjsec.lms.service;
 
 import com.mjsec.lms.domain.GroupMember;
+import com.mjsec.lms.domain.StudyActivity;
 import com.mjsec.lms.domain.StudyGroup;
 import com.mjsec.lms.domain.User;
+import com.mjsec.lms.dto.StudyActivityDto;
+import com.mjsec.lms.dto.StudyGroupPutDto;
+import com.mjsec.lms.dto.StudyGroupPutResponse;
 import com.mjsec.lms.exception.RestApiException;
 import com.mjsec.lms.repository.AttendanceRepository;
 import com.mjsec.lms.repository.GroupMemberRepository;
@@ -15,8 +19,11 @@ import com.mjsec.lms.repository.UserRepository;
 import com.mjsec.lms.type.ErrorCode;
 import java.util.List;
 import java.util.Objects;
+
+import com.mjsec.lms.util.ValidationUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Slf4j
@@ -29,12 +36,14 @@ public class MentorService {
     private final PlanCommentRepository planCommentRepository;
     private final AttendanceRepository attendanceRepository;
     private final StudyActivityRepository studyActivityRepository;
-    private final PlanRepository planRepository;
+    private final ValidationUtils validationUtils;
+    private final FileService fileService;
 
     public MentorService(UserRepository userRepository, StudyGroupRepository studyGroupRepository,
                          GroupMemberRepository groupMemberRepository, SubmissionRepository submissionRepository,
                          PlanCommentRepository planCommentRepository, AttendanceRepository attendanceRepository,
-                         StudyActivityRepository studyActivityRepository, PlanRepository planRepository) {
+                         StudyActivityRepository studyActivityRepository, ValidationUtils validationUtils,
+                         FileService fileService) {
 
         this.userRepository = userRepository;
         this.studyGroupRepository = studyGroupRepository;
@@ -43,7 +52,8 @@ public class MentorService {
         this.planCommentRepository = planCommentRepository;
         this.attendanceRepository = attendanceRepository;
         this.studyActivityRepository = studyActivityRepository;
-        this.planRepository = planRepository;
+        this.validationUtils = validationUtils;
+        this.fileService = fileService;
     }
 
     /**
@@ -155,6 +165,95 @@ public class MentorService {
 
         if(groupMember.getWarn() == 3) {
             groupMemberRepository.delete(groupMember);
+        }
+    }
+
+    /**
+     * 멘토가 스터디 그룹 수정하는 메소드
+     * @param currentStudentNumber 요청을 보낸 사용자의 학번
+     * @param groupId 스터디 그룹의 ID
+     */
+    public StudyGroupPutResponse updateStudyGroup(Long groupId, Long currentStudentNumber,MultipartFile image, StudyGroupPutDto dto) {
+
+        User user = validationUtils.validateUser(currentStudentNumber);
+        StudyGroup studyGroup = validationUtils.validateStudyGroup(groupId);
+        validationUtils.validateMentorRole(user.getUserId(), groupId);
+
+        updateStudyGroupData(studyGroup, dto);
+
+        handleImageUpdate(studyGroup,image,dto);
+
+        return StudyGroupPutResponse.builder()
+                .studyId(studyGroup.getStudyId())
+                .name(studyGroup.getName())
+                .content(studyGroup.getContent())
+                .studyImage(studyGroup.getStudyImage())
+                .build();
+    }
+    
+    /**
+    * PRiVATE 메서드들
+     */
+
+    private void updateStudyGroupData(StudyGroup studyGroup, StudyGroupPutDto dto) {
+
+        if(dto == null){
+            return;
+        }
+
+        boolean isUpdated = false;
+
+        if(dto.getName() != null && !dto.getName().trim().isEmpty()) {
+            studyGroup.setName(dto.getName());
+            isUpdated = true;
+        }
+
+        if(dto.getContent() != null && !dto.getContent().trim().isEmpty()){
+            studyGroup.setContent(dto.getContent());
+            isUpdated = true;
+        }
+
+        if(isUpdated) {
+            studyGroupRepository.save(studyGroup);
+        }
+    }
+
+    // 이미지 업데이트 처리를 위한 별도 메서드
+    private void handleImageUpdate(StudyGroup studyGroup, MultipartFile newImage, StudyGroupPutDto dto) {
+
+        String currentImageUrl = studyGroup.getStudyImage();
+
+        // 새 이미지가 업로드된 경우
+        if (newImage != null && !newImage.isEmpty()) {
+            log.info("New image uploaded, processing image replacement for StudyGroup: {}", studyGroup.getStudyId());
+
+            // 기존 이미지가 있다면 삭제
+            if (currentImageUrl != null && !currentImageUrl.trim().isEmpty()) {
+                try {
+                    fileService.deleteImage(currentImageUrl);
+                    log.info("Previous image deleted successfully: {}", currentImageUrl);
+                } catch (Exception e) {
+                    log.warn("Failed to delete previous image: {}, but continuing with new image upload",
+                            currentImageUrl, e);
+                }
+            }
+
+            // 새 이미지 업로드
+            try {
+                String newImageUrl = fileService.uploadImage(newImage);
+                studyGroup.setStudyImage(newImageUrl);
+                studyGroupRepository.save(studyGroup);
+                log.info("New image uploaded successfully: {}", newImageUrl);
+            } catch (Exception e) {
+                log.error("Failed to upload new image for StudyGroup: {}", studyGroup.getStudyId(), e);
+                // 새 이미지 업로드 실패시, 기존 이미지 URL 유지 (null로 설정하지 않음)
+                throw e; // 예외를 다시 던져서 트랜잭션 롤백 유도
+            }
+        }
+        // 새 이미지가 없는 경우: 기존 이미지 URL 유지 (수정하지 않음)
+        else {
+            log.info("No new image provided, keeping existing image: {}", currentImageUrl);
+            // 기존 imageUrl을 그대로 유지 - 별도 처리 불필요
         }
     }
 }

@@ -104,6 +104,8 @@ public class ValidationUtils {
                 .orElseThrow(() -> new RestApiException(ErrorCode.STUDY_ACTIVITY_NOT_FOUND));
     }
 
+
+
     // ========== 멤버십 및 역할 검증 ==========
 
     // 사용자가 해당 스터디 그룹의 멤버인지 확인
