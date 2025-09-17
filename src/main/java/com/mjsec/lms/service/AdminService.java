@@ -6,7 +6,6 @@ import com.mjsec.lms.domain.StudyGroup;
 import com.mjsec.lms.domain.User;
 import com.mjsec.lms.dto.PendingUserDto;
 import com.mjsec.lms.dto.StudyGroupDto.StudyGroupRequestDto;
-import com.mjsec.lms.dto.StudyGroupDto.StudyGroupResponseDto;
 import com.mjsec.lms.dto.StudyGroupDto.StudyGroupUpdateDto;
 import com.mjsec.lms.dto.StudyGroupSummaryDto;
 import com.mjsec.lms.dto.UserAdminResponseDto;
@@ -21,13 +20,12 @@ import com.mjsec.lms.repository.StudyActivityRepository;
 import com.mjsec.lms.repository.StudyGroupRepository;
 import com.mjsec.lms.repository.SubmissionRepository;
 import com.mjsec.lms.repository.UserRepository;
-import com.mjsec.lms.type.Category;
 import com.mjsec.lms.type.ErrorCode;
 import com.mjsec.lms.type.GroupMemberRole;
 import com.mjsec.lms.type.UserRole;
+import com.mjsec.lms.type.StudyStatus;
 import jakarta.transaction.Transactional;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -203,6 +201,7 @@ public class AdminService {
                 .category(requestDto.getCategory().name())
                 .content(requestDto.getContent())
                 .creator(mentor)
+                .status(StudyStatus.ACTIVE)
                 .build();
 
         studyGroupRepository.save(studyGroup);
@@ -362,5 +361,25 @@ public class AdminService {
             log.error("사용자 삭제 중 오류 발생 - userId: {}, error: {}", userId, e.getMessage(), e);
             throw new RestApiException(ErrorCode.USER_DELETE_FAILED);
         }
+    }
+
+    /**
+     * 스터디 그룹의 상태를 변경시키는 메소드 (ACTIVATE <-> INACTIVE)
+     * @param groupId
+     */
+    public void updateGroupStatus(Long groupId) {
+
+        log.info("Updating Study Group Status : group_id {}", groupId);
+
+        StudyGroup studyGroup = studyGroupRepository.findByStudyId(groupId)
+                .orElseThrow(() -> new RestApiException(ErrorCode.STUDY_NOT_FOUND));
+
+        StudyStatus currentStatus = studyGroup.getStatus();
+        StudyStatus newStatus = (currentStatus == StudyStatus.ACTIVE) ? StudyStatus.INACTIVE : StudyStatus.ACTIVE;
+        studyGroup.setStatus(newStatus);
+
+        studyGroupRepository.save(studyGroup);
+
+        log.info("Study Group Status Successfully Updated : group_id {}", groupId);
     }
 }

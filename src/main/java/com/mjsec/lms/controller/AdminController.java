@@ -134,4 +134,16 @@ public class AdminController {
                 )
         );
     }
+
+    @PutMapping("/group/status/{groupId}")
+    public ResponseEntity<SuccessResponse<Void>> updateGroupStatus(@PathVariable("groupId") Long groupId) {
+
+        adminService.updateGroupStatus(groupId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                SuccessResponse.of(
+                        ResponseMessage.UPDATE_GROUP_STATUS_SUCCESS
+                )
+        );
+    }
 }

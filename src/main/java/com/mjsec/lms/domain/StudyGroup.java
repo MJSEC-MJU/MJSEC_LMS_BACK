@@ -38,7 +38,9 @@ public class StudyGroup extends BaseEntity {
     @Column(name = "study_image", columnDefinition = "TEXT")
     private String studyImage;
 
-    private StudyStatus status = StudyStatus.ACTIVE;
+    @Enumerated(EnumType.ORDINAL)
+    @Column(name = "status", nullable = false)
+    private StudyStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_id")
