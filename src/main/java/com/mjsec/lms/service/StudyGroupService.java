@@ -429,17 +429,17 @@ public class StudyGroupService {
                 .build();
     }
 
-    public List<MenteeStudyGroupDto> getAllGroups(Long studentNumber) {
+    public List<AllStudyGroupDto> getAllGroups(Long studentNumber) {
 
         User mentee = userRepository.findByStudentNumber(studentNumber)
                 .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
 
-        List<GroupMember> groupMembers = groupMemberRepository.findByUserAndRoleWithStudyGroup(mentee, GroupMemberRole.MENTEE);
+        List<GroupMember> groupMembers = groupMemberRepository.findByUserWithStudyGroup(mentee);
 
         return groupMembers.stream()
                 .map(GroupMember::getStudyGroup)
-                .filter(Objects::nonNull) // null 체크
-                .map(studyGroup -> MenteeStudyGroupDto.builder()
+                .filter(Objects::nonNull)
+                .map(studyGroup -> AllStudyGroupDto.builder()
                         .studyGroupId(studyGroup.getStudyId())
                         .name(studyGroup.getName())
                         .category(studyGroup.getCategory())
