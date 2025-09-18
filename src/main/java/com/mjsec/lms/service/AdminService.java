@@ -4,10 +4,10 @@ import com.mjsec.lms.domain.GroupMember;
 import com.mjsec.lms.domain.PendingUser;
 import com.mjsec.lms.domain.StudyGroup;
 import com.mjsec.lms.domain.User;
+import com.mjsec.lms.dto.AllStudyGroupDto;
 import com.mjsec.lms.dto.PendingUserDto;
 import com.mjsec.lms.dto.StudyGroupDto.StudyGroupRequestDto;
 import com.mjsec.lms.dto.StudyGroupDto.StudyGroupUpdateDto;
-import com.mjsec.lms.dto.StudyGroupSummaryDto;
 import com.mjsec.lms.dto.UserAdminResponseDto;
 import com.mjsec.lms.exception.RestApiException;
 import com.mjsec.lms.repository.AnnouncementRepository;
@@ -26,7 +26,6 @@ import com.mjsec.lms.type.UserRole;
 import com.mjsec.lms.type.StudyStatus;
 import jakarta.transaction.Transactional;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -161,20 +160,21 @@ public class AdminService {
     }
 
     /**
-     * 모든 스터디 그룹의 정보를 반환하는 메소드 (study group Id, 이름, 카테고리, 스터디 그룹 대표 이미지만 반환)
-     * @return List<StudyGroupSummaryDto>
+     * 모든 스터디 그룹의 정보를 반환하는 메소드 (study group Id, 이름, 카테고리, 스터디 그룹 대표 이미지, 스터디 상태만 반환)
+     * @return List<AllStudyGroupDto>
      */
-    public List<StudyGroupSummaryDto> getAllGroups() {
+    public List<AllStudyGroupDto> getAllGroups() {
 
         log.info("Getting All Groups Info");
 
-        List<StudyGroupSummaryDto> groups = studyGroupRepository.findAll().stream()
+        List<AllStudyGroupDto> groups = studyGroupRepository.findAll().stream()
                 .map(studyGroup -> {
-                    return StudyGroupSummaryDto.builder()
+                    return AllStudyGroupDto.builder()
                             .studyGroupId(studyGroup.getStudyId())
                             .name(studyGroup.getName())
                             .category(studyGroup.getCategory())
                             .studyImage(studyGroup.getStudyImage())
+                            .status(studyGroup.getStatus())
                             .build();
                 })
                 .toList();
@@ -295,9 +295,6 @@ public class AdminService {
         log.info("사용자 삭제 시도 - userId: {}, userName: {}", userId, user.getName());
 
         try {
-            log.debug("1. 사용자 직접 관련 데이터 삭제 시작");
-
-            // 사용자 프로필 이미지 삭제
             if (user.getProfileImage() != null && !user.getProfileImage().trim().isEmpty()) {
                 try {
                     fileService.deleteImage(user.getProfileImage());
@@ -308,7 +305,6 @@ public class AdminService {
                 }
             }
 
-            //해당 사용자가 생성한 스터디 그룹들의 이미지 삭제
             List<StudyGroup> userCreatedGroups = studyGroupRepository.findByCreatorUserId(userId);
 
             for (StudyGroup studyGroup : userCreatedGroups) {
@@ -325,67 +321,42 @@ public class AdminService {
             }
 
             submissionRepository.deleteBySubmitter(user);
-            log.debug("- 과제 제출물 삭제 완료");
 
             planCommentRepository.deleteByAuthor(user);
-            log.debug("- 댓글 삭제 완료");
 
             attendanceRepository.deleteByUser(user);
-            log.debug("- 출석 정보 삭제 완료");
 
             groupMemberRepository.deleteByUser(user);
-            log.debug("- 그룹 탈퇴 완료");
 
             announcementRepository.deleteByCreator(user);
-            log.debug("- 공지사항 삭제 완료");
-
-            log.debug("2. Plan 관련 데이터 삭제 시작");
 
             submissionRepository.deleteByPlanCreator(user);
-            log.debug("- Plan에 의한 제출물 삭제 완료");
 
             planCommentRepository.deleteByPlanCreator(user);
-            log.debug("- Plan 댓글 삭제 완료");
 
             planRepository.deleteByCreator(user);
-            log.debug("- Plan 삭제 완료");
-
-            log.debug("3. 스터디 활동 관련 데이터 삭제 시작");
 
             attendanceRepository.deleteByStudyActivityCreator(user);
-            log.debug("- 출석 정보 삭제 완료");
 
             studyActivityRepository.deleteByCreator(user);
-            log.debug("- 스터디 활동 삭제 완료");
-
-            log.debug("4. 스터디 그룹 관련 데이터 삭제 시작");
 
             submissionRepository.deleteByStudyGroupCreator(user);
-            log.debug("- 스터디 제출물 삭제 완료");
 
             planCommentRepository.deleteByStudyGroupCreator(user);
-            log.debug("- 스터디 그룹에서 작성한 댓글 삭제 완료");
 
             attendanceRepository.deleteByStudyGroupCreator(user);
-            log.debug("- 출석 정보 삭제 완료");
 
             groupMemberRepository.deleteByStudyGroupCreator(user);
-            log.debug("- 모든 그룹 탈퇴");
 
             planRepository.deleteByStudyGroupCreator(user);
-            log.debug("- Plan 삭제 완료");
 
             studyActivityRepository.deleteByStudyGroupCreator(user);
-            log.debug("- 멘토와 관련된 모든 스터디 활동 정보 삭제 완료");
 
             studyGroupRepository.deleteByCreator(user);
-            log.debug("- 스터디 그룹 삭제 완료");
-            
-            log.debug("5. 사용자 엔티티 삭제");
+
             userRepository.delete(user);
 
-            log.info("사용자 삭제 완료 - userId: {}", userId);
-
+            log.info("사용자 삭제 완료");
         } catch (Exception e) {
             log.error("사용자 삭제 중 오류 발생 - userId: {}, error: {}", userId, e.getMessage(), e);
             throw new RestApiException(ErrorCode.USER_DELETE_FAILED);
