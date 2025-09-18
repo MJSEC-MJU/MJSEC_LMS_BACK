@@ -185,6 +185,21 @@ public class AdminService {
     }
 
     /**
+     * 사용 중인 스터디 이름인지 체크하는 메소드
+     * @param name 새로운 스터디 이름
+     * @return true / false
+     */
+    public boolean checkGroupName(String name) {
+
+        if(studyGroupRepository.existsByName(name)){
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+
+    /**
      * 스터디 그룹을 생성하는 메소드
      * @param requestDto 스터디 그룹명, 스터디 소개, 스터디 타입, 멘토 학번
      */

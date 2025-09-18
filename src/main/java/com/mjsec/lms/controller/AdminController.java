@@ -81,6 +81,27 @@ public class AdminController {
         );
     }
 
+    @GetMapping("/group/name-check/{name}")
+    public ResponseEntity<SuccessResponse<Boolean>> checkGroupName(@PathVariable("name") String name) {
+
+        if(adminService.checkGroupName(name)) {
+            return ResponseEntity.status(HttpStatus.OK).body(
+                    SuccessResponse.of(
+                            ResponseMessage.GROUP_NAME_CHECK_SUCCESS,
+                            true
+                    )
+            );
+        }
+        else {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    SuccessResponse.of(
+                            ResponseMessage.DUPLICATE_GROUP_NAME,
+                            false
+                    )
+            );
+        }
+    }
+
     @PostMapping("/group")
     public ResponseEntity<SuccessResponse<Void>> createGroup(@Valid @RequestBody StudyGroupRequestDto studyGroupDto){
 
