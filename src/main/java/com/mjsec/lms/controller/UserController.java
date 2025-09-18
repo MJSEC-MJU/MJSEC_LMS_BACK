@@ -57,6 +57,7 @@ public class UserController {
     ) {
 
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
         userService.updateUser(currentUserStudentNumber, profileImage, userUpdateDto);
 
         return ResponseEntity.ok(

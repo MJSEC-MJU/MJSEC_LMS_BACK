@@ -1,7 +1,9 @@
 package com.mjsec.lms.service;
 
 import com.mjsec.lms.domain.GroupMember;
+import com.mjsec.lms.domain.StudyActivity;
 import com.mjsec.lms.domain.User;
+import com.mjsec.lms.dto.StudyActivityDto;
 import com.mjsec.lms.dto.StudyGroupSummaryDto;
 import com.mjsec.lms.dto.UserResponse;
 import com.mjsec.lms.dto.UserUpdateDto;
@@ -15,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -129,10 +132,7 @@ public class UserService {
         User user = userRepository.findByStudentNumber(currentStudentNumber)
                 .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
 
-        if(profileImage != null && !profileImage.isEmpty()) {
-            String imgUrl = fileService.uploadImage(profileImage);
-            user.setProfileImage(imgUrl);
-        }
+        handleImageUpdate(user, profileImage);
 
         if(userUpdateDto != null) {
             if(userUpdateDto.getName() != null && !userUpdateDto.getName().trim().isEmpty()) {
@@ -149,5 +149,21 @@ public class UserService {
         }
 
         userRepository.save(user);
+    }
+
+    //이미지 처리를 위한 별도 메서드
+    private void handleImageUpdate(User user, MultipartFile newImage) {
+        String newImageUrl = fileService.updateImage(
+                user.getProfileImage(),
+                newImage,
+                "User",
+                user.getUserId()
+        );
+
+        // 이미지 URL이 변경된 경우에만 저장
+        if (!Objects.equals(user.getProfileImage(), newImageUrl)) {
+            user.setProfileImage(newImageUrl);
+            userRepository.save(user);
+        }
     }
 }

@@ -69,6 +69,41 @@ public class FileService {
         }
     }
 
+    // 이미지를 업데이트하는 통합 메서드
+    public String updateImage(String currentImageUrl, MultipartFile newImage, String entityName, Long entityId) {
+
+        // 새 이미지가 업로드된 경우
+        if (newImage != null && !newImage.isEmpty()) {
+            log.info("New image uploaded, processing image replacement for {}: {}", entityName, entityId);
+
+            // 기존 이미지가 있다면 삭제
+            if (currentImageUrl != null && !currentImageUrl.trim().isEmpty()) {
+                try {
+                    deleteImage(currentImageUrl);
+                    log.info("Previous image deleted successfully for {}: {}", entityName, currentImageUrl);
+                } catch (Exception e) {
+                    log.warn("Failed to delete previous image: {}, but continuing with new image upload for {}: {}",
+                            currentImageUrl, entityName, entityId, e);
+                }
+            }
+
+            // 새 이미지 업로드
+            try {
+                String newImageUrl = uploadImage(newImage);
+                log.info("New image uploaded successfully for {}: {}", entityName, newImageUrl);
+                return newImageUrl;
+            } catch (Exception e) {
+                log.error("Failed to upload new image for {}: {}", entityName, entityId, e);
+                // 새 이미지 업로드 실패시 예외를 다시 던져서 트랜잭션 롤백 유도
+                throw e;
+            }
+        }
+
+        // 새 이미지가 없는 경우: 기존 이미지 URL 유지
+        log.info("No new image provided for {}: {}, keeping existing image: {}", entityName, entityId, currentImageUrl);
+        return currentImageUrl;
+    }
+
     // 업로드할 이미지 파일의 유효성을 검사하는 메서드
     private void validateImageFile(MultipartFile file) {
         // 빈 파일인지 확인

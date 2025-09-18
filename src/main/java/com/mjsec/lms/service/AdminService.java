@@ -26,6 +26,8 @@ import com.mjsec.lms.type.UserRole;
 import com.mjsec.lms.type.StudyStatus;
 import jakarta.transaction.Transactional;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -295,6 +297,33 @@ public class AdminService {
         try {
             log.debug("1. 사용자 직접 관련 데이터 삭제 시작");
 
+            // 사용자 프로필 이미지 삭제
+            if (user.getProfileImage() != null && !user.getProfileImage().trim().isEmpty()) {
+                try {
+                    fileService.deleteImage(user.getProfileImage());
+                    log.info("User profile image deleted successfully: {}", user.getProfileImage());
+                } catch (Exception e) {
+                    log.warn("Failed to delete user profile image: {}, but continuing with user deletion",
+                            user.getProfileImage(), e);
+                }
+            }
+
+            //해당 사용자가 생성한 스터디 그룹들의 이미지 삭제
+            List<StudyGroup> userCreatedGroups = studyGroupRepository.findByCreatorUserId(userId);
+
+            for (StudyGroup studyGroup : userCreatedGroups) {
+                if (studyGroup.getStudyImage() != null && !studyGroup.getStudyImage().trim().isEmpty()) {
+                    try {
+                        fileService.deleteImage(studyGroup.getStudyImage());
+                        log.info("Study group image deleted successfully for group {}: {}",
+                                studyGroup.getStudyId(), studyGroup.getStudyImage());
+                    } catch (Exception e) {
+                        log.warn("Failed to delete study group image for group {}: {}, but continuing with deletion",
+                                studyGroup.getStudyId(), studyGroup.getStudyImage(), e);
+                    }
+                }
+            }
+
             submissionRepository.deleteBySubmitter(user);
             log.debug("- 과제 제출물 삭제 완료");
 
@@ -351,7 +380,7 @@ public class AdminService {
 
             studyGroupRepository.deleteByCreator(user);
             log.debug("- 스터디 그룹 삭제 완료");
-
+            
             log.debug("5. 사용자 엔티티 삭제");
             userRepository.delete(user);
 

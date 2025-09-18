@@ -23,4 +23,7 @@ public interface StudyGroupRepository extends JpaRepository<StudyGroup, Long> {
     @Modifying
     @Query("DELETE FROM StudyGroup s WHERE s.creator = :user")
     void deleteByCreator(@Param("user") User user);
+
+    @Query("SELECT s FROM StudyGroup s WHERE s.creator.userId = :userId")
+    List<StudyGroup> findByCreatorUserId(@Param("userId") Long userId);
 }
