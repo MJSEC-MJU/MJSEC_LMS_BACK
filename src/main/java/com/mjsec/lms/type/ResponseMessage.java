@@ -83,6 +83,8 @@ public enum ResponseMessage {
     GET_ALL_GROUPS_SUCCESS("전체 스터디 그룹 정보 조회 성공"),
     GET_ALL_WARN_SUCCESS("스터디 멘티 멤버들 경고 조회 성공"),
     UPDATE_GROUP_STATUS_SUCCESS("스터디 그룹 상태 변경 성공"),
+    GROUP_NAME_CHECK_SUCCESS("사용 가능한 스터디 이름"),
+    DUPLICATE_GROUP_NAME("사용 중인 스터디 이름")
     ;
     private final String message;
 }
