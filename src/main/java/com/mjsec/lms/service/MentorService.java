@@ -218,42 +218,19 @@ public class MentorService {
         }
     }
 
-    // 이미지 업데이트 처리를 위한 별도 메서드
+    //이미지 업데이트
     private void handleImageUpdate(StudyGroup studyGroup, MultipartFile newImage, StudyGroupPutDto dto) {
+        String newImageUrl = fileService.updateImage(
+                studyGroup.getStudyImage(),
+                newImage,
+                "StudyGroup",
+                studyGroup.getStudyId()
+        );
 
-        String currentImageUrl = studyGroup.getStudyImage();
-
-        // 새 이미지가 업로드된 경우
-        if (newImage != null && !newImage.isEmpty()) {
-            log.info("New image uploaded, processing image replacement for StudyGroup: {}", studyGroup.getStudyId());
-
-            // 기존 이미지가 있다면 삭제
-            if (currentImageUrl != null && !currentImageUrl.trim().isEmpty()) {
-                try {
-                    fileService.deleteImage(currentImageUrl);
-                    log.info("Previous image deleted successfully: {}", currentImageUrl);
-                } catch (Exception e) {
-                    log.warn("Failed to delete previous image: {}, but continuing with new image upload",
-                            currentImageUrl, e);
-                }
-            }
-
-            // 새 이미지 업로드
-            try {
-                String newImageUrl = fileService.uploadImage(newImage);
-                studyGroup.setStudyImage(newImageUrl);
-                studyGroupRepository.save(studyGroup);
-                log.info("New image uploaded successfully: {}", newImageUrl);
-            } catch (Exception e) {
-                log.error("Failed to upload new image for StudyGroup: {}", studyGroup.getStudyId(), e);
-                // 새 이미지 업로드 실패시, 기존 이미지 URL 유지 (null로 설정하지 않음)
-                throw e; // 예외를 다시 던져서 트랜잭션 롤백 유도
-            }
-        }
-        // 새 이미지가 없는 경우: 기존 이미지 URL 유지 (수정하지 않음)
-        else {
-            log.info("No new image provided, keeping existing image: {}", currentImageUrl);
-            // 기존 imageUrl을 그대로 유지 - 별도 처리 불필요
+        // 이미지 URL이 변경된 경우에만 저장
+        if (!Objects.equals(studyGroup.getStudyImage(), newImageUrl)) {
+            studyGroup.setStudyImage(newImageUrl);
+            studyGroupRepository.save(studyGroup);
         }
     }
 }
