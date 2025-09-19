@@ -86,6 +86,7 @@ public class AdminService {
                         .name(user.getName())
                         .email(user.getEmail())
                         .phoneNumber(user.getPhoneNumber())
+                        .createdAt(user.getCreatedAt())
                         .build())
                 .toList();
     }

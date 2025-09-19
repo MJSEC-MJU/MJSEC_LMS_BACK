@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -37,4 +38,7 @@ public class PendingUser{
 
     @Column(nullable = false)
     private String phoneNumber;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
 }

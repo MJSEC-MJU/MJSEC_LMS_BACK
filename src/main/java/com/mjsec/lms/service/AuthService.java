@@ -7,6 +7,7 @@ import com.mjsec.lms.exception.RestApiException;
 import com.mjsec.lms.repository.PendingUserRepository;
 import com.mjsec.lms.repository.UserRepository;
 import com.mjsec.lms.type.ErrorCode;
+import java.time.LocalDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -121,6 +122,7 @@ public class AuthService {
                 .name(userDto.getName())
                 .email(userDto.getEmail())
                 .phoneNumber(userDto.getPhoneNumber())
+                .createdAt(LocalDateTime.now())
                 .build();
 
         pendingUserRepository.save(pendingUser);
