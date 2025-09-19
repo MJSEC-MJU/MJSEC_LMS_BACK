@@ -16,7 +16,7 @@ public enum ErrorCode {
 
     // 학번 관련 에러
     DUPLICATE_STUDENT_NUMBER(HttpStatus.CONFLICT, "사용할 수 없는 학번 입니다."),
-    INVALID_STUDENT_NUMBER(HttpStatus.BAD_REQUEST, "학번은 8자리 숫자 입니다."),
+    INVALID_STUDENT_NUMBER(HttpStatus.BAD_REQUEST, "등록되지 않았거나 유효하지 않은 학번 입니다."),
 
     // 이메일 관련 에러
     DUPLICATE_EMAIL(HttpStatus.BAD_REQUEST, "이미 사용 중인 이메일입니다."),
