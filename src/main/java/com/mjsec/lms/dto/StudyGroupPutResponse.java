@@ -14,5 +14,7 @@ public class StudyGroupPutResponse {
 
     private String content;
 
+    private String generation;
+
     private String studyImage;
 }

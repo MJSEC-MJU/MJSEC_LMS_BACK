@@ -82,6 +82,7 @@ public class UserService {
                 .studyGroupId(groupMember.getStudyGroup().getStudyId())
                 .name(groupMember.getStudyGroup().getName())
                 .category(groupMember.getStudyGroup().getCategory())
+                .generation(groupMember.getStudyGroup().getGeneration())
                 .studyImage(groupMember.getStudyGroup().getStudyImage())
                 .build();
     }

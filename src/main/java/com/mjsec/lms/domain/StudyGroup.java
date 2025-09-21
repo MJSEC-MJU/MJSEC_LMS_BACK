@@ -38,6 +38,9 @@ public class StudyGroup extends BaseEntity {
     @Column(name = "study_image", columnDefinition = "TEXT")
     private String studyImage;
 
+    @Column(name = "generation", nullable = false, length = 10)
+    private String generation;
+
     @Enumerated(EnumType.ORDINAL)
     @Column(name = "status", nullable = false)
     private StudyStatus status;

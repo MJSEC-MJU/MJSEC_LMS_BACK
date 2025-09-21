@@ -13,5 +13,7 @@ public class StudyGroupSummaryDto {
 
     private String category;
 
+    private String generation;
+
     private String studyImage;
 }

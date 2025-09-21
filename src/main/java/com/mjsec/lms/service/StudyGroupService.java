@@ -422,6 +422,7 @@ public class StudyGroupService {
                         .name(studyGroup.getName())
                         .category(studyGroup.getCategory())
                         .studyImage(studyGroup.getStudyImage())
+                        .generation(studyGroup.getGeneration())
                         .status(studyGroup.getStatus())
                         .build())
                 .collect(Collectors.toList());
