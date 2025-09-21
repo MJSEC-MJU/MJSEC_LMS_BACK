@@ -21,7 +21,8 @@ public class StudyGroupController {
     private final StudyGroupService studyGroupService;
     private final ValidationUtils validationUtils;
 
-    StudyGroupController(StudyGroupService studyGroupService, ValidationUtils validationUtils){
+    StudyGroupController(StudyGroupService studyGroupService, ValidationUtils validationUtils) {
+
         this.studyGroupService = studyGroupService;
         this.validationUtils = validationUtils;
     }
@@ -46,6 +47,7 @@ public class StudyGroupController {
                 )
         );
     }
+
 
     //스터디 멘티 멤버만 반환
     @GetMapping("/{groupId}/mentee")
@@ -221,6 +223,25 @@ public class StudyGroupController {
                 SuccessResponse.of(
                         ResponseMessage.GET_ALL_GROUPS_SUCCESS,
                         groups
+                )
+        );
+    }
+
+    // 특정 그룹 상세 정보 조회
+    @GetMapping("/{groupId}/info")
+    public ResponseEntity<SuccessResponse<StudyGroupDetailDto>> getStudyGroupDetail(
+            @PathVariable Long groupId,
+            Authentication authentication) {
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        StudyGroupDetailDto studyGroupDetail = studyGroupService.getStudyGroupDetail(groupId, currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.STUDY_GROUP_DETAIL_GET_SUCCESS,
+                        studyGroupDetail
                 )
         );
     }
