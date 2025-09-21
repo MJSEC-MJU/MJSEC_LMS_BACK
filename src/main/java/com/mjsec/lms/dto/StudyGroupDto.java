@@ -1,10 +1,7 @@
 package com.mjsec.lms.dto;
 
 import com.mjsec.lms.type.Category;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,6 +30,10 @@ public class StudyGroupDto {
         @Min(value = 10000000, message = "멘토 학번은 8자리 숫자여야 합니다.")
         @Max(value = 99999999, message = "멘토 학번은 8자리 숫자여야 합니다.")
         private Long mentorStudentNumber;
+
+        @NotBlank(message = "기수 정보는 필수 입력값 입니다.")
+        @Pattern(regexp = "^[1-9]\\d*(\\.5)?기$", message = "기수는 '1기', '1.5기', '2기' 형식으로 입력해주세요.")
+        private String generation;
     }
 
     @Data
@@ -48,6 +49,8 @@ public class StudyGroupDto {
         private String description;
 
         private Category category;
+
+        private String generation;
 
         private String studyImage;
 
@@ -71,5 +74,8 @@ public class StudyGroupDto {
         @Min(value = 10000000, message = "멘토 학번은 8자리 숫자여야 합니다.")
         @Max(value = 99999999, message = "멘토 학번은 8자리 숫자여야 합니다.")
         private Long mentorStudentNumber;
+
+        @Pattern(regexp = "^[1-9]\\d*(\\.5)?기$", message = "기수는 '1기', '1.5기', '2기' 형식으로 입력해주세요.")
+        private String generation;
     }
 }

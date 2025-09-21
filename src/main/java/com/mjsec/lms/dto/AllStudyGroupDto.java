@@ -16,5 +16,7 @@ public class AllStudyGroupDto {
 
     private String studyImage;
 
+    private String generation;
+
     private StudyStatus status;
 }

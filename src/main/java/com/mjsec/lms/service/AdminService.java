@@ -175,6 +175,7 @@ public class AdminService {
                             .name(studyGroup.getName())
                             .category(studyGroup.getCategory())
                             .studyImage(studyGroup.getStudyImage())
+                            .generation(studyGroup.getGeneration())
                             .status(studyGroup.getStatus())
                             .build();
                 })
@@ -218,6 +219,7 @@ public class AdminService {
                 .name(requestDto.getName())
                 .category(requestDto.getCategory().name())
                 .content(requestDto.getContent())
+                .generation(requestDto.getGeneration())
                 .creator(mentor)
                 .status(StudyStatus.ACTIVE)
                 .build();
@@ -265,6 +267,10 @@ public class AdminService {
 
             if (studyGroupUpdateDto.getContent() != null && !studyGroupUpdateDto.getContent().trim().isEmpty()) {
                 studyGroup.setContent(studyGroupUpdateDto.getContent());
+            }
+
+            if (studyGroupUpdateDto.getGeneration() != null && !studyGroupUpdateDto.getGeneration().trim().isEmpty()) {
+                studyGroup.setGeneration(studyGroupUpdateDto.getGeneration());
             }
 
             if (studyGroupUpdateDto.getMentorStudentNumber() != null) {
