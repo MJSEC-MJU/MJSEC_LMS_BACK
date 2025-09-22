@@ -86,6 +86,7 @@ public enum ResponseMessage {
     GROUP_NAME_CHECK_SUCCESS("사용 가능한 스터디 이름"),
     DUPLICATE_GROUP_NAME("사용 중인 스터디 이름"),
     STUDY_GROUP_DETAIL_GET_SUCCESS("스터디 그룹 상세 정보 조회 성공"),
+    DELETE_GROUP_SUCCESS("스터디 그룹 삭제 성공"),
     ;
     private final String message;
 }

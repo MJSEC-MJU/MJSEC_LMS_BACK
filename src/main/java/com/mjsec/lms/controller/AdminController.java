@@ -130,6 +130,18 @@ public class AdminController {
         );
     }
 
+    @DeleteMapping("/group/{name}")
+    public ResponseEntity<SuccessResponse<Void>> deleteGroup(@PathVariable String name) {
+
+        adminService.deleteGroup(name);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                SuccessResponse.of(
+                        ResponseMessage.DELETE_GROUP_SUCCESS
+                )
+        );
+    }
+
     @GetMapping("/users")
     public ResponseEntity<SuccessResponse<List<UserAdminResponseDto>>> getAllUsersForAdmin() {
 
