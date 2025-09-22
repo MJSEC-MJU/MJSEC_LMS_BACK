@@ -1,7 +1,12 @@
 package com.mjsec.lms.service;
 
+import com.mjsec.lms.domain.AssignmentSubmission;
+import com.mjsec.lms.domain.Attendance;
 import com.mjsec.lms.domain.GroupMember;
 import com.mjsec.lms.domain.PendingUser;
+import com.mjsec.lms.domain.Plan;
+import com.mjsec.lms.domain.PlanComment;
+import com.mjsec.lms.domain.StudyActivity;
 import com.mjsec.lms.domain.StudyGroup;
 import com.mjsec.lms.domain.User;
 import com.mjsec.lms.dto.AllStudyGroupDto;
@@ -282,6 +287,53 @@ public class AdminService {
         }
 
         studyGroupRepository.save(studyGroup);
+    }
+
+    /**
+     * 스터디 그룹을 삭제시키는 메소드
+     * @param name 스터디 그룹 이름
+     */
+    public void deleteGroup(String name) {
+
+        log.info("Admin attempting to delete study group: {}", name);
+
+        StudyGroup studyGroup = studyGroupRepository.findByName(name)
+                .orElseThrow(() -> new RestApiException(ErrorCode.STUDY_NOT_FOUND));
+
+        Long studyId = studyGroup.getStudyId();
+        log.debug("Deleting related data for study group ID: {}", studyId);
+
+        List<Plan> plans = planRepository.findAllByStudyGroup_StudyId(studyId);
+        for (Plan plan : plans) {
+            Long planId = plan.getPlanId();
+
+            List<AssignmentSubmission> submissions = submissionRepository.findAssignmentSubmissionsByPlanPlanId(planId);
+            submissionRepository.deleteAll(submissions);
+
+            List<PlanComment> comments = planCommentRepository.findAllByPlanPlanId(planId);
+            planCommentRepository.deleteAll(comments);
+
+            planRepository.deleteById(planId);
+            log.debug("Deleted plan and related data for plan ID: {}", planId);
+        }
+
+        List<StudyActivity> activities = studyActivityRepository.findAllByStudyGroupId(studyId);
+        for (StudyActivity activity : activities) {
+            Long activityId = activity.getActivityId();
+
+            List<Attendance> attendances = attendanceRepository.findByStudyActivityActivityId(activityId);
+            attendanceRepository.deleteAll(attendances);
+
+            studyActivityRepository.deleteById(activityId);
+            log.debug("Deleted activity and related data for activity ID: {}", activityId);
+        }
+
+        List<GroupMember> members = groupMemberRepository.findByStudyGroup_StudyId(studyId);
+        groupMemberRepository.deleteAll(members);
+
+        studyGroupRepository.delete(studyGroup);
+
+        log.info("Successfully deleted study group: {}", name);
     }
 
     /**

@@ -63,4 +63,6 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
             "WHERE a.user.userId = :userId " +
             "AND a.studyGroup.studyId = :studyId")
     List<Long> findIdsByUserIdAndStudyGroupId(@Param("userId") Long userId, @Param("studyId") Long studyId);
+
+    List<Attendance> findByStudyActivityActivityId(Long activityId);
 }
