@@ -125,6 +125,7 @@ public class StudyGroupService {
         return createStudyActivityResponse(savedStudyActivity, attendanceList);
     }
 
+    //스터디 활동 글 수정하기
     @Transactional
     public StudyActivityResponse updateStudyActivity(Long groupId, Long activityId,
                                                      Long currentUserStudentNumber, StudyActivityDto studyActivityDto, MultipartFile image) {
@@ -224,6 +225,40 @@ public class StudyGroupService {
         log.info("Found study activity: {} with title: {}", activityId, studyActivity.getTitle());
 
         return createStudyActivityResponse(studyActivity, studyActivity.getAttendances());
+    }
+
+    // 특정 그룹 상세 정보 조회
+    @Transactional(readOnly = true)
+    public StudyGroupDetailDto getStudyGroupDetail(Long groupId, Long currentUserStudentNumber) {
+
+        log.info("getStudyGroupDetail called for group: {} by user: {}", groupId, currentUserStudentNumber);
+
+        // 기본 접근 권한 검증 (해당 그룹의 멤버인지 확인)
+        validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
+        StudyGroup studyGroup = validationUtils.validateStudyGroup(groupId);
+
+        // 그룹의 모든 멤버 조회
+        List<GroupMember> allMembers = groupMemberRepository.findByStudyGroup_StudyId(groupId);
+
+        // 멘토와 멘티 분리
+        GroupMember mentor = allMembers.stream()
+                .filter(member -> member.getRole() == GroupMemberRole.MENTOR)
+                .findFirst()
+                .orElse(null);
+
+        List<GroupMember> mentees = allMembers.stream()
+                .filter(member -> member.getRole() == GroupMemberRole.MENTEE)
+                .toList();
+
+        // 멘티 정보 DTO 리스트 생성
+        List<StudyGroupDetailDto.MenteeInfo> menteeInfoList = mentees.stream()
+                .map(this::createMenteeInfo)
+                .collect(Collectors.toList());
+
+        log.info("Found {} total members in study group: {} (1 mentor, {} mentees)",
+                allMembers.size(), groupId, mentees.size());
+
+        return createStudyGroupDetailDto(studyGroup, mentor, menteeInfoList);
     }
 
     /*
@@ -426,5 +461,41 @@ public class StudyGroupService {
                         .status(studyGroup.getStatus())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    //그룹 상세 정보 DTO 생성
+    private StudyGroupDetailDto createStudyGroupDetailDto(StudyGroup studyGroup, GroupMember mentor,
+                                                          List<StudyGroupDetailDto.MenteeInfo> menteeList) {
+
+        StudyGroupDetailDto.StudyGroupDetailDtoBuilder builder = StudyGroupDetailDto.builder()
+                .studyId(studyGroup.getStudyId())
+                .name(studyGroup.getName())
+                .content(studyGroup.getContent())
+                .category(studyGroup.getCategory())
+                .generation(studyGroup.getGeneration())
+                .studyImage(studyGroup.getStudyImage())
+                .status(studyGroup.getStatus())
+                .menteeList(menteeList)
+                .menteeCount(menteeList.size())
+                .createdAt(studyGroup.getCreatedAt())
+                .updatedAt(studyGroup.getUpdatedAt());
+
+        // 멘토 정보 설정
+        if (mentor != null && mentor.getUser() != null) {
+            builder.mentorName(mentor.getUser().getName())
+                    .mentorStudentNumber(mentor.getUser().getStudentNumber());
+        }
+
+        return builder.build();
+    }
+
+    //멘티 정보 DTO 생성
+    private StudyGroupDetailDto.MenteeInfo createMenteeInfo(GroupMember mentee) {
+
+        return StudyGroupDetailDto.MenteeInfo.builder()
+                .name(mentee.getUser().getName())
+                .studentNumber(mentee.getUser().getStudentNumber())
+                .email(mentee.getUser().getEmail())
+                .build();
     }
 }
