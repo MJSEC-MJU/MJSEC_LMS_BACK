@@ -26,7 +26,7 @@ public class UserDto {
     private Long studentNumber;
 
     @Pattern(
-            regexp = "^(?=.*[A-Z])(?=.*[0-9])(?=.*[a-z])(?=.*[!@#$%^&*()-+=]).{8,}$",
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=(?:.*\\d){4,})(?=.*[!@#$%^&*?_]).{8,}$",
             message = "비밀번호는 대소문자, 숫자, 특수문자를 포함해야 합니다."
     )
     @NotBlank
