@@ -113,7 +113,8 @@ public enum ErrorCode {
     IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지 파일을 찾을 수 없습니다."),
     UNSUPPORTED_IMAGE_TYPE(HttpStatus.BAD_REQUEST,  "지원하지 않는 이미지 파일 형식입니다."),
     IMAGE_NOT_READABLE(HttpStatus.INTERNAL_SERVER_ERROR,  "이미지 파일을 읽을 수 없습니다."),
-    IMAGE_LOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 로딩 중 오류가 발생했습니다.")
+    IMAGE_LOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 로딩 중 오류가 발생했습니다."),
+    TOO_MANY_IMAGES(HttpStatus.BAD_REQUEST, "이미지는 최대 5개까지만 업로드할 수 있습니다."),
     ;
 
     private final HttpStatus status;

@@ -96,7 +96,7 @@ public class StudyGroupController {
     public ResponseEntity<SuccessResponse<StudyActivityResponse>> createStudyActivity(
             @PathVariable Long groupId,
             @Valid @RequestPart("studyActivityDto") StudyActivityDto studyActivityDto,
-            @RequestPart(value = "image", required = false) MultipartFile image,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
             Authentication authentication
     ){
         log.info("Creating study activity for group: {}", groupId);
@@ -104,9 +104,13 @@ public class StudyGroupController {
         // JwtFilter에서 설정한 studentNumber를 가져옴
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
-        validationUtils.validateActivityContent(studyActivityDto.getTitle(), studyActivityDto.getContent());
+        validationUtils.validateActivityContentWithImages(
+                studyActivityDto.getTitle(),
+                studyActivityDto.getContent(),
+                images
+        );
 
-        StudyActivityResponse studyActivityResponse = studyGroupService.createStudyActivity(groupId, currentUserStudentNumber, studyActivityDto, image);
+        StudyActivityResponse studyActivityResponse = studyGroupService.createStudyActivity(groupId, currentUserStudentNumber, studyActivityDto, images);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
@@ -122,7 +126,7 @@ public class StudyGroupController {
             @PathVariable Long groupId,
             @PathVariable Long activityId,
             @Valid @RequestPart("studyActivityDto") StudyActivityDto studyActivityDto,
-            @RequestPart(value = "image", required = false) MultipartFile image,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
             Authentication authentication) {
 
         log.info("Updating study activity: {} for group: {}", activityId, groupId);
@@ -130,10 +134,14 @@ public class StudyGroupController {
         Long currentUserStudentNumber = (Long) authentication.getPrincipal();
 
         validationUtils.validateActivityBelongsToGroup(activityId, groupId); // 연관관계 검증
-        validationUtils.validateActivityContent(studyActivityDto.getTitle(), studyActivityDto.getContent()); // 내용 검증
+        validationUtils.validateActivityContentWithImages(
+                studyActivityDto.getTitle(),
+                studyActivityDto.getContent(),
+                images
+        );// 내용 검증
 
         StudyActivityResponse studyActivityResponse = studyGroupService.updateStudyActivity(
-                groupId, activityId, currentUserStudentNumber, studyActivityDto, image);
+                groupId, activityId, currentUserStudentNumber, studyActivityDto, images);
 
         return ResponseEntity.ok(
                 SuccessResponse.of(

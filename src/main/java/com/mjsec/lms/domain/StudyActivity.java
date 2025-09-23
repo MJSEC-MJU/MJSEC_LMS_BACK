@@ -34,8 +34,8 @@ public class StudyActivity extends BaseEntity{
     @Column(name="week", nullable = false, length = 50)
     private String week;
 
-    @Column(name = "image_url", columnDefinition = "TEXT")
-    private String imageUrl;
+    @Column(name = "image_urls", columnDefinition = "JSON")
+    private String imageUrls;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "study_id")

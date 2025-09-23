@@ -21,5 +21,5 @@ public class StudyActivityDto {
     @Pattern(regexp = "^\\d{1,2}주차$", message = "주차는 'N주차' 형식이어야 합니다")
     private String week;
 
-    private String imageUrl;
+    private List<String> imageUrls;
 }
