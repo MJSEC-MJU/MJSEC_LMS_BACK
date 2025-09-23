@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +30,8 @@ public class FileService {
     @Value("${file.upload.max-size:10485760}") // 10MB
     private long maxFileSize;
 
+    private static final int MAX_IMAGE_COUNT = 5;
+
     // 허용되는 이미지 파일 타입 목록
     private final List<String> allowedImageTypes = Arrays.asList(
             "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"
@@ -43,6 +46,99 @@ public class FileService {
         } catch (IOException e) {
             log.error("Could not create upload directory: {}", uploadPath, e);
         }
+    }
+
+    // ========== 다중 이미지 처리 메서드들 ==========
+
+    // 다중 이미지 업로드 메서드
+    public List<String> uploadMultipleImages(List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) {
+            log.debug("No files provided for upload");
+            return new ArrayList<>();
+        }
+
+        // 이미지 개수 제한 검증
+        if (files.size() > MAX_IMAGE_COUNT) {
+            log.warn("Too many images provided: {} (max: {})", files.size(), MAX_IMAGE_COUNT);
+            throw new RestApiException(ErrorCode.TOO_MANY_IMAGES);
+        }
+
+        List<String> uploadedUrls = new ArrayList<>();
+
+        for (MultipartFile file : files) {
+            // 빈 파일 스킵
+            if (file.isEmpty()) {
+                log.debug("Skipping empty file");
+                continue;
+            }
+
+            String uploadedUrl = uploadImage(file);
+            uploadedUrls.add(uploadedUrl);
+        }
+
+        log.info("Successfully uploaded {} images", uploadedUrls.size());
+        return uploadedUrls;
+    }
+
+    // 다중 이미지 업데이트
+    public List<String> updateMultipleImages(List<String> currentImageUrls, List<MultipartFile> newImages,
+                                             String entityName, Long entityId) {
+
+        log.info("Updating multiple images for {}: {} - Current: {}, New: {}",
+                entityName, entityId,
+                currentImageUrls != null ? currentImageUrls.size() : 0,
+                newImages != null ? newImages.size() : 0);
+
+        //기존 이미지들 삭제
+        if (currentImageUrls != null && !currentImageUrls.isEmpty()) {
+            for (String imageUrl : currentImageUrls) {
+                try {
+                    deleteImage(imageUrl);
+                    log.debug("Previous image deleted successfully: {}", imageUrl);
+                } catch (Exception e) {
+                    log.warn("Failed to delete previous image: {}, but continuing", imageUrl, e);
+                }
+            }
+            log.info("Deleted {} existing images for {}: {}", currentImageUrls.size(), entityName, entityId);
+        }
+
+        //새 이미지가 제공된 경우 업로드
+        if (newImages != null && !newImages.isEmpty()) {
+            try {
+                List<String> newImageUrls = uploadMultipleImages(newImages);
+                log.info("New images uploaded successfully for {}: {} - {} images",
+                        entityName, entityId, newImageUrls.size());
+                return newImageUrls;
+            } catch (Exception e) {
+                log.error("Failed to upload new images for {}: {}", entityName, entityId, e);
+                // 새 이미지 업로드 실패시 예외를 다시 던져서 트랜잭션 롤백 유도
+                throw e;
+            }
+        }
+
+        //새 이미지가 없으면 빈 리스트 반환 (기존 이미지들은 이미 삭제됨)
+        log.info("No new images provided for {}: {}, all existing images deleted", entityName, entityId);
+        return new ArrayList<>();
+    }
+
+    // 다중 이미지 삭제 메서드
+    public void deleteMultipleImages(List<String> imageUrls) {
+        if (imageUrls == null || imageUrls.isEmpty()) {
+            log.debug("No images to delete");
+            return;
+        }
+
+        int deletedCount = 0;
+        for (String imageUrl : imageUrls) {
+            try {
+                deleteImage(imageUrl);
+                deletedCount++;
+            } catch (Exception e) {
+                log.warn("Failed to delete image: {}, continuing with others", imageUrl, e);
+            }
+        }
+
+        log.info("Deleted {}/{} images successfully", deletedCount, imageUrls.size());
     }
 
     // 이미지 파일을 업로드하고 웹에서 접근 가능한 URL을 반환하는 메서드

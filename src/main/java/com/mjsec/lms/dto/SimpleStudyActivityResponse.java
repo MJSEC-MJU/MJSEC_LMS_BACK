@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -15,7 +16,7 @@ public class SimpleStudyActivityResponse {
 
     private String week;
 
-    private String imageUrl;
+    private List<String> imageUrls;
 
     private LocalDateTime createdAt;
 }

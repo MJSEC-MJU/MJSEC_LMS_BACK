@@ -8,6 +8,7 @@ import com.mjsec.lms.type.GroupMemberRole;
 import com.mjsec.lms.type.UserRole;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -247,6 +248,20 @@ public class ValidationUtils {
             validateMaliciousContent(content);
             log.debug("Activity content validated successfully");
         }
+    }
+
+    // 활동 글 + 이미지 검사
+    public void validateActivityContentWithImages(String title, String content, List<MultipartFile> images) {
+        // 기존 텍스트 내용 검증
+        validateActivityContent(title, content);
+
+        // 이미지 개수 검증
+        if (images != null && images.size() > 5) {
+            log.warn("Too many images provided: {} (max: 5)", images.size());
+            throw new RestApiException(ErrorCode.TOO_MANY_IMAGES);
+        }
+
+        log.debug("Activity content and images validated successfully");
     }
 
     // ========== 복합 접근 검증 ==========
