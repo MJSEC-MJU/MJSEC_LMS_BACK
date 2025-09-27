@@ -178,7 +178,7 @@ public class AssignmentSubmissionService {
         validationUtils.validateMentorAccess(groupId, currentUserStudentNumber);
         validationUtils.validatePlanBelongsToGroup(planId, groupId);
         validationUtils.validateAssignmentSubmissionAllowed(planId);
-        validationUtils.validateSubmissionStatus(dto.getStatus());
+        validationUtils.validateSubmissionStatus(dto.getStatus().toString());
 
         //피드백 내용 + 제출 상태 검증
         validationUtils.validateFeedbackContentAndStatus(dto.getFeedback(), dto.getStatus());
@@ -201,7 +201,7 @@ public class AssignmentSubmissionService {
         validationUtils.validateMentorAccess(groupId, currentUserStudentNumber);
         validationUtils.validatePlanBelongsToGroup(planId, groupId);
         validationUtils.validateAssignmentSubmissionAllowed(planId);
-        validationUtils.validateSubmissionStatus(dto.getStatus());
+        validationUtils.validateSubmissionStatus(dto.getStatus().toString());
 
         validationUtils.validateFeedbackContentAndStatus(dto.getFeedback(), dto.getStatus());
 
@@ -243,7 +243,7 @@ public class AssignmentSubmissionService {
         validationUtils.validatePlanBelongsToGroup(planId, groupId);
         Plan plan = validationUtils.validatePlan(planId);
         validationUtils.validateAssignmentSubmissionAllowed(planId);
-        validationUtils.validateSubmissionStatus(status);
+        validationUtils.validateSubmissionStatus(status.toString());
 
         // 역할 반한
         GroupMemberRole role = validationUtils.validateUserRole(user.getUserId(), groupId);
