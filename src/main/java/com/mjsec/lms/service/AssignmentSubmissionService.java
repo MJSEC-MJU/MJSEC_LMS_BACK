@@ -377,22 +377,20 @@ public class AssignmentSubmissionService {
         }
 
         SubmissionStatus originalStatus = assignmentSubmission.getStatus();
-        boolean contentChanged = false;
 
         if(dto.getContent() != null && !dto.getContent().trim().isEmpty()){
             validationUtils.validateSubmissionContent(dto.getContent());
             assignmentSubmission.setContent(dto.getContent());
-            contentChanged = true;
+
+            if (originalStatus == SubmissionStatus.REVISION_REQUIRED) {
+                assignmentSubmission.setStatus(SubmissionStatus.SUBMITTED);
+                log.info("Status changed -> SUBMITTED for submission: {}",
+                        assignmentSubmission.getSubmissionId());
+            }
         }
 
         if(dto.getPassword() != null && !dto.getPassword().trim().isEmpty()){
             assignmentSubmission.setPassword(dto.getPassword());
-        }
-
-        if (contentChanged && originalStatus == SubmissionStatus.REVISION_REQUIRED) {
-            assignmentSubmission.setStatus(SubmissionStatus.SUBMITTED);
-            log.info("Status changed -> SUBMITTED for submission: {}",
-                    assignmentSubmission.getSubmissionId());
         }
 
         assignmentSubmission.setUpdatedAt(LocalDateTime.now());
