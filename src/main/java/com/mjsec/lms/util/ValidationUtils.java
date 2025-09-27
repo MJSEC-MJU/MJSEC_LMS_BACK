@@ -327,6 +327,22 @@ public class ValidationUtils {
         }
     }
 
+    //과제 제출 상태 ENUM 타입 검증
+    public SubmissionStatus validateSubmissionStatus(SubmissionStatus status) {
+        String statusString = status.toString();
+
+        if (statusString == null || statusString.trim().isEmpty()) {
+            throw new RestApiException(ErrorCode.INVALID_SUBMISSION_STATUS);
+        }
+
+        try {
+            return SubmissionStatus.valueOf(statusString.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid submission status provided: {}", statusString);
+            throw new RestApiException(ErrorCode.INVALID_SUBMISSION_STATUS);
+        }
+    }
+
     // 과제 제출 삭제 가능 상태 검증
     public void validateSubmissionStatusForDelete(AssignmentSubmission submission) {
         // 완료된 과제는 삭제 불가

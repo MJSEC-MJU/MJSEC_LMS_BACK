@@ -64,7 +64,8 @@ public enum ErrorCode {
     PLAN_COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."),
     COMMENT_TOO_LONG(HttpStatus.BAD_REQUEST, "댓글은 1000자 이하로 작성해주세요."),
     UNAUTHORIZED_COMMENT_ACCESS(HttpStatus.UNAUTHORIZED, "댓글을 수정/삭제할 권한이 없습니다."),
-
+    INVALID_SUBMISSION_STATUS(HttpStatus.BAD_REQUEST, "유효하지 않은 과제 상태입니다."),
+    
     //과제 피드백
     FEEDBACK_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 피드백을 남겼습니다."),
     FEEDBACK_NOT_FOUND(HttpStatus.NOT_FOUND,"피드백이 존재하지 않습니다."),

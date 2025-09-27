@@ -371,27 +371,6 @@ public class AssignmentController {
         );
     }
 
-    //멘토용 피드백 대기 중인 과제 조회 API
-    @GetMapping("/{groupId}/assignment/submit/{planId}/pending-feedback")
-    public ResponseEntity<SuccessResponse<List<SubmissionResponse>>> getPendingFeedbackSubmissions(
-            @PathVariable Long groupId,
-            @PathVariable Long planId,
-            Authentication authentication) {
-
-        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
-
-        // SUBMITTED 상태인 과제들 조회
-        List<SubmissionResponse> submissionResponseList = assignmentSubmissionService.getSubmissionsByStatus(
-                groupId, planId, SubmissionStatus.SUBMITTED, currentUserStudentNumber);
-
-        return ResponseEntity.ok(
-                SuccessResponse.of(
-                        ResponseMessage.PENDING_FEEDBACK_SUBMISSIONS_SUCCESS,
-                        submissionResponseList
-                )
-        );
-    }
-
     // 멘티용 수정 필요한 과제 조회 API <- 필요할까 싶기도 함 일단 추가함.
     @GetMapping("/{groupId}/assignment/submit/{planId}/revision-required")
     public ResponseEntity<SuccessResponse<List<SubmissionResponse>>> getRevisionRequiredSubmissions(
