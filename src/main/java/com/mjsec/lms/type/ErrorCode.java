@@ -70,6 +70,10 @@ public enum ErrorCode {
     FEEDBACK_NOT_FOUND(HttpStatus.NOT_FOUND,"피드백이 존재하지 않습니다."),
     FEEDBACK_CONTENT_REQUIRED(HttpStatus.NOT_FOUND, "과제 피드백 내용이 없습니다."),
     FEEDBACK_TOO_LONG(HttpStatus.BAD_REQUEST, "피드백은 2000자 이하로 작성해주세요."),
+    INVALID_SUBMISSION_STATUS_FOR_FEEDBACK(HttpStatus.BAD_REQUEST, "제출 완료 상태의 과제만 피드백을 남길 수 있습니다."),
+    INVALID_SUBMISSION_STATUS_FOR_UPDATE(HttpStatus.BAD_REQUEST, "수정 가능한 상태의 과제가 아닙니다."),
+    INVALID_STATUS_TRANSITION(HttpStatus.BAD_REQUEST, "유효하지 않은 상태 변경입니다."),
+    FEEDBACK_STATUS_REQUIRED(HttpStatus.BAD_REQUEST, "피드백과 함께 과제 상태를 결정해주세요."),
 
     //과제 제출
     SUBMISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "과제 제출 내역을 찾을 수 없습니다."),

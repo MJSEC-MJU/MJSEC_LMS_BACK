@@ -1,5 +1,6 @@
 package com.mjsec.lms.domain;
 
+import com.mjsec.lms.type.SubmissionStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -35,6 +36,11 @@ public class AssignmentSubmission extends BaseEntity {
     
     @Column(name = "feedback", columnDefinition = "TEXT")
     private String feedback;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    @Builder.Default
+    private SubmissionStatus status = SubmissionStatus.SUBMITTED;
 
     // 연관관계 매핑
     @ManyToOne(fetch = FetchType.LAZY)

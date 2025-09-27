@@ -1,5 +1,6 @@
 package com.mjsec.lms.dto;
 
+import com.mjsec.lms.type.SubmissionStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -15,6 +16,8 @@ public class SubmissionResponse {
     private String content;
 
     private String creatorName;
+
+    private SubmissionStatus status;
 
     private LocalDateTime createdAt;
 }

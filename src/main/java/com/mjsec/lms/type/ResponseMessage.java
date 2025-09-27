@@ -43,6 +43,9 @@ public enum ResponseMessage {
     COMMENT_DELETE_SUCCESS("댓글 삭제 성공"),
     FEEDBACK_UPDATE_SUCCESS("과제 피드백 수정 성공"),
     FEEDBACK_DELETE_SUCCESS("과제 피드백 삭제 성공"),
+    PENDING_FEEDBACK_SUBMISSIONS_SUCCESS("피드백 대기 중인 과제 조회 성공"),
+    REVISION_REQUIRED_SUBMISSIONS_SUCCESS("수정 필요한 과제 조회 성공"),
+    SUBMISSION_STATISTICS_SUCCESS("과제 제출 통계 조회 성공"),
 
     // 계획
     PLAN_CREATE_SUCCESS("계획 등록 성공"),

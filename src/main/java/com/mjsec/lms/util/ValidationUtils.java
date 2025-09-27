@@ -5,6 +5,7 @@ import com.mjsec.lms.exception.RestApiException;
 import com.mjsec.lms.repository.*;
 import com.mjsec.lms.type.ErrorCode;
 import com.mjsec.lms.type.GroupMemberRole;
+import com.mjsec.lms.type.SubmissionStatus;
 import com.mjsec.lms.type.UserRole;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -264,6 +265,91 @@ public class ValidationUtils {
         log.debug("Activity content and images validated successfully");
     }
 
+    // 피드백을 남길 수 있는 상태인지 검증
+    public void validateSubmissionStatusForFeedback(AssignmentSubmission submission) {
+        if (submission.getStatus() != SubmissionStatus.SUBMITTED) {
+            log.warn("Cannot leave feedback for submission {} in status: {}",
+                    submission.getSubmissionId(), submission.getStatus());
+            throw new RestApiException(ErrorCode.INVALID_SUBMISSION_STATUS_FOR_FEEDBACK);
+        }
+    }
+
+    // 피드백 DTO의 상태 값 검증
+    public void validateFeedbackStatus(SubmissionStatus status) {
+        if (status == null) {
+            throw new RestApiException(ErrorCode.FEEDBACK_STATUS_REQUIRED);
+        }
+
+        // 피드백 시에는 COMPLETED 또는 REVISION_REQUIRED만 가능
+        if (status != SubmissionStatus.COMPLETED && status != SubmissionStatus.REVISION_REQUIRED) {
+            log.warn("Invalid feedback status: {}. Only COMPLETED or REVISION_REQUIRED allowed", status);
+            throw new RestApiException(ErrorCode.INVALID_STATUS_TRANSITION);
+        }
+    }
+
+    // 과제를 수정할 수 있는 상태인지 검증 (멘티용)
+    public void validateSubmissionStatusForUpdate(AssignmentSubmission submission) {
+        // 제출 완료 상태이거나 수정 필요 상태일 때만 수정 가능
+        if (submission.getStatus() != SubmissionStatus.SUBMITTED &&
+                submission.getStatus() != SubmissionStatus.REVISION_REQUIRED) {
+            log.warn("Cannot update submission {} in status: {}",
+                    submission.getSubmissionId(), submission.getStatus());
+            throw new RestApiException(ErrorCode.INVALID_SUBMISSION_STATUS_FOR_UPDATE);
+        }
+    }
+
+    // 상태 전환이 유효한지 검증
+    public void validateStatusTransition(SubmissionStatus currentStatus, SubmissionStatus newStatus) {
+        boolean isValidTransition = false;
+
+        switch (currentStatus) {
+            case SUBMITTED:
+                // 제출 완료 -> 완료 또는 수정 필요
+                isValidTransition = (newStatus == SubmissionStatus.COMPLETED ||
+                        newStatus == SubmissionStatus.REVISION_REQUIRED);
+                break;
+
+            case REVISION_REQUIRED:
+                // 수정 필요 -> 제출 완료 (재제출 시)
+                isValidTransition = (newStatus == SubmissionStatus.SUBMITTED);
+                break;
+
+            case COMPLETED:
+                // 완료 -> 수정 필요 (피드백 수정 시에만)
+                isValidTransition = (newStatus == SubmissionStatus.REVISION_REQUIRED ||
+                        newStatus == SubmissionStatus.COMPLETED); // 피드백 수정
+                break;
+        }
+
+        if (!isValidTransition) {
+            log.warn("Invalid status transition from {} to {}", currentStatus, newStatus);
+            throw new RestApiException(ErrorCode.INVALID_STATUS_TRANSITION);
+        }
+    }
+
+    // 과제 제출 삭제 가능 상태 검증
+    public void validateSubmissionStatusForDelete(AssignmentSubmission submission) {
+        // 완료된 과제는 삭제 불가
+        if (submission.getStatus() == SubmissionStatus.COMPLETED) {
+            log.warn("Cannot delete completed submission: {}", submission.getSubmissionId());
+            throw new RestApiException(ErrorCode.INVALID_SUBMISSION_STATUS_FOR_UPDATE);
+        }
+    }
+
+    // 과제 상태에 따른 접근 권한 검증 (멘티가 자신의 과제에 접근할 때)
+    public void validateSubmissionAccessByStatus(AssignmentSubmission submission, Long userId, GroupMemberRole role) {
+        if (role == GroupMemberRole.MENTOR) {
+            return;
+        }
+
+        // 멘티는 자신의 과제만 접근 가능
+        if (!submission.getSubmitter().getUserId().equals(userId)) {
+            log.warn("User {} attempted to access submission {} which is not theirs",
+                    userId, submission.getSubmissionId());
+            throw new RestApiException(ErrorCode.UNAUTHORIZED_ACCESS_SUBMISSION);
+        }
+    }
+
     // ========== 복합 접근 검증 ==========
 
     // 기본 접근 검증 (사용자, 스터디 그룹 존재, 멤버십)
@@ -396,6 +482,11 @@ public class ValidationUtils {
         }
 
         validateMaliciousContent(content);
+    }
+
+    public void validateFeedbackContentAndStatus(String feedback, SubmissionStatus status) {
+        validateFeedbackContent(feedback);
+        validateFeedbackStatus(status);
     }
 
     // 피드백 내용 검증 강화
