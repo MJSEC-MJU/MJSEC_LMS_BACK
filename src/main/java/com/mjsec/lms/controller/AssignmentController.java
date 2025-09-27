@@ -6,6 +6,7 @@ import com.mjsec.lms.dto.*;
 import com.mjsec.lms.service.AssignmentSubmissionService;
 import com.mjsec.lms.service.PlanService;
 import com.mjsec.lms.type.ResponseMessage;
+import com.mjsec.lms.type.SubmissionStatus;
 import com.mjsec.lms.util.IpUtils;
 import com.mjsec.lms.util.ValidationUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -291,7 +292,7 @@ public class AssignmentController {
             @PathVariable Long groupId,
             @PathVariable Long planId,
             @PathVariable Long submitId,
-            @RequestBody SubmissionFeedbackDto dto,
+            @Valid @RequestBody SubmissionFeedbackDto dto,
             Authentication authentication){
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
@@ -313,7 +314,7 @@ public class AssignmentController {
             @PathVariable Long groupId,
             @PathVariable Long planId,
             @PathVariable Long submitId,
-            @RequestBody SubmissionFeedbackDto dto,
+            @Valid @RequestBody SubmissionFeedbackDto dto,
             Authentication authentication){
 
         // JwtFilter에서 설정한 studentNumber를 가져옴
@@ -323,7 +324,8 @@ public class AssignmentController {
 
         return ResponseEntity.ok(
                 SuccessResponse.of(
-                        ResponseMessage.FEEDBACK_UPDATE_SUCCESS
+                        ResponseMessage.FEEDBACK_UPDATE_SUCCESS,
+                        submissionFeedbackDto
                 )
         );
     }
@@ -344,6 +346,69 @@ public class AssignmentController {
         return ResponseEntity.ok(
                 SuccessResponse.of(
                         ResponseMessage.FEEDBACK_DELETE_SUCCESS
+                )
+        );
+    }
+
+    //과제 상태별 조회 API
+    @GetMapping("/{groupId}/assignment/submit/{planId}/status/{status}")
+    public ResponseEntity<SuccessResponse<List<SubmissionResponse>>> getSubmissionsByStatus(
+            @PathVariable Long groupId,
+            @PathVariable Long planId,
+            @PathVariable SubmissionStatus status,
+            Authentication authentication) {
+
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        List<SubmissionResponse> submissionResponseList = assignmentSubmissionService.getSubmissionsByStatus(
+                groupId, planId, status, currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.ASSIGNMENT_SUBMIT_CHECK_SUCCESS,
+                        submissionResponseList
+                )
+        );
+    }
+
+    // 멘티용 수정 필요한 과제 조회 API <- 필요할까 싶기도 함 일단 추가함.
+    @GetMapping("/{groupId}/assignment/submit/{planId}/revision-required")
+    public ResponseEntity<SuccessResponse<List<SubmissionResponse>>> getRevisionRequiredSubmissions(
+            @PathVariable Long groupId,
+            @PathVariable Long planId,
+            Authentication authentication) {
+
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        // REVISION_REQUIRED 상태인 과제들 조회
+        List<SubmissionResponse> submissionResponseList = assignmentSubmissionService.getSubmissionsByStatus(
+                groupId, planId, SubmissionStatus.REVISION_REQUIRED, currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.REVISION_REQUIRED_SUBMISSIONS_SUCCESS,
+                        submissionResponseList
+                )
+        );
+    }
+
+    // 과제 상태 통계 조회 API (멘토용)
+    @GetMapping("/{groupId}/assignment/submit/{planId}/statistics")
+    public ResponseEntity<SuccessResponse<SubmissionStatisticsResponse>> getSubmissionStatistics(
+            @PathVariable Long groupId,
+            @PathVariable Long planId,
+            Authentication authentication) {
+
+        // JwtFilter에서 설정한 studentNumber를 가져옴
+        Long currentUserStudentNumber = (Long) authentication.getPrincipal();
+
+        SubmissionStatisticsResponse statistics = assignmentSubmissionService.getSubmissionStatistics(
+                groupId, planId, currentUserStudentNumber);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.SUBMISSION_STATISTICS_SUCCESS,
+                        statistics
                 )
         );
     }

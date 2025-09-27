@@ -1,8 +1,8 @@
 package com.mjsec.lms.repository;
 
 import com.mjsec.lms.domain.AssignmentSubmission;
-import com.mjsec.lms.domain.StudyGroup;
 import com.mjsec.lms.domain.User;
+import com.mjsec.lms.type.SubmissionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -37,4 +37,17 @@ public interface SubmissionRepository extends JpaRepository<AssignmentSubmission
             "WHERE a.submitter.userId = :userId " +
             "AND a.plan.studyGroup.studyId = :studyId")
     List<Long> findIdsByUserIdAndStudyGroupId(@Param("userId") Long userId, @Param("studyId") Long studyId);
+
+    // 특정 과제의 특정 상태 제출물들 조회
+    List<AssignmentSubmission> findByPlanPlanIdAndStatus(Long planId, SubmissionStatus status);
+
+    // 특정 사용자의 특정 과제의 특정 상태 제출물들 조회
+    List<AssignmentSubmission> findByPlanPlanIdAndSubmitterUserIdAndStatus(Long planId, Long submitterUserId, SubmissionStatus status);
+
+    int countByPlanPlanIdAndStatus(Long planId, SubmissionStatus status);
+
+    // 특정 과제에 제출한 고유 제출자 수 조회 (미제출자 계산용)
+    @Query("SELECT COUNT(DISTINCT a.submitter.userId) FROM AssignmentSubmission a WHERE a.plan.planId = :planId")
+    int countDistinctSubmittersByPlanId(@Param("planId") Long planId);
+
 }

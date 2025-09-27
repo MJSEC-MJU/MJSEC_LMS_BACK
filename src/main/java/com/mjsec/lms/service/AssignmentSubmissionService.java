@@ -3,14 +3,13 @@ package com.mjsec.lms.service;
 import com.mjsec.lms.domain.AssignmentSubmission;
 import com.mjsec.lms.domain.Plan;
 import com.mjsec.lms.domain.User;
-import com.mjsec.lms.dto.DetailSubmissionResponse;
-import com.mjsec.lms.dto.SubmissionDto;
-import com.mjsec.lms.dto.SubmissionFeedbackDto;
-import com.mjsec.lms.dto.SubmissionResponse;
+import com.mjsec.lms.dto.*;
 import com.mjsec.lms.exception.RestApiException;
+import com.mjsec.lms.repository.GroupMemberRepository;
 import com.mjsec.lms.repository.SubmissionRepository;
 import com.mjsec.lms.type.ErrorCode;
 import com.mjsec.lms.type.GroupMemberRole;
+import com.mjsec.lms.type.SubmissionStatus;
 import com.mjsec.lms.util.ValidationUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,11 +25,13 @@ public class AssignmentSubmissionService {
 
     private final ValidationUtils validationUtils;
     private final SubmissionRepository submissionRepository;
+    private final GroupMemberRepository groupMemberRepository;
 
-    AssignmentSubmissionService(ValidationUtils validationUtils, SubmissionRepository submissionRepository){
+    AssignmentSubmissionService(ValidationUtils validationUtils, SubmissionRepository submissionRepository, GroupMemberRepository groupMemberRepository){
 
         this.validationUtils = validationUtils;
         this.submissionRepository = submissionRepository;
+        this.groupMemberRepository = groupMemberRepository;
     }
 
     // 과제 제출하기 (멘티만)
@@ -60,6 +61,7 @@ public class AssignmentSubmissionService {
                 .password(dto.getPassword())
                 .submitter(user)
                 .plan(plan)
+                .status(SubmissionStatus.SUBMITTED)
                 .submitterIp(ipAddress)
                 .build();
 
@@ -105,16 +107,7 @@ public class AssignmentSubmissionService {
         AssignmentSubmission assignmentSubmission = validationUtils.validateSubmissionAccess(planId, submitId);
         GroupMemberRole role = validationUtils.validateUserRole(user.getUserId(), groupId);
 
-        if(role == GroupMemberRole.MENTEE) {
-            if (!assignmentSubmission.getSubmitter().getUserId().equals(user.getUserId())) {
-                log.warn("User {} attempted to access submission {} which is not theirs",
-                        user.getUserId(), submitId);
-                throw new RestApiException(ErrorCode.UNAUTHORIZED_ACCESS_SUBMISSION);
-            }
-        }
-        else if(role == GroupMemberRole.MENTOR) {
-            log.info("Mentor {} accessing submission {}", user.getUserId(), submitId);
-        }
+        validationUtils.validateSubmissionAccessByStatus(assignmentSubmission, user.getUserId(), role);
 
         return createDetailSubmissionResponse(assignmentSubmission);
     }
@@ -137,9 +130,18 @@ public class AssignmentSubmissionService {
         AssignmentSubmission assignmentSubmission = validationUtils.validateSubmissionAccess(planId, submitId);
         validationUtils.validateSubmissionOwnership(assignmentSubmission, user.getUserId());
 
+        //수정 가능한 상태인지 확인
+        validationUtils.validateSubmissionStatusForUpdate(assignmentSubmission);
+
         // 내용 검증 강화
         if (dto.getContent() != null && !dto.getContent().trim().isEmpty()) {
             validationUtils.validateSubmissionContent(dto.getContent());
+        }
+
+        //수정 필요 상태에서 재제출 시 상태를 SUBMITTED로 변경
+        if (assignmentSubmission.getStatus() == SubmissionStatus.REVISION_REQUIRED) {
+            assignmentSubmission.setStatus(SubmissionStatus.SUBMITTED);
+            log.info("Status changed from REVISION_REQUIRED to SUBMITTED for submission: {}", submitId);
         }
 
         return updateSubmitData(assignmentSubmission, dto);
@@ -160,6 +162,8 @@ public class AssignmentSubmissionService {
         AssignmentSubmission assignmentSubmission = validationUtils.validateSubmissionAccess(planId, submitId);
         validationUtils.validateSubmissionOwnership(assignmentSubmission, user.getUserId());
 
+        validationUtils.validateSubmissionStatusForDelete(assignmentSubmission);
+
         submissionRepository.delete(assignmentSubmission);
         log.info("Assignment submission deleted successfully: {}", assignmentSubmission);
     }
@@ -174,10 +178,15 @@ public class AssignmentSubmissionService {
         validationUtils.validateMentorAccess(groupId, currentUserStudentNumber);
         validationUtils.validatePlanBelongsToGroup(planId, groupId);
         validationUtils.validateAssignmentSubmissionAllowed(planId);
-        validationUtils.validateFeedbackContent(dto.getFeedback()); // 피드백 내용 검증
+        validationUtils.validateSubmissionStatus(dto.getStatus());
+
+        //피드백 내용 + 제출 상태 검증
+        validationUtils.validateFeedbackContentAndStatus(dto.getFeedback(), dto.getStatus());
 
         AssignmentSubmission assignmentSubmission = validationUtils.validateSubmissionAccess(planId, submitId);
         validationUtils.validateFeedbackNotExists(assignmentSubmission);
+
+        validationUtils.validateSubmissionStatusForFeedback(assignmentSubmission);
 
         leaveFeedbackData(assignmentSubmission, dto);
     }
@@ -192,10 +201,14 @@ public class AssignmentSubmissionService {
         validationUtils.validateMentorAccess(groupId, currentUserStudentNumber);
         validationUtils.validatePlanBelongsToGroup(planId, groupId);
         validationUtils.validateAssignmentSubmissionAllowed(planId);
-        validationUtils.validateFeedbackContent(dto.getFeedback()); // 피드백 내용 검증 강화
+        validationUtils.validateSubmissionStatus(dto.getStatus());
+
+        validationUtils.validateFeedbackContentAndStatus(dto.getFeedback(), dto.getStatus());
 
         AssignmentSubmission assignmentSubmission = validationUtils.validateSubmissionAccess(planId, submitId);
         validationUtils.validateFeedbackExists(assignmentSubmission);
+
+        validationUtils.validateStatusTransition(assignmentSubmission.getStatus(), dto.getStatus());
 
         return updateFeedbackData(assignmentSubmission, dto);
     }
@@ -220,6 +233,71 @@ public class AssignmentSubmissionService {
         log.info("Feedback deleted successfully for submission: {}", assignmentSubmission.getSubmissionId());
     }
 
+    // 상태별 과제 제출 조회 메서드
+    @Transactional(readOnly = true)
+    public List<SubmissionResponse> getSubmissionsByStatus(Long groupId, Long planId, SubmissionStatus status, Long currentUserStudentNumber) {
+
+        log.info("getSubmissionsByStatus called for status: {}", status);
+
+        User user = validationUtils.validateBasicAccess(groupId, currentUserStudentNumber);
+        validationUtils.validatePlanBelongsToGroup(planId, groupId);
+        Plan plan = validationUtils.validatePlan(planId);
+        validationUtils.validateAssignmentSubmissionAllowed(planId);
+        validationUtils.validateSubmissionStatus(status);
+
+        // 역할 반한
+        GroupMemberRole role = validationUtils.validateUserRole(user.getUserId(), groupId);
+
+        List<AssignmentSubmission> submissions;
+
+        if (role == GroupMemberRole.MENTOR) {
+            // 멘토는 해당 과제의 모든 특정 상태 제출물 조회 가능
+            submissions = submissionRepository.findByPlanPlanIdAndStatus(planId, status);
+            log.info("Mentor {} retrieved {} submissions with status: {}", user.getUserId(), submissions.size(), status);
+        } else {
+            // 멘티는 자신의 특정 상태 제출물만 조회 가능
+            submissions = submissionRepository.findByPlanPlanIdAndSubmitterUserIdAndStatus(planId, user.getUserId(), status);
+            log.info("Mentee {} retrieved {} own submissions with status: {}", user.getUserId(), submissions.size(), status);
+        }
+
+        return submissions.stream()
+                .map(this::createSubmissionResponse)
+                .collect(Collectors.toList());
+    }
+
+    // 과제 제출 통계 조회 메서드 (멘토 전용)
+    @Transactional(readOnly = true)
+    public SubmissionStatisticsResponse getSubmissionStatistics(Long groupId, Long planId, Long currentUserStudentNumber) {
+
+        log.info("getSubmissionStatistics called");
+
+        // 멘토 권한 검증
+        validationUtils.validateMentorAccess(groupId, currentUserStudentNumber);
+        validationUtils.validatePlanBelongsToGroup(planId, groupId);
+        Plan plan = validationUtils.validatePlan(planId);
+        validationUtils.validateAssignmentSubmissionAllowed(planId);
+
+        // 해당 스터디 그룹의 전체 멘티 수 조회
+        int totalMentees = groupMemberRepository.findByStudyGroup_StudyIdAndRole(groupId, GroupMemberRole.MENTEE).size();
+
+        // 상태별 제출 수 조회
+        int submittedCount = submissionRepository.countByPlanPlanIdAndStatus(planId, SubmissionStatus.SUBMITTED);
+        int completedCount = submissionRepository.countByPlanPlanIdAndStatus(planId, SubmissionStatus.COMPLETED);
+        int revisionRequiredCount = submissionRepository.countByPlanPlanIdAndStatus(planId, SubmissionStatus.REVISION_REQUIRED);
+
+        // 미제출자 수 계산
+        int submittedMentees = submissionRepository.countDistinctSubmittersByPlanId(planId);
+        int notSubmittedCount = totalMentees - submittedMentees;
+
+        return SubmissionStatisticsResponse.builder()
+                .totalMentees(totalMentees)
+                .submittedCount(submittedCount)
+                .completedCount(completedCount)
+                .revisionRequiredCount(revisionRequiredCount)
+                .notSubmittedCount(notSubmittedCount)
+                .build();
+    }
+
     /**
     DTO 반환용 Method들
      */
@@ -235,12 +313,17 @@ public class AssignmentSubmissionService {
             throw new RestApiException(ErrorCode.FEEDBACK_CONTENT_REQUIRED);
         }
 
+        if (dto.getStatus() != null) {
+            submission.setStatus(dto.getStatus());
+        }
+
         submissionRepository.save(submission);
 
         log.info("Feedback updated successfully for submission: {}", submission.getSubmissionId());
 
         return SubmissionFeedbackDto.builder()
                 .feedback(submission.getFeedback())
+                .status(submission.getStatus())
                 .build();
     }
 
@@ -254,6 +337,7 @@ public class AssignmentSubmissionService {
             throw new RestApiException(ErrorCode.FEEDBACK_CONTENT_REQUIRED);
         }
 
+        submission.setStatus(dto.getStatus());
         submission.setUpdatedAt(LocalDateTime.now());
         submissionRepository.save(submission);
 
@@ -267,6 +351,7 @@ public class AssignmentSubmissionService {
                 .submissionId(assignmentSubmission.getSubmissionId())
                 .content(assignmentSubmission.getContent())
                 .creatorName(assignmentSubmission.getSubmitter().getName())
+                .status(assignmentSubmission.getStatus())
                 .createdAt(assignmentSubmission.getCreatedAt())
                 .build();
     }
@@ -282,10 +367,10 @@ public class AssignmentSubmissionService {
                 .updatedAt(assignmentSubmission.getUpdatedAt())
                 .password(assignmentSubmission.getPassword())
                 .feedback(assignmentSubmission.getFeedback())
+                .status(assignmentSubmission.getStatus())
                 .build();
     }
 
-    // 제출한 과제 내용을 수정
     private DetailSubmissionResponse updateSubmitData(AssignmentSubmission assignmentSubmission, SubmissionDto dto) {
 
         // 수정할 데이터가 없으면 예외
@@ -294,9 +379,17 @@ public class AssignmentSubmissionService {
             throw new RestApiException(ErrorCode.SUBMISSION_CONTENT_REQUIRED);
         }
 
+        SubmissionStatus originalStatus = assignmentSubmission.getStatus();
+
         if(dto.getContent() != null && !dto.getContent().trim().isEmpty()){
             validationUtils.validateSubmissionContent(dto.getContent());
             assignmentSubmission.setContent(dto.getContent());
+
+            if (originalStatus == SubmissionStatus.REVISION_REQUIRED) {
+                assignmentSubmission.setStatus(SubmissionStatus.SUBMITTED);
+                log.info("Status changed -> SUBMITTED for submission: {}",
+                        assignmentSubmission.getSubmissionId());
+            }
         }
 
         if(dto.getPassword() != null && !dto.getPassword().trim().isEmpty()){
