@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Data
 @Builder
@@ -22,7 +23,7 @@ public class DetailSubmissionResponse {
 
     private SubmissionStatus status;
 
-    private LocalDateTime createdAt;
+    private ZonedDateTime createdAt;
 
-    private LocalDateTime updatedAt;
+    private ZonedDateTime updatedAt;
 }

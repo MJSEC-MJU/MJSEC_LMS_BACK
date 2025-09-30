@@ -7,6 +7,8 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.time.ZonedDateTime;
+
 @Entity
 @Getter
 @Setter
@@ -41,6 +43,12 @@ public class AssignmentSubmission extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
     private SubmissionStatus status = SubmissionStatus.SUBMITTED;
+
+    @Column(name = "created_at")
+    private ZonedDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private ZonedDateTime updatedAt;
 
     // 연관관계 매핑
     @ManyToOne(fetch = FetchType.LAZY)
