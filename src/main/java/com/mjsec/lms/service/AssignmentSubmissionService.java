@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -57,7 +58,7 @@ public class AssignmentSubmissionService {
 
         AssignmentSubmission assignmentSubmission = AssignmentSubmission.builder()
                 .content(dto.getContent())
-                .createdAt(ZonedDateTime.now())
+                .createdAt(LocalDateTime.now())
                 .password(dto.getPassword())
                 .submitter(user)
                 .plan(plan)
@@ -227,7 +228,7 @@ public class AssignmentSubmissionService {
         validationUtils.validateFeedbackExists(assignmentSubmission);
 
         assignmentSubmission.setFeedback(null);
-        assignmentSubmission.setUpdatedAt(ZonedDateTime.now());
+        assignmentSubmission.setUpdatedAt(LocalDateTime.now());
         submissionRepository.save(assignmentSubmission);
 
         log.info("Feedback deleted successfully for submission: {}", assignmentSubmission.getSubmissionId());
@@ -307,7 +308,7 @@ public class AssignmentSubmissionService {
 
         if(dto.getFeedback() != null && !dto.getFeedback().trim().isEmpty()){
             submission.setFeedback(dto.getFeedback());
-            submission.setUpdatedAt(ZonedDateTime.now());
+            submission.setUpdatedAt(LocalDateTime.now());
         }
         else {
             throw new RestApiException(ErrorCode.FEEDBACK_CONTENT_REQUIRED);
@@ -338,7 +339,7 @@ public class AssignmentSubmissionService {
         }
 
         submission.setStatus(dto.getStatus());
-        submission.setUpdatedAt(ZonedDateTime.now());
+        submission.setUpdatedAt(LocalDateTime.now());
         submissionRepository.save(submission);
 
         log.info("Feedback saved successfully for submission: {}", submission.getSubmissionId());
@@ -396,7 +397,7 @@ public class AssignmentSubmissionService {
             assignmentSubmission.setPassword(dto.getPassword());
         }
 
-        assignmentSubmission.setUpdatedAt(ZonedDateTime.now());
+        assignmentSubmission.setUpdatedAt(LocalDateTime.now());
         submissionRepository.save(assignmentSubmission);
 
         log.info("Assignment submission updated successfully: {}", assignmentSubmission.getSubmissionId());

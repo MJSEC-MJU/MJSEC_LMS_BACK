@@ -23,7 +23,7 @@ public class DetailSubmissionResponse {
 
     private SubmissionStatus status;
 
-    private ZonedDateTime createdAt;
+    private LocalDateTime createdAt;
 
-    private ZonedDateTime updatedAt;
+    private LocalDateTime updatedAt;
 }

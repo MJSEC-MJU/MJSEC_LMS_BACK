@@ -20,5 +20,5 @@ public class SubmissionResponse {
 
     private SubmissionStatus status;
 
-    private ZonedDateTime createdAt;
+    private LocalDateTime createdAt;
 }

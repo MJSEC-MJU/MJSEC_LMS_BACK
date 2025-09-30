@@ -44,12 +44,6 @@ public class AssignmentSubmission extends BaseEntity {
     @Builder.Default
     private SubmissionStatus status = SubmissionStatus.SUBMITTED;
 
-    @Column(name = "created_at")
-    private ZonedDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private ZonedDateTime updatedAt;
-
     // 연관관계 매핑
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
