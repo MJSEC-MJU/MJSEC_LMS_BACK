@@ -120,6 +120,7 @@ public enum ErrorCode {
     IMAGE_NOT_READABLE(HttpStatus.INTERNAL_SERVER_ERROR,  "이미지 파일을 읽을 수 없습니다."),
     IMAGE_LOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 로딩 중 오류가 발생했습니다."),
     TOO_MANY_IMAGES(HttpStatus.BAD_REQUEST, "이미지는 최대 5개까지만 업로드할 수 있습니다."),
+    INSUFFICIENT_MEMORY(HttpStatus.SERVICE_UNAVAILABLE, "서버 메모리가 부족하여 파일을 처리할 수 없습니다. 잠시 후 다시 시도해주세요."),
     ;
 
     private final HttpStatus status;
