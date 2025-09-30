@@ -44,7 +44,7 @@ jobs:
         run: npm ci --ignore-scripts --no-audit
 
       # ──────────────────────────────
-      # Semgrep (SAST) — Java/Kotlin + (옵션) JS/React → SARIF
+      # Semgrep (SAST)
       # ──────────────────────────────
       - name: Set up Python (for Semgrep CLI)
         uses: actions/setup-python@v5
@@ -56,8 +56,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install semgrep
 
-      # 백엔드만 있어도 Java/Kotlin/OWASP 룰은 항상 실행.
-      # JS/React 룰은 락파일 있을 때만 추가로 돌리도록 나눔.
       - name: Run Semgrep (OWASP + Java/Kotlin) → SARIF
         run: |
           set -euo pipefail
@@ -76,7 +74,6 @@ jobs:
             --config p/javascript \
             --config p/react \
             --sarif -o semgrep-js.sarif || true
-          # SARIF 병합(간단 append; GitHub는 여러 SARIF 업로드도 지원)
           jq -s '.[0].runs += .[1].runs | .[0]' semgrep.sarif semgrep-js.sarif > semgrep-merged.sarif && mv semgrep-merged.sarif semgrep.sarif
 
       - name: Check Semgrep SARIF has results
@@ -96,7 +93,7 @@ jobs:
           sarif_file: semgrep.sarif
 
       # ──────────────────────────────
-      # Node SCA — npm audit (프론트엔드 있을 때만, report-only)
+      # Node SCA — npm audit (report-only)
       # ──────────────────────────────
       - name: Node audit (npm)
         if: ${{ hashFiles('**/package-lock.json', '**/npm-shrinkwrap.json', '**/pnpm-lock.yaml', '**/yarn.lock') != '' }}
@@ -124,12 +121,13 @@ jobs:
         run: ./gradlew build -x test
 
       # ──────────────────────────────
-      # Dependency-Check (Java SCA) → SARIF (리포트만, 실패 안함)
+      # Dependency-Check (Java SCA) → SARIF
       # ──────────────────────────────
-      - name: OWASP Dependency-Check → SARIF
+      - name: OWASP Dependency-Check → SARIF (fast, Java-only)
+        if: ${{ hashFiles('**/pom.xml', '**/build.gradle*') != '' }}
         uses: dependency-check/Dependency-Check_Action@main
         env:
-          JAVA_HOME: /opt/jdk  # README 권고
+          JAVA_HOME: /opt/jdk  # action 이미지 요구사항
         with:
           project: ${{ github.repository }}
           path: .
@@ -137,9 +135,12 @@ jobs:
           out: 'dependency-check-report'
           args: >
             --noupdate
-            --failOnCVSS 11
+            --disableCentral
+            --disableNodeJS --disableNodeAudit --disableYarnAudit --disablePnpmAudit --disableRetireJS
             --enableRetired
+            --failOnCVSS 11
             --suppression .github/dependency-check-suppressions.xml
+            --log dependency-check-report/odc.log
         continue-on-error: true
 
       - name: Upload Dependency-Check SARIF
@@ -147,6 +148,13 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: dependency-check-report/dependency-check-report.sarif
+
+      - name: Upload Dependency-Check log (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-log
+          path: dependency-check-report/odc.log
 
       # ──────────────────────────────
       # Trivy (filesystem scan) → SARIF
@@ -178,7 +186,7 @@ jobs:
           sarif_file: trivy-fs.sarif
 
       # ──────────────────────────────
-      # Hadolint (Dockerfile Lint)
+      # Hadolint
       # ──────────────────────────────
       - name: Locate Dockerfile(s)
         id: df
@@ -255,7 +263,7 @@ jobs:
           sarif_file: trivy-image.sarif
 
       # ──────────────────────────────
-      # Gitleaks (Secrets) — SARIF
+      # Gitleaks (Secrets)
       # ──────────────────────────────
       - name: Run Gitleaks (secrets scan) → SARIF
         shell: bash
