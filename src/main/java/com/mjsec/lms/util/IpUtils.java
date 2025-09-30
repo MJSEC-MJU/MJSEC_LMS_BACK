@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 //IP 주소 추출을 위한 유틸리티 클래스
+@Component
 public class IpUtils {
 
     private static final String[] IP_HEADERS = {
