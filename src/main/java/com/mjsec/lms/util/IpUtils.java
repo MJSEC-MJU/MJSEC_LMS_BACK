@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 //IP 주소 추출을 위한 유틸리티 클래스
-@Component
 public class IpUtils {
 
     private static final String[] IP_HEADERS = {
@@ -71,7 +70,7 @@ public class IpUtils {
                 "localhost".equalsIgnoreCase(ip);
     }
 
-    // 유틸리티 클래스이므로 인스턴스화 방지
+    // 유틸리티 클래스이므로 인스턴스화 방지 <- @Component 금지
     private IpUtils() {
         throw new IllegalStateException("Utility class");
     }
