@@ -6,8 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
 import org.springframework.stereotype.Component;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 @Component
@@ -46,8 +51,10 @@ public class FileUtils {
             "cgi", "pl", "py", "rb", "js", "jar", "war"
     );
 
+    private static final int MAX_IMAGE_DIMENSION = 10000;
+
     // 원본 파일명을 기반으로 고유한 파일명을 생성하는 메서드
-    public static String generateUniqueFileName(String originalFileName) {
+    public static String generateUniqueFileName(String originalFileName, String uploadPath) {
 
         if (originalFileName == null || originalFileName.trim().isEmpty()) {
             throw new RestApiException(ErrorCode.INVALID_FILE_NAME);
@@ -57,13 +64,34 @@ public class FileUtils {
 
         String safeFileName = UUID.randomUUID().toString() + "." + extension;
 
-        if (safeFileName.contains("..") || safeFileName.contains("/") || safeFileName.contains("\\")) {
-            log.error("Path traversal attempt in generated filename: {}", safeFileName);
-            throw new RestApiException(ErrorCode.INVALID_FILE_NAME);
+        Path normalizedPath = Paths.get(uploadPath, safeFileName).normalize();
+        if (!normalizedPath.startsWith(Paths.get(uploadPath).normalize())) {
+            log.error("Path traversal attempt detected: {}", safeFileName);
+            throw new RestApiException(ErrorCode.INVALID_FILE_PATH);
         }
 
         log.info("Safe filename generated: {} -> {}", originalFileName, safeFileName);
         return safeFileName;
+    }
+
+    //TIFF Bomb 같은 압축 폭탄 공격 방어
+    public static void validateImageDimensions(InputStream inputStream) throws IOException {
+        if (!inputStream.markSupported()) {
+            throw new IOException("Stream does not support mark/reset");
+        }
+
+        inputStream.mark(Integer.MAX_VALUE);
+
+        try {
+            BufferedImage img = ImageIO.read(inputStream);
+            if (img != null && (img.getWidth() > MAX_IMAGE_DIMENSION ||
+                    img.getHeight() > MAX_IMAGE_DIMENSION)) {
+                log.error("Image dimensions too large: {}x{}", img.getWidth(), img.getHeight());
+                throw new RestApiException(ErrorCode.INVALID_FILE_TYPE);
+            }
+        } finally {
+            inputStream.reset();
+        }
     }
 
     // 파일 시그니처 검증 메서드
@@ -102,9 +130,10 @@ public class FileUtils {
 
             // WebP 검증
             if (expectedExtension.equals("webp")) {
-                String riff = new String(fileBytes, 0, 4);
-                String webp = new String(fileBytes, 8, 4);
-                return riff.equals("RIFF") && webp.equals("WEBP");
+                byte[] riffSig = Arrays.copyOfRange(fileBytes, 0, 4);
+                byte[] webpSig = Arrays.copyOfRange(fileBytes, 8, 12);
+                return Arrays.equals(riffSig, "RIFF".getBytes(StandardCharsets.US_ASCII)) &&
+                        Arrays.equals(webpSig, "WEBP".getBytes(StandardCharsets.US_ASCII));
             }
 
             return false;
@@ -117,10 +146,15 @@ public class FileUtils {
     // 확장자 추출 및 검증
     public static String extractAndValidateExtension(String originalFileName) {
 
-        // 파일명에서 모든 점(.) 위치 검사
-        String[] parts = originalFileName.split("\\.");
-        if (parts.length > 2) {
-            log.warn("Double extension detected: {}", originalFileName);
+        //Null Byte Injection 검증
+        if (originalFileName.contains("\0")) {
+            log.error("Null byte injection attempt: {}", originalFileName);
+            throw new RestApiException(ErrorCode.INVALID_FILE_NAME);
+        }
+
+        // 파일명 길이 제한 검증
+        if (originalFileName.length() > 255) {
+            log.error("Filename too long: {} characters", originalFileName.length());
             throw new RestApiException(ErrorCode.INVALID_FILE_NAME);
         }
 
@@ -137,10 +171,12 @@ public class FileUtils {
             throw new RestApiException(ErrorCode.INVALID_FILE_TYPE);
         }
 
-        // 위험한 확장자 블랙리스트 검증
+        // 위험한 Double Extension 검증
+        String lowerFileName = originalFileName.toLowerCase();
         for (String dangerous : DANGEROUS_EXTENSIONS) {
-            if (originalFileName.toLowerCase().contains("." + dangerous)) {
-                log.error("Dangerous extension detected: {}", originalFileName);
+            // test.php.jpg 같은 케이스 차단
+            if (lowerFileName.matches(".*\\." + dangerous + "\\..*")) {
+                log.error("Dangerous double extension detected: {}", originalFileName);
                 throw new RestApiException(ErrorCode.INVALID_FILE_TYPE);
             }
         }

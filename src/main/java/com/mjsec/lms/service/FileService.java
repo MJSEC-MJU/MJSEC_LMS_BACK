@@ -5,13 +5,11 @@ import com.mjsec.lms.type.ErrorCode;
 import com.mjsec.lms.util.FileUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
@@ -184,7 +182,7 @@ public class FileService {
         validateImageFileMemorySafe(file);
 
         // 고유한 파일명 생성
-        String fileName = FileUtils.generateUniqueFileName(file.getOriginalFilename());
+        String fileName = FileUtils.generateUniqueFileName(file.getOriginalFilename(), uploadPath);
         String filePath = uploadPath + fileName;
 
         try {
@@ -309,6 +307,8 @@ public class FileService {
                         detectedMimeType, originalFilename);
                 throw new RestApiException(ErrorCode.INVALID_FILE_TYPE);
             }
+
+            FileUtils.validateImageDimensions(inputStream);
 
             // Content-Type과 실제 검출된 타입 비교
             FileUtils.validateContentType(file.getContentType(), detectedMimeType, originalFilename);
