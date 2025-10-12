@@ -2,27 +2,34 @@ package com.mjsec.lms.service;
 
 import com.mjsec.lms.exception.RestApiException;
 import com.mjsec.lms.type.ErrorCode;
+import com.mjsec.lms.util.FileUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Slf4j
 public class FileService {
 
-    // application.yml에서 파일 업로드 경로 설정값을 가져옴 (기본값: uploads/)
+    private static final int MAX_HEADER_SIZE = 1024; // 헤더 검증용 최대 크기
+    private static final double MAX_MEMORY_USAGE_RATIO = 0.8; // 최대 메모리 사용률 80%
+
+    private final MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
+
+    // 파일 업로드 경로 설정값을 가져옴
     @Value("${file.upload.path:uploads/}")
     private String uploadPath;
 
@@ -36,6 +43,7 @@ public class FileService {
     private final List<String> allowedImageTypes = Arrays.asList(
             "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"
     );
+
 
     // 스프링 빈 생성 후 실행되는 초기화 메서드
     @PostConstruct
@@ -52,32 +60,8 @@ public class FileService {
 
     // 다중 이미지 업로드 메서드
     public List<String> uploadMultipleImages(List<MultipartFile> files) {
-        if (files == null || files.isEmpty()) {
-            log.debug("No files provided for upload");
-            return new ArrayList<>();
-        }
 
-        // 이미지 개수 제한 검증
-        if (files.size() > MAX_IMAGE_COUNT) {
-            log.warn("Too many images provided: {} (max: {})", files.size(), MAX_IMAGE_COUNT);
-            throw new RestApiException(ErrorCode.TOO_MANY_IMAGES);
-        }
-
-        List<String> uploadedUrls = new ArrayList<>();
-
-        for (MultipartFile file : files) {
-            // 빈 파일 스킵
-            if (file.isEmpty()) {
-                log.debug("Skipping empty file");
-                continue;
-            }
-
-            String uploadedUrl = uploadImage(file);
-            uploadedUrls.add(uploadedUrl);
-        }
-
-        log.info("Successfully uploaded {} images", uploadedUrls.size());
-        return uploadedUrls;
+        return uploadMultipleImagesMemorySafe(files);
     }
 
     // 다중 이미지 업데이트
@@ -123,6 +107,7 @@ public class FileService {
 
     // 다중 이미지 삭제 메서드
     public void deleteMultipleImages(List<String> imageUrls) {
+
         if (imageUrls == null || imageUrls.isEmpty()) {
             log.debug("No images to delete");
             return;
@@ -141,22 +126,74 @@ public class FileService {
         log.info("Deleted {}/{} images successfully", deletedCount, imageUrls.size());
     }
 
+    // 다중 파일 업로드 시 메모리 사용량 관리
+    public List<String> uploadMultipleImagesMemorySafe(List<MultipartFile> files) {
+
+        if (files == null || files.isEmpty()) {
+            log.debug("No files provided for upload");
+            return new ArrayList<>();
+        }
+
+        // 이미지 개수 제한 검증
+        if (files.size() > MAX_IMAGE_COUNT) {
+            log.warn("Too many images provided: {} (max: {})", files.size(), MAX_IMAGE_COUNT);
+            throw new RestApiException(ErrorCode.TOO_MANY_IMAGES);
+        }
+
+        // 전체 파일 크기 계산
+        long totalFileSize = files.stream().mapToLong(MultipartFile::getSize).sum();
+
+        // 전체 파일에 대한 메모리 체크
+        if (!checkMemoryAvailability(totalFileSize)) {
+            log.error("Insufficient memory for multiple file upload. Total size: {} bytes", totalFileSize);
+            throw new RestApiException(ErrorCode.INSUFFICIENT_MEMORY);
+        }
+
+        List<String> uploadedUrls = new ArrayList<>();
+
+        for (MultipartFile file : files) {
+            // 빈 파일 스킵
+            if (file.isEmpty()) {
+                log.debug("Skipping empty file");
+                continue;
+            }
+
+            String uploadedUrl = uploadImage(file);
+            uploadedUrls.add(uploadedUrl);
+
+            // 각 파일 업로드 후 메모리 상태 체크
+            if (log.isDebugEnabled()) {
+                long usedMemory = memoryBean.getHeapMemoryUsage().getUsed();
+                long maxMemory = memoryBean.getHeapMemoryUsage().getMax();
+                double usageRatio = (double) usedMemory / maxMemory;
+                log.debug("파일 업로드 후 메모리 상태: {:.2f}%", usageRatio * 100);
+            }
+        }
+
+        log.info("Successfully uploaded {} images with total size: {} bytes",
+                uploadedUrls.size(), totalFileSize);
+        return uploadedUrls;
+    }
+
     // 이미지 파일을 업로드하고 웹에서 접근 가능한 URL을 반환하는 메서드
     public String uploadImage(MultipartFile file) {
+
         // 파일 유효성 검사 수행
-        validateImageFile(file);
+        validateImageFileMemorySafe(file);
 
         // 고유한 파일명 생성
-        String fileName = generateUniqueFileName(file.getOriginalFilename());
+        String fileName = FileUtils.generateUniqueFileName(file.getOriginalFilename(), uploadPath);
         String filePath = uploadPath + fileName;
 
         try {
             Path targetLocation = Paths.get(filePath);
-            // 파일을 지정된 경로에 저장 (기존 파일이 있으면 덮어쓰기)
-            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+
+            // 스트림 기반 파일 복사 (메모리 효율적)
+            try (InputStream inputStream = file.getInputStream()) {
+                Files.copy(inputStream, targetLocation, StandardCopyOption.REPLACE_EXISTING);
+            }
 
             log.info("File uploaded successfully: {}", fileName);
-            // 웹에서 접근 가능한 URL 형태로 반환
             return "/uploads/" + fileName;
 
         } catch (IOException e) {
@@ -200,38 +237,9 @@ public class FileService {
         return currentImageUrl;
     }
 
-    // 업로드할 이미지 파일의 유효성을 검사하는 메서드
-    private void validateImageFile(MultipartFile file) {
-        // 빈 파일인지 확인
-        if (file.isEmpty()) {
-            throw new RestApiException(ErrorCode.EMPTY_FILE);
-        }
-
-        // 파일 크기가 허용 범위를 초과하는지 확인
-        if (file.getSize() > maxFileSize) {
-            throw new RestApiException(ErrorCode.FILE_SIZE_EXCEEDED);
-        }
-
-        // 파일 타입이 허용되는 이미지 타입인지 확인
-        String contentType = file.getContentType();
-        if (!allowedImageTypes.contains(contentType)) {
-            throw new RestApiException(ErrorCode.INVALID_FILE_TYPE);
-        }
-    }
-
-    // 원본 파일명을 기반으로 고유한 파일명을 생성하는 메서드
-    private String generateUniqueFileName(String originalFileName) {
-        String extension = "";
-        // 원본 파일명에서 확장자 추출
-        if (originalFileName != null && originalFileName.contains(".")) {
-            extension = originalFileName.substring(originalFileName.lastIndexOf("."));
-        }
-        // UUID를 사용하여 고유한 파일명 생성
-        return UUID.randomUUID().toString() + extension;
-    }
-
     // 기존에 업로드된 이미지 파일을 삭제하는 메서드
     public void deleteImage(String imageUrl) {
+
         // URL이 유효하고 uploads 경로로 시작하는지 확인
         if (imageUrl != null && imageUrl.startsWith("/uploads/")) {
             // URL에서 파일명 추출
@@ -247,4 +255,96 @@ public class FileService {
             }
         }
     }
+
+    /*
+    ------- PRIVATE ----------
+     */
+    private void validateImageFileMemorySafe(MultipartFile file) {
+
+        // 기본 검증
+        if (file.isEmpty()) {
+            throw new RestApiException(ErrorCode.EMPTY_FILE);
+        }
+
+        if (file.getSize() > maxFileSize) {
+            throw new RestApiException(ErrorCode.FILE_SIZE_EXCEEDED);
+        }
+
+        // 메모리 사용량 체크
+        if (!checkMemoryAvailability(file.getSize())) {
+            log.error("Insufficient memory for file upload. File size: {} bytes", file.getSize());
+            throw new RestApiException(ErrorCode.INSUFFICIENT_MEMORY);
+        }
+
+        // 원본 파일명 검증
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null) {
+            throw new RestApiException(ErrorCode.INVALID_FILE_NAME);
+        }
+
+        // 확장자 추출 및 검증
+        String extension = FileUtils.extractAndValidateExtension(originalFilename);
+
+        // 스트림 기반 파일 검증
+        try (InputStream inputStream = new BufferedInputStream(file.getInputStream())) {
+
+            // 헤더만 읽어서 Magic Number 검증 (메모리 효율적)
+            byte[] headerBytes = FileUtils.readHeader(inputStream, MAX_HEADER_SIZE);
+
+            // Magic Number 검증
+            if (!FileUtils.verifyImageSignature(headerBytes, extension)) {
+                log.error("File signature mismatch for file: {}. Expected: {}",
+                        originalFilename, extension);
+                throw new RestApiException(ErrorCode.INVALID_FILE_TYPE);
+            }
+
+            // MIME 타입 검출 (스트림 기반)
+            String detectedMimeType = FileUtils.detectMimeTypeFromStream(inputStream, originalFilename);
+
+            // 검출된 MIME 타입 검증
+            if (!allowedImageTypes.contains(detectedMimeType)) {
+                log.error("Detected MIME type {} is not allowed. File: {}",
+                        detectedMimeType, originalFilename);
+                throw new RestApiException(ErrorCode.INVALID_FILE_TYPE);
+            }
+
+            FileUtils.validateImageDimensions(inputStream);
+
+            // Content-Type과 실제 검출된 타입 비교
+            FileUtils.validateContentType(file.getContentType(), detectedMimeType, originalFilename);
+
+            log.info("File validation successful. File: {}, Type: {}, Size: {} bytes",
+                    originalFilename, detectedMimeType, file.getSize());
+
+        } catch (IOException e) {
+            log.error("Failed to read file stream: {}", originalFilename, e);
+            throw new RestApiException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
+    }
+
+    // 메모리 가용성 체크
+    private boolean checkMemoryAvailability(long fileSize) {
+
+        try {
+            long usedMemory = memoryBean.getHeapMemoryUsage().getUsed();
+            long maxMemory = memoryBean.getHeapMemoryUsage().getMax();
+
+            // 현재 메모리 사용률 계산
+            double currentUsageRatio = (double) usedMemory / maxMemory;
+
+            // 파일 처리 후 예상 메모리 사용률 계산
+            double projectedUsageRatio = (double) (usedMemory + fileSize) / maxMemory;
+
+            //얘는 차마 영어로 못 적겠다
+            log.debug("현재 메모리 사용률: {:.2f}%, 예상 메모리 사용률: {:.2f}%, 최대 허용률: {:.2f}%",
+                    currentUsageRatio * 100, projectedUsageRatio * 100, MAX_MEMORY_USAGE_RATIO * 100);
+
+            return projectedUsageRatio <= MAX_MEMORY_USAGE_RATIO;
+
+        } catch (Exception e) {
+            log.warn("Failed to check memory availability, allowing upload", e);
+            return true; // 메모리 체크 실패 시 업로드 허용 (안전장치)
+        }
+    }
+
 }

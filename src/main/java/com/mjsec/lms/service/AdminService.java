@@ -30,6 +30,8 @@ import com.mjsec.lms.type.GroupMemberRole;
 import com.mjsec.lms.type.UserRole;
 import com.mjsec.lms.type.StudyStatus;
 import jakarta.transaction.Transactional;
+
+import java.io.IOException;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;

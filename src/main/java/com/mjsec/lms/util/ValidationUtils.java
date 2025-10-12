@@ -328,8 +328,7 @@ public class ValidationUtils {
     }
 
     //과제 제출 상태 ENUM 타입 검증
-    public SubmissionStatus validateSubmissionStatus(SubmissionStatus status) {
-        String statusString = status.toString();
+    public SubmissionStatus validateSubmissionStatus(String statusString) {
 
         if (statusString == null || statusString.trim().isEmpty()) {
             throw new RestApiException(ErrorCode.INVALID_SUBMISSION_STATUS);

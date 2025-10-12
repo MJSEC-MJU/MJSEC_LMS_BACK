@@ -70,7 +70,7 @@ public class IpUtils {
                 "localhost".equalsIgnoreCase(ip);
     }
 
-    // 유틸리티 클래스이므로 인스턴스화 방지
+    // 유틸리티 클래스이므로 인스턴스화 방지 <- @Component 금지
     private IpUtils() {
         throw new IllegalStateException("Utility class");
     }
