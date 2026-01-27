@@ -266,6 +266,37 @@ public class StudyGroupService {
         return createStudyGroupDetailDto(studyGroup, mentor, menteeInfoList);
     }
 
+    // 관리자 권한으로 특정 그룹 상세 정보 조회
+    public StudyGroupDetailDto getStudyGroupDetailForAdmin(Long groupId) {
+
+        log.info("getStudyGroupDetailForAdmin called for group: {}", groupId);
+
+        StudyGroup studyGroup = validationUtils.validateStudyGroup(groupId);
+
+        // 그룹의 모든 멤버 조회
+        List<GroupMember> allMembers = groupMemberRepository.findByStudyGroup_StudyId(groupId);
+
+        // 멘토와 멘티 분리
+        GroupMember mentor = allMembers.stream()
+                .filter(member -> member.getRole() == GroupMemberRole.MENTOR)
+                .findFirst()
+                .orElse(null);
+
+        List<GroupMember> mentees = allMembers.stream()
+                .filter(member -> member.getRole() == GroupMemberRole.MENTEE)
+                .toList();
+
+        // 멘티 정보 DTO 리스트 생성
+        List<StudyGroupDetailDto.MenteeInfo> menteeInfoList = mentees.stream()
+                .map(this::createMenteeInfo)
+                .collect(Collectors.toList());
+
+        log.info("Found {} total members in study group: {} (1 mentor, {} mentees)",
+                allMembers.size(), groupId, mentees.size());
+
+        return createStudyGroupDetailDto(studyGroup, mentor, menteeInfoList);
+    }
+
     /*
     그 외 Private 메서드
      */
