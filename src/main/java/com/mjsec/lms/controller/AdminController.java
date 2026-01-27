@@ -2,11 +2,13 @@ package com.mjsec.lms.controller;
 
 import com.mjsec.lms.dto.AllStudyGroupDto;
 import com.mjsec.lms.dto.PendingUserDto;
+import com.mjsec.lms.dto.StudyGroupDetailDto;
 import com.mjsec.lms.dto.StudyGroupDto.StudyGroupRequestDto;
 import com.mjsec.lms.dto.StudyGroupDto.StudyGroupUpdateDto;
 import com.mjsec.lms.dto.SuccessResponse;
 import com.mjsec.lms.dto.UserAdminResponseDto;
 import com.mjsec.lms.service.AdminService;
+import com.mjsec.lms.service.StudyGroupService;
 import com.mjsec.lms.type.ResponseMessage;
 import jakarta.validation.Valid;
 
@@ -15,6 +17,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class AdminController {
 
     private final AdminService adminService;
+    private final StudyGroupService studyGroupService;
 
     @GetMapping("/member-approval")
     public ResponseEntity<SuccessResponse<List<PendingUserDto>>> getAllPendingUser(){
@@ -177,6 +181,20 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.OK).body(
                 SuccessResponse.of(
                         ResponseMessage.UPDATE_GROUP_STATUS_SUCCESS
+                )
+        );
+    }
+
+    @GetMapping("/group/{groupId}/info")
+    public ResponseEntity<SuccessResponse<StudyGroupDetailDto>> getStudyGroupDetail(
+            @PathVariable Long groupId) {
+
+        StudyGroupDetailDto studyGroupDetail = studyGroupService.getStudyGroupDetailForAdmin(groupId);
+
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        ResponseMessage.STUDY_GROUP_DETAIL_GET_SUCCESS,
+                        studyGroupDetail
                 )
         );
     }
