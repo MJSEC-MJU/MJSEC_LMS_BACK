@@ -267,6 +267,7 @@ public class StudyGroupService {
     }
 
     // 관리자 권한으로 특정 그룹 상세 정보 조회
+    @Transactional(readOnly = true)
     public StudyGroupDetailDto getStudyGroupDetailForAdmin(Long groupId) {
 
         log.info("getStudyGroupDetailForAdmin called for group: {}", groupId);
