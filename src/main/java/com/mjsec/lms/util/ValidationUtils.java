@@ -311,7 +311,8 @@ public class ValidationUtils {
 
             case REVISION_REQUIRED:
                 // 수정 필요 -> 제출 완료 (재제출 시)
-                isValidTransition = (newStatus == SubmissionStatus.SUBMITTED);
+                isValidTransition = (newStatus == SubmissionStatus.SUBMITTED ||
+                        newStatus == SubmissionStatus.COMPLETED);
                 break;
 
             case COMPLETED:
