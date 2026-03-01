@@ -159,10 +159,21 @@ jobs:
       # ──────────────────────────────
       # Trivy (filesystem scan) → SARIF
       # ──────────────────────────────
+      - name: Install Trivy
+        run: |
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key \
+            | gpg --dearmor \
+            | sudo tee /etc/apt/trusted.gpg.d/trivy.gpg > /dev/null
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" \
+            | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update -qq && sudo apt-get install -y trivy
+          trivy --version
+
       - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.34.1
         with:
           scan-type: fs
+          skip-setup-trivy: true
           ignore-unfixed: true
           severity: HIGH,CRITICAL
           format: sarif
@@ -235,9 +246,10 @@ jobs:
 
       - name: Trivy image scan
         if: ${{ steps.df.outputs.found == 'true' }}
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.34.1
         with:
           scan-type: image
+          skip-setup-trivy: true
           image-ref: local/lms-back:secscan
           ignore-unfixed: true
           severity: HIGH,CRITICAL

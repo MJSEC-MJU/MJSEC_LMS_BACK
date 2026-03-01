@@ -112,12 +112,22 @@ public class ValidationUtils {
 
     // 사용자가 해당 스터디 그룹의 멤버인지 확인
     public void validateGroupMembership(User user, StudyGroup studyGroup) {
+        if (user.getRole() == UserRole.ROLE_ADMIN) {
+            return; // 어드민은 모든 그룹 접근 가능
+        }
         groupMemberRepository.findByUserAndStudyGroup(user, studyGroup)
                 .orElseThrow(() -> new RestApiException(ErrorCode.STUDY_USER_NOT_FOUND));
     }
 
     // 사용자가 해당 스터디 그룹의 멘토인지 확인
     public void validateMentorRole(Long userId, Long groupId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RestApiException(ErrorCode.USER_NOT_FOUND));
+
+        if (user.getRole() == UserRole.ROLE_ADMIN) {
+            return; // 어드민은 멘토 권한 보유
+        }
+
         GroupMemberRole userRole = groupMemberRepository.findRoleByUserIdAndStudyId(userId, groupId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.STUDY_USER_NOT_FOUND));
 
@@ -188,9 +198,9 @@ public class ValidationUtils {
     }
 
     // 제출물의 완전한 연관관계 검증
-    public AssignmentSubmission validateSubmissionFullAccess(Long groupId, Long planId, Long submitId) {
+    public void validateSubmissionFullAccess(Long groupId, Long planId, Long submitId) {
         validatePlanBelongsToGroup(planId, groupId);
-        return validateSubmissionAccess(planId, submitId);
+        validateSubmissionAccess(planId, submitId);
     }
 
     // 댓글 관리 권한 검증 강화 (작성자 본인 + 멘토 권한)
@@ -300,27 +310,20 @@ public class ValidationUtils {
 
     // 상태 전환이 유효한지 검증
     public void validateStatusTransition(SubmissionStatus currentStatus, SubmissionStatus newStatus) {
-        boolean isValidTransition = false;
-
-        switch (currentStatus) {
-            case SUBMITTED:
+        boolean isValidTransition = switch (currentStatus) {
+            case SUBMITTED ->
                 // 제출 완료 -> 완료 또는 수정 필요
-                isValidTransition = (newStatus == SubmissionStatus.COMPLETED ||
-                        newStatus == SubmissionStatus.REVISION_REQUIRED);
-                break;
-
-            case REVISION_REQUIRED:
+                    (newStatus == SubmissionStatus.COMPLETED ||
+                            newStatus == SubmissionStatus.REVISION_REQUIRED);
+            case REVISION_REQUIRED ->
                 // 수정 필요 -> 제출 완료 (재제출 시)
-                isValidTransition = (newStatus == SubmissionStatus.SUBMITTED ||
-                        newStatus == SubmissionStatus.COMPLETED);
-                break;
-
-            case COMPLETED:
+                    (newStatus == SubmissionStatus.SUBMITTED ||
+                            newStatus == SubmissionStatus.COMPLETED);
+            case COMPLETED ->
                 // 완료 -> 수정 필요 (피드백 수정 시에만)
-                isValidTransition = (newStatus == SubmissionStatus.REVISION_REQUIRED ||
-                        newStatus == SubmissionStatus.COMPLETED); // 피드백 수정
-                break;
-        }
+                    (newStatus == SubmissionStatus.REVISION_REQUIRED ||
+                            newStatus == SubmissionStatus.COMPLETED); // 피드백 수정
+        };
 
         if (!isValidTransition) {
             log.warn("Invalid status transition from {} to {}", currentStatus, newStatus);
@@ -329,14 +332,14 @@ public class ValidationUtils {
     }
 
     //과제 제출 상태 ENUM 타입 검증
-    public SubmissionStatus validateSubmissionStatus(String statusString) {
+    public void validateSubmissionStatus(String statusString) {
 
         if (statusString == null || statusString.trim().isEmpty()) {
             throw new RestApiException(ErrorCode.INVALID_SUBMISSION_STATUS);
         }
 
         try {
-            return SubmissionStatus.valueOf(statusString.trim().toUpperCase());
+            SubmissionStatus.valueOf(statusString.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
             log.warn("Invalid submission status provided: {}", statusString);
             throw new RestApiException(ErrorCode.INVALID_SUBMISSION_STATUS);
