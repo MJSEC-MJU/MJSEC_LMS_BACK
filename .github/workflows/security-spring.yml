@@ -160,7 +160,7 @@ jobs:
       # Trivy (filesystem scan) → SARIF
       # ──────────────────────────────
       - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.34.1
         with:
           scan-type: fs
           ignore-unfixed: true
@@ -235,7 +235,7 @@ jobs:
 
       - name: Trivy image scan
         if: ${{ steps.df.outputs.found == 'true' }}
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.34.1
         with:
           scan-type: image
           image-ref: local/lms-back:secscan
