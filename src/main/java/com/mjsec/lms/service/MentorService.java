@@ -1,22 +1,20 @@
 package com.mjsec.lms.service;
 
 import com.mjsec.lms.domain.GroupMember;
-import com.mjsec.lms.domain.StudyActivity;
 import com.mjsec.lms.domain.StudyGroup;
 import com.mjsec.lms.domain.User;
-import com.mjsec.lms.dto.StudyActivityDto;
 import com.mjsec.lms.dto.StudyGroupPutDto;
 import com.mjsec.lms.dto.StudyGroupPutResponse;
 import com.mjsec.lms.exception.RestApiException;
 import com.mjsec.lms.repository.AttendanceRepository;
 import com.mjsec.lms.repository.GroupMemberRepository;
 import com.mjsec.lms.repository.PlanCommentRepository;
-import com.mjsec.lms.repository.PlanRepository;
 import com.mjsec.lms.repository.StudyActivityRepository;
 import com.mjsec.lms.repository.StudyGroupRepository;
 import com.mjsec.lms.repository.SubmissionRepository;
 import com.mjsec.lms.repository.UserRepository;
 import com.mjsec.lms.type.ErrorCode;
+import com.mjsec.lms.type.UserRole;
 import java.util.List;
 import java.util.Objects;
 
@@ -69,6 +67,10 @@ public class MentorService {
 
         StudyGroup studyGroup = studyGroupRepository.findByStudyId(groupId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.STUDY_NOT_FOUND));
+
+        if (user.getRole() == UserRole.ROLE_ADMIN) {
+            return studyGroup; // 어드민은 creator 체크 없이 통과
+        }
 
         if(!Objects.equals(user.getUserId(), studyGroup.getCreator().getUserId())) {
             throw new RestApiException(ErrorCode.MENTOR_ONLY_CAN_DELETE_MEMBER);
