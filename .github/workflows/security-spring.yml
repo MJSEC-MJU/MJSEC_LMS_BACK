@@ -160,10 +160,15 @@ jobs:
       # Trivy (filesystem scan) → SARIF
       # ──────────────────────────────
       - name: Install Trivy
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          curl -sL https://github.com/aquasecurity/trivy/releases/download/v0.69.1/trivy_0.69.1_Linux-64bit.tar.gz \
-            | tar -xz -C /tmp trivy
+          gh release download --repo aquasecurity/trivy \
+            --pattern "trivy_*_Linux-64bit.tar.gz" \
+            --dir /tmp
+          tar -xzf /tmp/trivy_*_Linux-64bit.tar.gz -C /tmp trivy
           sudo mv /tmp/trivy /usr/local/bin/trivy
+          trivy --version
 
       - name: Trivy filesystem scan
         uses: aquasecurity/trivy-action@0.34.1
