@@ -14,6 +14,7 @@ import com.mjsec.lms.assignment.repository.SubmissionRepository;
 import com.mjsec.lms.common.type.ErrorCode;
 import com.mjsec.lms.studygroup.domain.type.GroupMemberRole;
 import com.mjsec.lms.assignment.domain.type.SubmissionStatus;
+import com.mjsec.lms.user.domain.type.UserRole;
 import com.mjsec.lms.common.util.ValidationUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -109,7 +110,9 @@ public class AssignmentSubmissionService {
         validationUtils.validateAssignmentSubmissionAllowed(planId);
 
         AssignmentSubmission assignmentSubmission = validationUtils.validateSubmissionAccess(planId, submitId);
-        GroupMemberRole role = validationUtils.validateUserRole(user.getUserId(), groupId);
+        GroupMemberRole role = (user.getRole() == UserRole.ROLE_ADMIN)
+                ? GroupMemberRole.MENTOR
+                : validationUtils.validateUserRole(user.getUserId(), groupId);
 
         validationUtils.validateSubmissionAccessByStatus(assignmentSubmission, user.getUserId(), role);
 
