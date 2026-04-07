@@ -46,8 +46,19 @@ public interface SubmissionRepository extends JpaRepository<AssignmentSubmission
 
     int countByPlanPlanIdAndStatus(Long planId, SubmissionStatus status);
 
-    // 특정 과제에 제출한 고유 제출자 수 조회 (미제출자 계산용)
-    @Query("SELECT COUNT(DISTINCT a.submitter.userId) FROM AssignmentSubmission a WHERE a.plan.planId = :planId")
-    int countDistinctSubmittersByPlanId(@Param("planId") Long planId);
+    // 특정 과제에 제출한 고유 제출자 수 조회 (미제출자 계산용) - 해당 그룹 멘티만 필터링
+    // Query 내에 enum 타입은 전체 경로를 다 적어줘야 함 이슈
+    @Query("SELECT COUNT(DISTINCT a.submitter.userId) FROM AssignmentSubmission a " +
+           "WHERE a.plan.planId = :planId " +
+           "AND a.submitter.userId IN (" +
+               "SELECT gm.user.userId FROM GroupMember gm " +
+               "WHERE gm.studyGroup.studyId = :groupId AND gm.role = com.mjsec.lms.studygroup.domain.type.GroupMemberRole.MENTEE" +
+           ")")
+    int countDistinctMenteeSubmittersByPlanIdAndGroupId(@Param("planId") Long planId, @Param("groupId") Long groupId);
+
+    // 상태별 고유 제출자 수 조회
+    @Query("SELECT COUNT(DISTINCT a.submitter.userId) FROM AssignmentSubmission a " +
+           "WHERE a.plan.planId = :planId AND a.status = :status")
+    int countDistinctSubmittersByPlanIdAndStatus(@Param("planId") Long planId, @Param("status") SubmissionStatus status);
 
 }

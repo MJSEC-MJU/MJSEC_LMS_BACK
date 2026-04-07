@@ -17,6 +17,7 @@ import com.mjsec.lms.assignment.domain.type.SubmissionStatus;
 import com.mjsec.lms.user.domain.type.UserRole;
 import com.mjsec.lms.common.util.ValidationUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,7 +71,12 @@ public class AssignmentSubmissionService {
                 .submitterIp(ipAddress)
                 .build();
 
-        submissionRepository.save(assignmentSubmission);
+        try {
+            submissionRepository.save(assignmentSubmission);
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Duplicate submission blocked by DB constraint for user: {}, plan: {}", user.getUserId(), planId);
+            throw new RestApiException(ErrorCode.DUPLICATE_SUBMISSION);
+        }
         log.info("Assignment submission saved successfully: {}", assignmentSubmission);
 
         return createSubmissionResponse(assignmentSubmission);
@@ -287,13 +293,13 @@ public class AssignmentSubmissionService {
         // 해당 스터디 그룹의 전체 멘티 수 조회
         int totalMentees = groupMemberRepository.findByStudyGroup_StudyIdAndRole(groupId, GroupMemberRole.MENTEE).size();
 
-        // 상태별 제출 수 조회
-        int submittedCount = submissionRepository.countByPlanPlanIdAndStatus(planId, SubmissionStatus.SUBMITTED);
-        int completedCount = submissionRepository.countByPlanPlanIdAndStatus(planId, SubmissionStatus.COMPLETED);
-        int revisionRequiredCount = submissionRepository.countByPlanPlanIdAndStatus(planId, SubmissionStatus.REVISION_REQUIRED);
+        // 상태별 고유 제출자 수 조회 (중복 제출 시에도 정확한 인원 수 반영)
+        int submittedCount = submissionRepository.countDistinctSubmittersByPlanIdAndStatus(planId, SubmissionStatus.SUBMITTED);
+        int completedCount = submissionRepository.countDistinctSubmittersByPlanIdAndStatus(planId, SubmissionStatus.COMPLETED);
+        int revisionRequiredCount = submissionRepository.countDistinctSubmittersByPlanIdAndStatus(planId, SubmissionStatus.REVISION_REQUIRED);
 
-        // 미제출자 수 계산
-        int submittedMentees = submissionRepository.countDistinctSubmittersByPlanId(planId);
+        // 미제출자 수 계산 (그룹 멘티 기준으로만 집계 - 음수 방지)
+        int submittedMentees = submissionRepository.countDistinctMenteeSubmittersByPlanIdAndGroupId(planId, groupId);
         int notSubmittedCount = totalMentees - submittedMentees;
 
         return SubmissionStatisticsResponse.builder()

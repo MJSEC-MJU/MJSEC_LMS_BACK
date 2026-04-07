@@ -14,7 +14,9 @@ import com.mjsec.lms.user.domain.User;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "assignment_submission")
+@Table(name = "assignment_submission", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_submission_submitter_plan", columnNames = {"user_id", "plan_id"})
+})
 @SuperBuilder
 @SQLDelete(sql = "UPDATE assignment_submission SET deleted_at = NOW() WHERE submission_id = ?")
 @SQLRestriction("deleted_at is null")
