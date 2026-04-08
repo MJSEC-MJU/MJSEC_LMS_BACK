@@ -170,15 +170,14 @@ jobs:
           trivy --version
 
       - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@0.34.1
-        with:
-          scan-type: fs
-          skip-setup-trivy: true
-          ignore-unfixed: true
-          severity: HIGH,CRITICAL
-          format: sarif
-          output: trivy-fs.sarif
-          exit-code: '0'
+        run: |
+          trivy fs \
+            --ignore-unfixed \
+            --severity HIGH,CRITICAL \
+            --format sarif \
+            --output trivy-fs.sarif \
+            --exit-code 0 \
+            .
 
       - name: Check Trivy FS SARIF has results
         id: trivyfs_sarif_check
@@ -246,16 +245,14 @@ jobs:
 
       - name: Trivy image scan
         if: ${{ steps.df.outputs.found == 'true' }}
-        uses: aquasecurity/trivy-action@0.34.1
-        with:
-          scan-type: image
-          skip-setup-trivy: true
-          image-ref: local/lms-back:secscan
-          ignore-unfixed: true
-          severity: HIGH,CRITICAL
-          format: sarif
-          output: trivy-image.sarif
-          exit-code: '0'
+        run: |
+          trivy image \
+            --ignore-unfixed \
+            --severity HIGH,CRITICAL \
+            --format sarif \
+            --output trivy-image.sarif \
+            --exit-code 0 \
+            local/lms-back:secscan
 
       - name: Check Trivy IMG SARIF has results
         if: ${{ steps.df.outputs.found == 'true' }}

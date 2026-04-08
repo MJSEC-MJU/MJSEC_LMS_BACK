@@ -10,6 +10,7 @@ import com.mjsec.lms.assignment.dto.DetailSubmissionResponse;
 import com.mjsec.lms.assignment.dto.SubmissionStatisticsResponse;
 import com.mjsec.lms.common.exception.RestApiException;
 import com.mjsec.lms.studygroup.repository.GroupMemberRepository;
+import com.mjsec.lms.assignment.repository.PlanRepository;
 import com.mjsec.lms.assignment.repository.SubmissionRepository;
 import com.mjsec.lms.common.type.ErrorCode;
 import com.mjsec.lms.studygroup.domain.type.GroupMemberRole;
@@ -31,12 +32,14 @@ public class AssignmentSubmissionService {
     private final ValidationUtils validationUtils;
     private final SubmissionRepository submissionRepository;
     private final GroupMemberRepository groupMemberRepository;
+    private final PlanRepository planRepository;
 
-    AssignmentSubmissionService(ValidationUtils validationUtils, SubmissionRepository submissionRepository, GroupMemberRepository groupMemberRepository){
+    AssignmentSubmissionService(ValidationUtils validationUtils, SubmissionRepository submissionRepository, GroupMemberRepository groupMemberRepository, PlanRepository planRepository){
 
         this.validationUtils = validationUtils;
         this.submissionRepository = submissionRepository;
         this.groupMemberRepository = groupMemberRepository;
+        this.planRepository = planRepository;
     }
 
     // 과제 제출하기 (멘티만)
@@ -56,6 +59,10 @@ public class AssignmentSubmissionService {
 
         //과제 기한 검사
        // validationUtils.validateAssignmentDeadline(plan);
+
+        // Plan 행에 비관적 락 획득 — 동시 제출 요청을 직렬화하여 중복 제출 race condition 방지
+        planRepository.findByIdWithPessimisticLock(planId)
+                .orElseThrow(() -> new RestApiException(ErrorCode.PLAN_NOT_FOUND));
 
         // 과제 제출 중복 여부 체크
         validationUtils.validateDuplicateSubmission(user.getUserId(), planId);
@@ -287,13 +294,13 @@ public class AssignmentSubmissionService {
         // 해당 스터디 그룹의 전체 멘티 수 조회
         int totalMentees = groupMemberRepository.findByStudyGroup_StudyIdAndRole(groupId, GroupMemberRole.MENTEE).size();
 
-        // 상태별 제출 수 조회
-        int submittedCount = submissionRepository.countByPlanPlanIdAndStatus(planId, SubmissionStatus.SUBMITTED);
-        int completedCount = submissionRepository.countByPlanPlanIdAndStatus(planId, SubmissionStatus.COMPLETED);
-        int revisionRequiredCount = submissionRepository.countByPlanPlanIdAndStatus(planId, SubmissionStatus.REVISION_REQUIRED);
+        // 상태별 고유 제출자 수 조회 (중복 제출 시에도 정확한 인원 수 반영)
+        int submittedCount = submissionRepository.countDistinctSubmittersByPlanIdAndStatus(planId, SubmissionStatus.SUBMITTED);
+        int completedCount = submissionRepository.countDistinctSubmittersByPlanIdAndStatus(planId, SubmissionStatus.COMPLETED);
+        int revisionRequiredCount = submissionRepository.countDistinctSubmittersByPlanIdAndStatus(planId, SubmissionStatus.REVISION_REQUIRED);
 
-        // 미제출자 수 계산
-        int submittedMentees = submissionRepository.countDistinctSubmittersByPlanId(planId);
+        // 미제출자 수 계산 (그룹 멘티 기준으로만 집계 - 음수 방지)
+        int submittedMentees = submissionRepository.countDistinctMenteeSubmittersByPlanIdAndGroupId(planId, groupId);
         int notSubmittedCount = totalMentees - submittedMentees;
 
         return SubmissionStatisticsResponse.builder()
