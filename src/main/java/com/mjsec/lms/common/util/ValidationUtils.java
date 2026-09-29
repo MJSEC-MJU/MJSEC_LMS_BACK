@@ -40,7 +40,16 @@ public class ValidationUtils {
     private static final String[] ALLOWED_DOMAINS = {
             "velog.io",
             "tistory.com",
-            "blog.naver.com"
+            "blog.naver.com",
+            "github.io",
+            "github.com",
+            "notion.site",
+            "notion.so",
+            "oopy.io",
+            "medium.com",
+            "brunch.co.kr",
+            "blogspot.com",
+            "gitbook.io"
     };
 
     private static final String[] XSS_PATTERNS = {
