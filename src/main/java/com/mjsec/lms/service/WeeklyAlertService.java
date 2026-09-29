@@ -1,5 +1,6 @@
 package com.mjsec.lms.service;
 
+import com.mjsec.lms.config.TimeZones;
 import com.mjsec.lms.domain.*;
 import com.mjsec.lms.repository.*;
 import com.mjsec.lms.type.GroupMemberRole;
@@ -35,7 +36,8 @@ public class WeeklyAlertService {
     public void checkAndSendWeeklyAssignmentReport() {
         log.info("Starting weekly assignment report generation...");
 
-        LocalDateTime now = LocalDateTime.now();
+        // 마감 시각이 서울 시각으로 저장되므로 JVM 기본 시간대와 무관하게 서울 기준으로 조회함
+        LocalDateTime now = LocalDateTime.now(TimeZones.SEOUL_ZONE);
         LocalDateTime oneWeekAgo = now.minusWeeks(1);
 
         // hasAssignment=true이고 최근 1주일간 마감된 과제만 조회

@@ -1,5 +1,6 @@
 package com.mjsec.lms.service;
 
+import com.mjsec.lms.config.TimeZones;
 import com.mjsec.lms.domain.Attendance;
 import com.mjsec.lms.repository.AttendanceRepository;
 import com.mjsec.lms.type.AttendanceType;
@@ -36,7 +37,8 @@ public class AttendanceAlertService {
         log.info("Starting 10-day absence alert check...");
 
         // 정확히 10일 전 날짜 계산
-        LocalDate targetDate = LocalDate.now().minusDays(10);
+        // 출석 날짜가 서울 날짜로 저장되므로 JVM 기본 시간대와 무관하게 서울 기준으로 계산함
+        LocalDate targetDate = LocalDate.now(TimeZones.SEOUL_ZONE).minusDays(10);
 
         log.info("Checking absences for date: {}", targetDate);
 
