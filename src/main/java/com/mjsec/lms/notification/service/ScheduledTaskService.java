@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import com.mjsec.lms.attendance.service.AttendanceAlertService;
+import com.mjsec.lms.common.config.TimeZones;
 
 @Service
 @Slf4j
@@ -20,7 +21,7 @@ public class ScheduledTaskService {
     }
 
     //매주 월요일 0시에 체크
-    @Scheduled(cron = "0 0 0 * * MON")
+    @Scheduled(cron = "0 0 0 * * MON", zone = TimeZones.SEOUL)
     public void checkAssignmentNotSubmitted() {
         log.info("Scheduled task started: checkAssignmentNotSubmitted");
         try {
@@ -32,7 +33,7 @@ public class ScheduledTaskService {
     }
 
     // 매일 오전 9시에 10일 경과 결석자 체크
-    @Scheduled(cron = "0 0 9 * * *")
+    @Scheduled(cron = "0 0 9 * * *", zone = TimeZones.SEOUL)
     public void checkAbsenceAlert() {
         log.info("Scheduled task started: checkAbsenceAlert");
         try {
