@@ -44,37 +44,33 @@ jobs:
           } > .env
           cat .env | sed 's/^\(.*PASSWORD\|JWT_SECRET\)=.*/\1=****/'
 
-      # GitHub 호스트 러너엔 docker compose v2가 기본 포함되어 있어 일반적으로 설치 불필요
-      # 꼭 필요하면 아래 유지
-      - name: Install Docker Compose (optional)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker-compose
+      - name: Check Docker Compose
+        run: docker compose version
 
       - name: Docker Compose Build and Up
-        run: docker-compose up --build -d
+        run: docker compose up --build -d db redis app
 
       - name: Wait for MySQL
         run: |
           for i in {1..30}; do
-            docker-compose exec -T db mysqladmin ping -h localhost --silent && break
+            docker compose exec -T db mysqladmin ping -h localhost --silent && break
             echo "Waiting for MySQL..."
             sleep 2
           done
 
       - name: Run Gradle Tests in Docker
-        run: docker-compose run --rm test
+        run: docker compose run --rm test
 
       - name: Start Backend Container
-        run: docker-compose up -d app
+        run: docker compose up -d app
 
       - name: Record Java runtime versions
         run: |
-          docker-compose exec -T app java -XshowSettings:properties -version
-          docker-compose run --rm --no-deps --entrypoint java test -XshowSettings:properties -version
+          docker compose exec -T app java -XshowSettings:properties -version
+          docker compose run --rm --no-deps --entrypoint java test -XshowSettings:properties -version
 
       - name: Check Backend Container Logs
-        run: docker-compose logs app
+        run: docker compose logs app
 
       - name: Set up QEMU (for multi-arch, optional)
         uses: docker/setup-qemu-action@v3
@@ -120,7 +116,7 @@ jobs:
 
       - name: Stop containers
         if: always()
-        run: docker-compose down
+        run: docker compose down
 
       - name: Upload Test Report
         if: failure()
