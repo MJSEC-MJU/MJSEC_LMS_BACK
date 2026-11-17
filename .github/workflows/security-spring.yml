@@ -106,7 +106,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '17.0.21+9'
 
       - name: Build (Maven)
         if: ${{ hashFiles('**/pom.xml') != '' }}
