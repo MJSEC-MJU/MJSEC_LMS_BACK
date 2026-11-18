@@ -39,7 +39,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: dockerfile
     container_name: mjsec-app
     ports:
       - "8080:8080"
@@ -67,13 +67,17 @@ services:
     # (아래 3단계에서 Dockerfile HEALTHCHECK 추가 시 compose의 healthcheck는 생략 가능)
 
   test:
-    image: gradle:8.1.1-jdk17
+    build:
+      context: .
+      dockerfile: dockerfile
+      target: java-build
     container_name: mjsec-test
     working_dir: /app
     volumes:
       - .:/app
       - gradle_cache:/home/gradle/.gradle
     environment:
+      GRADLE_USER_HOME: /home/gradle/.gradle
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: db
       DB_PORT: 3306

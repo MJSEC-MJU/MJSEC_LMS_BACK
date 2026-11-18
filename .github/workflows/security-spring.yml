@@ -102,11 +102,18 @@ jobs:
       # ──────────────────────────────
       # Java build (Maven/Gradle 자동 감지)
       # ──────────────────────────────
-      - name: Setup Temurin JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
+      - name: Install the verified Corretto 17 security release
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/corretto-17.0.21.1.2.tar.gz"
+          java_dir="$RUNNER_TEMP/corretto-17.0.21.1.2"
+          curl --fail --silent --show-error --retry 3 -o "$archive" \
+            https://corretto.aws/downloads/resources/17.0.21.1.2/amazon-corretto-17.0.21.1.2-linux-x64.tar.gz
+          printf '%s  %s\n' d8a350b5988f58e6186ddc1db584af170e9d56862816d4a578e9570d85307e2c "$archive" | sha256sum --check
+          mkdir "$java_dir"
+          tar -xzf "$archive" --strip-components=1 -C "$java_dir"
+          printf 'JAVA_HOME=%s\n' "$java_dir" >> "$GITHUB_ENV"
+          printf '%s/bin\n' "$java_dir" >> "$GITHUB_PATH"
 
       - name: Build (Maven)
         if: ${{ hashFiles('**/pom.xml') != '' }}
