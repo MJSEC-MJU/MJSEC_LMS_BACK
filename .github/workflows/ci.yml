@@ -42,7 +42,6 @@ jobs:
             echo "WIKI_GROUP_ID=${{ env.WIKI_GROUP_ID }}"
             echo "WIKI_DOMAIN=${{ env.WIKI_DOMAIN }}"
           } > .env
-          cat .env | sed 's/^\(.*PASSWORD\|JWT_SECRET\)=.*/\1=****/'
 
       - name: Check Docker Compose
         run: docker compose version
@@ -66,8 +65,15 @@ jobs:
 
       - name: Record Java runtime versions
         run: |
-          docker compose exec -T app java -XshowSettings:properties -version
-          docker compose run --rm --no-deps --entrypoint java test -XshowSettings:properties -version
+          for service in app test; do
+            if [ "$service" = app ]; then
+              settings=$(docker compose exec -T app java -XshowSettings:properties -version 2>&1)
+            else
+              settings=$(docker compose run --rm --no-deps --entrypoint java test -XshowSettings:properties -version 2>&1)
+            fi
+            printf '%s\n' "$settings" | grep -F 'java.runtime.version = 17.0.21.1+2'
+            printf '%s\n' "$settings" | grep -F 'java.vendor = Amazon.com Inc.'
+          done
 
       - name: Check Backend Container Logs
         run: docker compose logs app
@@ -123,4 +129,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-report
-          path: Back/build/reports/tests/test
+          path: build/reports/tests/test

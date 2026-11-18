@@ -11,3 +11,7 @@ build/
 
 # 도커 컴포즈 파일 (필요 없으면 제외)
 docker-compose*.yml
+
+.git
+.env
+.env.*

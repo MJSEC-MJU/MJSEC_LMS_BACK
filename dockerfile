@@ -1,5 +1,5 @@
 # ─── 1) Build stage ────────────────────────────────────────────────────────────
-FROM eclipse-temurin:17.0.21_9-jdk-jammy@sha256:76751c16a2a07ec0960e659a2603491f8c79d95592173f6c0df8bf8ebab257cc AS builder
+FROM amazoncorretto:17-al2023@sha256:9f2fde515fa060e6218b680d0f5045940d915af43af266145586344bddb30320 AS builder
 
 # 작업 디렉토리 설정
 WORKDIR /home/gradle/project
@@ -13,7 +13,7 @@ RUN sed -i 's/\r$//' gradlew && chmod +x gradlew \
     && ./gradlew clean bootJar --no-daemon
 
 # ─── 2) Run stage ─────────────────────────────────────────────────────────────
-FROM eclipse-temurin:17.0.21_9-jre-jammy@sha256:aa6381384f8db99762fa7d0d3c2b5de58874e5f12c96df4c13a1455376ae0ed1
+FROM amazoncorretto:17-al2023@sha256:9f2fde515fa060e6218b680d0f5045940d915af43af266145586344bddb30320
 
 WORKDIR /app
 
