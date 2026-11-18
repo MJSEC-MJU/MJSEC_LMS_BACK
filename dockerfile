@@ -1,5 +1,9 @@
 # ─── 1) Build stage ────────────────────────────────────────────────────────────
-FROM amazoncorretto:17-al2023@sha256:9f2fde515fa060e6218b680d0f5045940d915af43af266145586344bddb30320 AS builder
+FROM amazoncorretto:17-al2023@sha256:9f2fde515fa060e6218b680d0f5045940d915af43af266145586344bddb30320 AS java-build
+
+RUN dnf install -y findutils && dnf clean all
+
+FROM java-build AS builder
 
 # 작업 디렉토리 설정
 WORKDIR /home/gradle/project

@@ -58,7 +58,7 @@ jobs:
           done
 
       - name: Run Gradle Tests in Docker
-        run: docker compose run --rm test
+        run: docker compose run --rm --build test
 
       - name: Start Backend Container
         run: docker compose up -d app

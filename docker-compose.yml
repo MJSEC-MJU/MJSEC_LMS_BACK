@@ -67,7 +67,10 @@ services:
     # (아래 3단계에서 Dockerfile HEALTHCHECK 추가 시 compose의 healthcheck는 생략 가능)
 
   test:
-    image: amazoncorretto:17-al2023@sha256:9f2fde515fa060e6218b680d0f5045940d915af43af266145586344bddb30320
+    build:
+      context: .
+      dockerfile: dockerfile
+      target: java-build
     container_name: mjsec-test
     working_dir: /app
     volumes:
